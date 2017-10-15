@@ -22,7 +22,8 @@
   "keywords": [
     "structural",
     "json",
-    "validation"
+    "validation",
+    "transform"
   ],
   "license": "MIT",
   "bugs": {

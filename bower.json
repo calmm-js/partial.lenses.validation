@@ -6,7 +6,8 @@
   "keywords": [
     "structural",
     "json",
-    "validation"
+    "validation",
+    "transform"
   ],
   "homepage": "https://github.com/calmm-js/partial.lenses.validation",
   "dependencies": {
