@@ -1,0 +1,73 @@
+{
+  "name": "partial.lenses.validation",
+  "version": "0.1.0",
+  "description": "Validation transform combinators for Partial Lenses",
+  "module": "dist/partial.lenses.validation.es.js",
+  "main": "dist/partial.lenses.validation.cjs.js",
+  "scripts": {
+    "dist": "npm run dist:umd & npm run dist:umd.min & npm run dist:es & npm run dist:cjs & wait",
+    "dist:cjs": "    NODE_ENV=           rollup -c -n V -i src/partial.lenses.validation.js -f cjs -o dist/partial.lenses.validation.cjs.js",
+    "dist:es": "     NODE_ENV=           rollup -c -n V -i src/partial.lenses.validation.js -f es  -o dist/partial.lenses.validation.es.js",
+    "dist:umd": "    NODE_ENV=dev        rollup -c -n V -i src/partial.lenses.validation.js -f umd -o dist/partial.lenses.validation.js",
+    "dist:umd.min": "NODE_ENV=production rollup -c -n V -i src/partial.lenses.validation.js -f umd -o dist/partial.lenses.validation.min.js",
+    "lint": "eslint src test",
+    "prepare": "npm run lint & (npm run dist && npm run test) & wait",
+    "report-coverage": "nyc report --reporter=lcov > coverage.lcov && codecov",
+    "test": "nyc mocha"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/calmm-js/partial.lenses.validation.git"
+  },
+  "keywords": [
+    "structural",
+    "json",
+    "validation"
+  ],
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/calmm-js/partial.lenses.validation/issues"
+  },
+  "homepage": "https://github.com/calmm-js/partial.lenses.validation#readme",
+  "dependencies": {
+    "infestines": "^0.4.5",
+    "partial.lenses": "^13.0.0"
+  },
+  "devDependencies": {
+    "babel-cli": "^6.26.0",
+    "babel-eslint": "^8.0.1",
+    "babel-plugin-check-es2015-constants": "^6.22.0",
+    "babel-plugin-transform-es2015-arrow-functions": "^6.22.0",
+    "babel-plugin-transform-es2015-block-scoped-functions": "^6.22.0",
+    "babel-plugin-transform-es2015-block-scoping": "^6.26.0",
+    "babel-plugin-transform-es2015-classes": "^6.24.1",
+    "babel-plugin-transform-es2015-computed-properties": "^6.24.1",
+    "babel-plugin-transform-es2015-destructuring": "^6.23.0",
+    "babel-plugin-transform-es2015-duplicate-keys": "^6.24.1",
+    "babel-plugin-transform-es2015-for-of": "^6.23.0",
+    "babel-plugin-transform-es2015-function-name": "^6.24.1",
+    "babel-plugin-transform-es2015-literals": "^6.22.0",
+    "babel-plugin-transform-es2015-modules-commonjs": "^6.26.0",
+    "babel-plugin-transform-es2015-object-super": "^6.24.1",
+    "babel-plugin-transform-es2015-parameters": "^6.24.1",
+    "babel-plugin-transform-es2015-shorthand-properties": "^6.24.1",
+    "babel-plugin-transform-es2015-spread": "^6.22.0",
+    "babel-plugin-transform-es2015-sticky-regex": "^6.24.1",
+    "babel-plugin-transform-es2015-template-literals": "^6.22.0",
+    "babel-plugin-transform-es2015-unicode-regex": "^6.24.1",
+    "babel-polyfill": "^6.26.0",
+    "babel-register": "^6.26.0",
+    "codecov": "^2.3.1",
+    "eslint": "^4.9.0",
+    "mocha": "^4.0.1",
+    "nyc": "^11.2.1",
+    "ramda": "^0.25.0",
+    "rollup": "^0.50.0",
+    "rollup-plugin-babel": "^3.0.2",
+    "rollup-plugin-node-resolve": "^3.0.0",
+    "rollup-plugin-replace": "^2.0.0",
+    "rollup-plugin-uglify": "^2.0.1",
+    "sprintf-js": "^1.1.1",
+    "uglify-js": "^3.1.3"
+  }
+}
