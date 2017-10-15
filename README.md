@@ -1,11 +1,11 @@
-# <a id="partial-lenses-validation"></a> [≡](#contents) Partial Lenses Validation &middot; [![Gitter](https://img.shields.io/gitter/room/calmm-js/chat.js.svg)](https://gitter.im/calmm-js/chat) [![GitHub stars](https://img.shields.io/github/stars/calmm-js/partial.lenses.validation.svg?style=social)](https://github.com/calmm-js/partial.lenses.validation) [![npm](https://img.shields.io/npm/dm/partial.lenses.validation.svg)](https://www.npmjs.com/package/partial.lenses.validation)
+# <a id="partial-lenses-validation"></a> [≡](#contents) [▶](https://calmm-js.github.io/partial.lenses.validation/#) Partial Lenses Validation &middot; [![Gitter](https://img.shields.io/gitter/room/calmm-js/chat.js.svg)](https://gitter.im/calmm-js/chat) [![GitHub stars](https://img.shields.io/github/stars/calmm-js/partial.lenses.validation.svg?style=social)](https://github.com/calmm-js/partial.lenses.validation) [![npm](https://img.shields.io/npm/dm/partial.lenses.validation.svg)](https://www.npmjs.com/package/partial.lenses.validation)
 
 Validation [transform](https://github.com/calmm-js/partial.lenses/#transforms)
 [combinators](https://wiki.haskell.org/Combinator) for [Partial
 Lenses](https://github.com/calmm-js/partial.lenses/).  The main idea is to
-produce validation errors in the same shape as the data being validated.  This
-way validation errors can be mechanically associated with the corresponding
-elements of the validated data structure.
+produce validation errors in the same shape as the data structure being
+validated.  This way validation errors can be mechanically associated with the
+corresponding elements of the validated data structure.
 
 [![npm version](https://badge.fury.io/js/partial.lenses.validation.svg)](http://badge.fury.io/js/partial.lenses.validation)
 [![Bower version](https://badge.fury.io/bo/partial.lenses.validation.svg)](https://badge.fury.io/bo/partial.lenses.validation)
@@ -14,38 +14,111 @@ elements of the validated data structure.
 [![](https://david-dm.org/calmm-js/partial.lenses.validation.svg)](https://david-dm.org/calmm-js/partial.lenses.validation)
 [![](https://david-dm.org/calmm-js/partial.lenses.validation/dev-status.svg)](https://david-dm.org/calmm-js/partial.lenses.validation?type=dev)
 
-## <a id="contents"></a> [≡](#contents) Contents
+## <a id="contents"></a> [≡](#contents) [▶](https://calmm-js.github.io/partial.lenses.validation/#contents) Contents
 
+* [An example](#an-example)
 * [Reference](#reference)
   * [Operations on rules](#operations-on-rules)
     * [`V.validate(rules, data) ~> maybeErrors`](#V-validate) <small><sup>v0.1.0</sup></small>
   * [Primitive rules](#primitive-rules)
     * [`V.accept ~> rules`](#V-accept) <small><sup>v0.1.0</sup></small>
-    * [`V.reject(error) ~> rules`](#V-reject) <small><sup>v0.1.0</sup></small>
+    * [`V.reject(errorValue) ~> rules`](#V-reject) <small><sup>v0.1.0</sup></small>
   * [Rules on an element](#rules-on-an-element)
-    * [`V.unless(predicate, error, ...) ~> rules`](#V-rules) <small><sup>v0.1.0</sup></small>
+    * [`V.unless((maybeValue, index) => testable, errorValue, ...) ~> rules`](#V-unless) <small><sup>v0.1.0</sup></small>
   * [Rules on objects](#rules-on-objects)
     * [`V.object([...propNames], {prop: rules, ...}) ~> rules`](#V-object) <small><sup>v0.1.0</sup></small>
   * [Rules on arrays](#rules-on-arrays)
     * [`V.arrayIx(rules) ~> rules`](#V-arrayIx) <small><sup>v0.1.0</sup></small>
     * [`V.arrayId(rules) ~> rules`](#V-arrayId) <small><sup>v0.1.0</sup></small>
   * [Conditional rules](#conditional-rules)
-    * [`V.cases(predicate, rules, ...) ~> rules`](#V-cases) <small><sup>v0.1.0</sup></small>
-    * [`V.choose(maybeData -> rules) ~> rules`](#V-choose) <small><sup>v0.1.0</sup></small>
+    * [`V.cases((maybeValue, index) => testable, rules, ...) ~> rules`](#V-cases) <small><sup>v0.1.0</sup></small>
+    * [`V.choose((maybeValue, index) => rules) ~> rules`](#V-choose) <small><sup>v0.1.0</sup></small>
 * [Known caveats](#known-caveats)
 * [Related work](#related-work)
 
-## <a id="reference"></a> [≡](#contents) Reference
+## <a id="an-example"></a> [≡](#contents) [▶](https://calmm-js.github.io/partial.lenses.validation/#an-example) An example
+
+Imagine a UI for editing a data structure that is an array (table) of objects
+(records) that have a `date` field and an `event` field:
+
+```json
+[
+  {"date": "2017-09-11", "event": "EFSA-H"},
+  {"date": "2017-09-20", "event": "EFSA-T"},
+  {"date": "",           "event": "EFSA-T"}
+]
+```
+
+We need to validate that each object has a valid date and an event and that
+dates and events are unique.  Furthermore, we wish to give feedback on all
+elements with errors so as to guide the user.
+
+Here is a sample set of rules
+
+```js
+const rules = V.choose(events => V.arrayIx(V.object([], {
+  date: V.unless(
+    isNonEmpty,                  'required',
+    isValidDate,                 'yyyy-mm-dd',
+    isUniqueBy('date', events),  'duplicate'),
+  event: V.unless(
+    isNonEmpty,                  'required',
+    isUniqueBy('event', events), 'duplicate')
+})))
+```
+
+where
+
+```js
+const isNonEmpty = R.identity
+
+function isUniqueBy(p, xs) {
+  const counts = L.counts([L.elems, p], xs)
+  return x => counts.get(x) <= 1
+}
+
+const isValidDate = R.test(/^\d{4}-\d{2}-\d{2}$/)
+```
+
+to give such validation feedback.  The rules basically just follow the structure
+of the data.
+
+Validating with those rules we get a data structure with the potential error
+feedback at the same location as the offending element:
+
+```js
+V.validate(rules, [
+  {"date": "2017-09-11", "event": "EFSA-H"},
+  {"date": "2017-09-20", "event": "EFSA-T"},
+  {"date": "",           "event": "EFSA-T"}
+])
+// [ null,
+//   { event: 'duplicate' },
+//   { date: 'required', event: 'duplicate' } ]
+```
+
+The result tells us that the first object is valid (i.e. there are no validation
+errors in it).  The `event` in the second object is a duplicate.  The third
+object is missing a date and the event is a duplicate.
+
+## <a id="reference"></a> [≡](#contents) [▶](https://calmm-js.github.io/partial.lenses.validation/#reference) Reference
 
 The [combinators](https://wiki.haskell.org/Combinator) provided by this library
 are available as named imports.  Typically one just imports the library as:
 
-```js
-import * as V from "partial.lenses.validation"
+```jsx
+import * as V from 'partial.lenses.validation'
 ```
 
-### <a id="operations-on-rules"></a> [≡](#contents) Operations on rules
-##### <a id="V-validate"></a> [≡](#contents) [`V.validate(rules, data) ~> maybeErrors`](#V-validate) <small><sup>v0.1.0</sup></small>
+This library is actually just a tiny library built on top of [Partial
+Lenses](https://github.com/calmm-js/partial.lenses/)
+[transforms](https://github.com/calmm-js/partial.lenses#transforms).  It is also
+typical to use e.g. [Ramda](http://ramdajs.com/), bound as `R` in examples, to
+implement predicates.
+
+### <a id="operations-on-rules"></a> [≡](#contents) [▶](https://calmm-js.github.io/partial.lenses.validation/#operations-on-rules) Operations on rules
+
+#### <a id="V-validate"></a> [≡](#contents) [▶](https://calmm-js.github.io/partial.lenses.validation/#V-validate) [`V.validate(rules, data) ~> maybeErrors`](#V-validate) <small><sup>v0.1.0</sup></small>
 
 `V.validate` runs the given validation rules on the given data structure.  Given
 properly defined rules, the result is an optional object structure in the shape
@@ -57,28 +130,27 @@ For example:
 ```js
 V.validate(V.reject('error'), 'data')
 // 'error'
+```
+```js
 V.validate(V.accept, 'data')
 // undefined
 ```
 
-`V.validate` is actually a synonym for
-[`L.transform`](https://github.com/calmm-js/partial.lenses/#L-transform) and
-"rules" are just Partial Lenses
-[transforms](https://github.com/calmm-js/partial.lenses#transforms).
+### <a id="primitive-rules"></a> [≡](#contents) [▶](https://calmm-js.github.io/partial.lenses.validation/#primitive-rules) Primitive rules
 
-### <a id="primitive-rules"></a> [≡](#contents) Primitive rules
-##### <a id="V-accept"></a> [≡](#contents) [`V.accept ~> rules`](#V-accept) <small><sup>v0.1.0</sup></small>
+#### <a id="V-accept"></a> [≡](#contents) [▶](https://calmm-js.github.io/partial.lenses.validation/#V-accept) [`V.accept ~> rules`](#V-accept) <small><sup>v0.1.0</sup></small>
 
 `V.accept` accepts the current focus by simply removing it.
 
-##### <a id="V-reject"></a> [≡](#contents) [`V.reject(error) ~> rules`](#V-reject) <small><sup>v0.1.0</sup></small>
+#### <a id="V-reject"></a> [≡](#contents) [▶](https://calmm-js.github.io/partial.lenses.validation/#V-reject) [`V.reject(errorValue) ~> rules`](#V-reject) <small><sup>v0.1.0</sup></small>
 
-`V.reject` overwrite the focus with the given error.
+`V.reject` rejects the current focus by overwriting it with the given error.
 
-### <a id="rules-on-an-element"></a> [≡](#contents) Rules on an element
-##### <a id="V-unless"></a> [≡](#contents) [`V.unless(predicate, error, ...) ~> rules`](#V-rules) <small><sup>v0.1.0</sup></small>
+### <a id="rules-on-an-element"></a> [≡](#contents) [▶](https://calmm-js.github.io/partial.lenses.validation/#rules-on-an-element) Rules on an element
 
-`V.unless` is given a list of predicate-error -pairs as arguments.  The
+#### <a id="V-unless"></a> [≡](#contents) [▶](https://calmm-js.github.io/partial.lenses.validation/#V-unless) [`V.unless((maybeValue, index) => testable, errorValue, ...) ~> rules`](#V-unless) <small><sup>v0.1.0</sup></small>
+
+`V.unless` is given a list of *predicate - error* -pairs as arguments.  The
 predicates are called from first to last with the focus.  In case a predicate
 fails, the focus is overwritten with the corresponding error.  If all predicates
 pass, the focus is removed.
@@ -92,8 +164,9 @@ V.validate(V.unless(R.contains(1), 'does not contain one',
 // 'does not contain two'
 ```
 
-### <a id="rules-on-objects"></a> [≡](#contents) Rules on objects
-##### <a id="V-object"></a> [≡](#contents) [`V.object([...propNames], {prop: rules, ...}) ~> rules`](#V-object) <small><sup>v0.1.0</sup></small>
+### <a id="rules-on-objects"></a> [≡](#contents) [▶](https://calmm-js.github.io/partial.lenses.validation/#rules-on-objects) Rules on objects
+
+#### <a id="V-object"></a> [≡](#contents) [▶](https://calmm-js.github.io/partial.lenses.validation/#V-object) [`V.object([...propNames], {prop: rules, ...}) ~> rules`](#V-object) <small><sup>v0.1.0</sup></small>
 
 `V.object` is given a list or property names to preserve in case of errors and a
 template object of rules with which to validate the corresponding fields.
@@ -106,13 +179,16 @@ V.validate(V.object(['id'], {a: V.accept, b: V.reject('error')}),
 // { id: 101, b: 'error' }
 ```
 
-### <a id="rules-on-arrays"></a> [≡](#contents) Rules on arrays
-##### <a id="V-arrayIx"></a> [≡](#contents) [`V.arrayIx(rules) ~> rules`](#V-arrayIx) <small><sup>v0.1.0</sup></small>
+### <a id="rules-on-arrays"></a> [≡](#contents) [▶](https://calmm-js.github.io/partial.lenses.validation/#rules-on-arrays) Rules on arrays
+
+#### <a id="V-arrayIx"></a> [≡](#contents) [▶](https://calmm-js.github.io/partial.lenses.validation/#V-arrayIx) [`V.arrayIx(rules) ~> rules`](#V-arrayIx) <small><sup>v0.1.0</sup></small>
 
 `V.arrayIx` is for validating an array of things that are addressed by their
 index and have no identities.  The result is an array of the same length as the
 input with accepted elements having value `null`.  In case all elements are
 accepted, the array is removed.
+
+For example:
 
 ```js
 V.validate(V.arrayIx(V.unless(R.equals('a'), 'error')),
@@ -120,11 +196,13 @@ V.validate(V.arrayIx(V.unless(R.equals('a'), 'error')),
 // [ null, 'error' ]
 ```
 
-##### <a id="V-arrayId"></a> [≡](#contents) [`V.arrayId(rules) ~> rules`](#V-arrayId) <small><sup>v0.1.0</sup></small>
+#### <a id="V-arrayId"></a> [≡](#contents) [▶](https://calmm-js.github.io/partial.lenses.validation/#V-arrayId) [`V.arrayId(rules) ~> rules`](#V-arrayId) <small><sup>v0.1.0</sup></small>
 
 `V.arrayId` is for validating an array of things that are addressed by and have
 unique identities.  The result is an array containing only the rejected
 elements.  In case all elements are accepted, the array is removed.
+
+For example:
 
 ```js
 V.validate(V.arrayId(V.object(['id'], {x: V.unless(R.equals(1), 'error')})),
@@ -132,31 +210,40 @@ V.validate(V.arrayId(V.object(['id'], {x: V.unless(R.equals(1), 'error')})),
 // [ { id: 1, x: 'error' } ]
 ```
 
-### <a id="conditional-rules"></a> [≡](#contents) Conditional rules
-##### <a id="V-cases"></a> [≡](#contents) [`V.cases(predicate, rules, ...) ~> rules`](#V-cases) <small><sup>v0.1.0</sup></small>
+### <a id="conditional-rules"></a> [≡](#contents) [▶](https://calmm-js.github.io/partial.lenses.validation/#conditional-rules) Conditional rules
 
-`V.cases` is given a list of predicate-rule -pairs as arguments.  The predicates
-are called from first to last with the focus.  In case a predicate passes, the
-corresponding rule is used on the focus and the remaining predicates are skipped
-and rules ignored.  In case all predicates fail, the focus is removed.
+#### <a id="V-cases"></a> [≡](#contents) [▶](https://calmm-js.github.io/partial.lenses.validation/#V-cases) [`V.cases((maybeValue, index) => testable, rules, ...) ~> rules`](#V-cases) <small><sup>v0.1.0</sup></small>
 
-##### <a id="V-choose"></a> [≡](#contents) [`V.choose(maybeData -> rules) ~> rules`](#V-choose) <small><sup>v0.1.0</sup></small>
+`V.cases` is given a list of *predicate - rule* -pairs as arguments.  The
+predicates are called from first to last with the focus.  In case a predicate
+passes, the corresponding rule is used on the focus and the remaining predicates
+are skipped and rules ignored.  In case all predicates fail, the focus is
+removed.
+
+#### <a id="V-choose"></a> [≡](#contents) [▶](https://calmm-js.github.io/partial.lenses.validation/#V-choose) [`V.choose((maybeValue, index) => rules) ~> rules`](#V-choose) <small><sup>v0.1.0</sup></small>
 
 `V.choose` is given a function that gets the current focus and then must return
 rules to be used on the focus.  This allows rules to depend on the data and
 allows rules that examine multiple parts of the data.
 
-## <a id="known-caveats"></a> [≡](#contents) Known caveats
+## <a id="known-caveats"></a> [≡](#contents) [▶](https://calmm-js.github.io/partial.lenses.validation/#known-caveats) Known caveats
 
 The implementation technique does not lend itself to an incremental
-implementation.  Every time [`validate`](V-validate) is run, everything is
-recomputed.  In an interactive settings this can become a performance issue.
+implementation.  Every time [`validate`](#V-validate) is called, everything is
+recomputed.  In an interactive setting this can become a performance issue.  It
+should be possible to create a library with a similar interface that could
+perform validation incrementally so that on repeated calls only changes would be
+recomputed.  This is left for future work.
 
-It would actually likely be possible to use optics for asynchronous validation,
-but this implementation does not directly support such a thing and validation is
-entirely synchronous.
+It should actually be possible to use optics
+(i.e. [`traverse`](https://github.com/calmm-js/partial.lenses/#L-traverse)) for
+asynchronous validation, but this implementation does not currently support such
+a thing and validation is entirely synchronous.  Again, it should be possible to
+support asynchronous validation with a library that has a similar interface and
+would also directly provide asynchronous validation combinators.  This is also
+left for future work.
 
-## <a id="related-work"></a> [≡](#contents) Related work
+## <a id="related-work"></a> [≡](#contents) [▶](https://calmm-js.github.io/partial.lenses.validation/#related-work) Related work
 
 This library primarily exists as a result of Stefan Rimaila's work on
 [validation](https://github.com/stuf/validation) using lenses.
