@@ -11,7 +11,7 @@
     'https://unpkg.com/ramda/dist/ramda.min.js'
   ],
   source: 'README.md',
-  target: 'docs/index.html',
+  target: 'index.html',
   title: 'Partial Lenses Validation',
   stripComments: true,
   constToVar: true,
