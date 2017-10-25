@@ -143,15 +143,24 @@ properly defined rules, the result is an optional object structure in the shape
 of the data structure containing the validation errors.  In case there are no
 validation errors, the result is <code>undefined</code>.</p>
 <p>For example:</p>
-<pre><code class="hljs lang-js">V.validate(V.reject(&#39;error&#39;), &#39;data&#39;)
-</code></pre>
-<pre><code class="hljs lang-js">V.validate(V.accept, &#39;data&#39;)
+<pre><code class="hljs lang-js">V.validate(V.arrayId(V.object([&#39;id&#39;], {
+  toBeValidated: V.unless(R.equals(true), &#39;Must be true!&#39;)
+})), [
+  {id: 101, toBeValidated: true},
+  {id: 42, toBeValidated: false}
+])
 </code></pre>
 <h3><a id="primitive-rules"></a> <a href="#contents">≡</a> <a href="https://github.com/calmm-js/partial.lenses.validation#primitive-rules">■</a> Primitive rules</h3>
 <h4><a id="V-accept"></a> <a href="#contents">≡</a> <a href="https://github.com/calmm-js/partial.lenses.validation#V-accept">■</a> <a href="#V-accept"><code>V.accept ~&gt; rules</code></a> <small><sup>v0.1.0</sup></small></h4>
 <p><code>V.accept</code> accepts the current focus by simply removing it.</p>
+<p>For example:</p>
+<pre><code class="hljs lang-js">V.validate(V.accept, &#39;data&#39;)
+</code></pre>
 <h4><a id="V-reject"></a> <a href="#contents">≡</a> <a href="https://github.com/calmm-js/partial.lenses.validation#V-reject">■</a> <a href="#V-reject"><code>V.reject(errorValue) ~&gt; rules</code></a> <small><sup>v0.1.0</sup></small></h4>
 <p><code>V.reject</code> rejects the current focus by overwriting it with the given error.</p>
+<p>For example:</p>
+<pre><code class="hljs lang-js">V.validate(V.reject(&#39;error&#39;), &#39;data&#39;)
+</code></pre>
 <h3><a id="rules-on-an-element"></a> <a href="#contents">≡</a> <a href="https://github.com/calmm-js/partial.lenses.validation#rules-on-an-element">■</a> Rules on an element</h3>
 <h4><a id="V-unless"></a> <a href="#contents">≡</a> <a href="https://github.com/calmm-js/partial.lenses.validation#V-unless">■</a> <a href="#V-unless"><code>V.unless((maybeValue, index) =&gt; testable, errorValue, ...) ~&gt; rules</code></a> <small><sup>v0.1.0</sup></small></h4>
 <p><code>V.unless</code> is given a list of <em>predicate - error</em> -pairs as arguments.  The
@@ -196,10 +205,32 @@ predicates are called from first to last with the focus.  In case a predicate
 passes, the corresponding rule is used on the focus and the remaining predicates
 are skipped and rules ignored.  In case all predicates fail, the focus is
 removed.</p>
+<p>For example:</p>
+<pre><code class="hljs lang-js">V.validate(V.cases(
+  R.whereEq({type: &#39;a&#39;}), V.object([], {
+    foo: V.unless(R.lt(0), &#39;Must be positive&#39;)
+  }),
+  R.whereEq({type: &#39;b&#39;}), V.object([], {
+    foo: V.unless(R.gt(0), &#39;Must be negative&#39;)
+  })
+), {
+  type: &#39;b&#39;,
+  foo: 10
+})
+</code></pre>
 <h4><a id="V-choose"></a> <a href="#contents">≡</a> <a href="https://github.com/calmm-js/partial.lenses.validation#V-choose">■</a> <a href="#V-choose"><code>V.choose((maybeValue, index) =&gt; rules) ~&gt; rules</code></a> <small><sup>v0.1.0</sup></small></h4>
 <p><code>V.choose</code> is given a function that gets the current focus and then must return
 rules to be used on the focus.  This allows rules to depend on the data and
 allows rules that examine multiple parts of the data.</p>
+<p>For example:</p>
+<pre><code class="hljs lang-js">V.validate(V.choose(({a, b}) =&gt; V.object([], {
+  a: V.unless(R.equals(b), &quot;Must equal &#39;b&#39;&quot;),
+  b: V.unless(R.equals(a), &quot;Must equal &#39;a&#39;&quot;)
+})), {
+  a: 1,
+  b: 2
+})
+</code></pre>
 <h2><a id="known-caveats"></a> <a href="#contents">≡</a> <a href="https://github.com/calmm-js/partial.lenses.validation#known-caveats">■</a> Known caveats</h2>
 <p>The implementation technique does not lend itself to an incremental
 implementation.  Every time <a href="#V-validate"><code>validate</code></a> is called, everything is

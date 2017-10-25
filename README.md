@@ -128,12 +128,13 @@ validation errors, the result is `undefined`.
 For example:
 
 ```js
-V.validate(V.reject('error'), 'data')
-// 'error'
-```
-```js
-V.validate(V.accept, 'data')
-// undefined
+V.validate(V.arrayId(V.object(['id'], {
+  toBeValidated: V.unless(R.equals(true), 'Must be true!')
+})), [
+  {id: 101, toBeValidated: true},
+  {id: 42, toBeValidated: false}
+])
+// [ { id: 42, toBeValidated: 'Must be true!' } ]
 ```
 
 ### <a id="primitive-rules"></a> [≡](#contents) [▶](https://calmm-js.github.io/partial.lenses.validation/#primitive-rules) Primitive rules
@@ -142,9 +143,23 @@ V.validate(V.accept, 'data')
 
 `V.accept` accepts the current focus by simply removing it.
 
+For example:
+
+```js
+V.validate(V.accept, 'data')
+// undefined
+```
+
 #### <a id="V-reject"></a> [≡](#contents) [▶](https://calmm-js.github.io/partial.lenses.validation/#V-reject) [`V.reject(errorValue) ~> rules`](#V-reject) <small><sup>v0.1.0</sup></small>
 
 `V.reject` rejects the current focus by overwriting it with the given error.
+
+For example:
+
+```js
+V.validate(V.reject('error'), 'data')
+// 'error'
+```
 
 ### <a id="rules-on-an-element"></a> [≡](#contents) [▶](https://calmm-js.github.io/partial.lenses.validation/#rules-on-an-element) Rules on an element
 
@@ -220,11 +235,41 @@ passes, the corresponding rule is used on the focus and the remaining predicates
 are skipped and rules ignored.  In case all predicates fail, the focus is
 removed.
 
+For example:
+
+```js
+V.validate(V.cases(
+  R.whereEq({type: 'a'}), V.object([], {
+    foo: V.unless(R.lt(0), 'Must be positive')
+  }),
+  R.whereEq({type: 'b'}), V.object([], {
+    foo: V.unless(R.gt(0), 'Must be negative')
+  })
+), {
+  type: 'b',
+  foo: 10
+})
+// { foo: 'Must be negative' }
+```
+
 #### <a id="V-choose"></a> [≡](#contents) [▶](https://calmm-js.github.io/partial.lenses.validation/#V-choose) [`V.choose((maybeValue, index) => rules) ~> rules`](#V-choose) <small><sup>v0.1.0</sup></small>
 
 `V.choose` is given a function that gets the current focus and then must return
 rules to be used on the focus.  This allows rules to depend on the data and
 allows rules that examine multiple parts of the data.
+
+For example:
+
+```js
+V.validate(V.choose(({a, b}) => V.object([], {
+  a: V.unless(R.equals(b), "Must equal 'b'"),
+  b: V.unless(R.equals(a), "Must equal 'a'")
+})), {
+  a: 1,
+  b: 2
+})
+// { a: "Must equal 'b'", b: "Must equal 'a'" }
+```
 
 ## <a id="known-caveats"></a> [≡](#contents) [▶](https://calmm-js.github.io/partial.lenses.validation/#known-caveats) Known caveats
 
