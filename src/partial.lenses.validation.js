@@ -4,21 +4,22 @@ import * as I from 'infestines'
 export const object = /*#__PURE__*/I.curry((propsToKeep, template) => {
   const keys = I.keys(template)
   const keep = propsToKeep.length ? propsToKeep.concat(keys) : keys
-  return [L.removable.apply(null, keys),
-          L.rewrite(L.get(L.props.apply(null, keep))),
-          L.branch(template)]
+  return L.toFunction([
+    L.removable.apply(null, keys),
+    L.rewrite(L.get(L.props.apply(null, keep))),
+    L.branch(template)])
 })
 
 const isNull = x => x === null
 const removeIfAllNull = xs => L.all(isNull, L.elems, xs) ? undefined : xs
 
-export const arrayIx = r => [
+export const arrayIx = r => L.toFunction([
   L.iso(I.id, removeIfAllNull),
   L.elems,
   L.required(null),
-  r]
+  r])
 
-export const arrayId = r => [L.defaults([]), L.elems, r]
+export const arrayId = r => L.toFunction([L.defaults([]), L.elems, r])
 
 const pargs = (name, fn) => /*#__PURE__*/(process.env.NODE_ENV === 'production' ? I.id : fn => function () {
   if (arguments.length & 1)
