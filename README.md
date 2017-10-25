@@ -271,6 +271,15 @@ V.validate(V.choose(({a, b}) => V.object([], {
 // { a: "Must equal 'b'", b: "Must equal 'a'" }
 ```
 
+Note that `V.choose` can be used to implement [`V.cases`](#V-cases) and
+[`V.unless`](#V-unless).  Also note that code inside `V.choose`, including code
+that constructs rules, is always run when the `V.choose` rule itself is used.
+For performance reasons it can be advantageous to move invariant expressions
+outside of the body of the function given to `V.choose`.  Also, when simple
+conditional combinators like [`V.cases`](#V-cases) or [`V.unless`](#V-unless)
+are sufficient, they can be preferable for performance reasons, because they are
+given previously constructed rules.
+
 ## <a id="known-caveats"></a> [≡](#contents) [▶](https://calmm-js.github.io/partial.lenses.validation/#known-caveats) Known caveats
 
 The implementation technique does not lend itself to an incremental

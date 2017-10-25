@@ -231,6 +231,14 @@ allows rules that examine multiple parts of the data.</p>
   b: 2
 })
 </code></pre>
+<p>Note that <code>V.choose</code> can be used to implement <a href="#V-cases"><code>V.cases</code></a> and
+<a href="#V-unless"><code>V.unless</code></a>.  Also note that code inside <code>V.choose</code>, including code
+that constructs rules, is always run when the <code>V.choose</code> rule itself is used.
+For performance reasons it can be advantageous to move invariant expressions
+outside of the body of the function given to <code>V.choose</code>.  Also, when simple
+conditional combinators like <a href="#V-cases"><code>V.cases</code></a> or <a href="#V-unless"><code>V.unless</code></a>
+are sufficient, they can be preferable for performance reasons, because they are
+given previously constructed rules.</p>
 <h2><a id="known-caveats"></a> <a href="#contents">≡</a> <a href="https://github.com/calmm-js/partial.lenses.validation#known-caveats">■</a> Known caveats</h2>
 <p>The implementation technique does not lend itself to an incremental
 implementation.  Every time <a href="#V-validate"><code>validate</code></a> is called, everything is
