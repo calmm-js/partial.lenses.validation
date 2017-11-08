@@ -34,8 +34,8 @@ const pargs = (name, fn) => /*#__PURE__*/(process.env.NODE_ENV === 'production' 
   return r
 })
 
-export const cases = /*#__PURE__*/pargs('cases', L.iftes)
-export const unless = /*#__PURE__*/pargs('unless', (c, a, r) => L.iftes(c, r, reject(a)))
+export const cases = /*#__PURE__*/pargs('cases', L.ifElse)
+export const unless = /*#__PURE__*/pargs('unless', (c, a, r) => L.ifElse(c, r, reject(a)))
 
 export { choose } from 'partial.lenses'
 

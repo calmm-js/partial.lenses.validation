@@ -1,6 +1,6 @@
 {
   "name": "partial.lenses.validation",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "Validation transform combinators for Partial Lenses",
   "module": "dist/partial.lenses.validation.es.js",
   "main": "dist/partial.lenses.validation.cjs.js",
@@ -37,7 +37,7 @@
   "homepage": "https://github.com/calmm-js/partial.lenses.validation#readme",
   "dependencies": {
     "infestines": "^0.4.5",
-    "partial.lenses": "^13.0.0"
+    "partial.lenses": "^13.1.0"
   },
   "devDependencies": {
     "babel-cli": "^6.26.0",

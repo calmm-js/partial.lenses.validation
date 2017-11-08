@@ -8,7 +8,7 @@ var I = require('infestines');
 var object = /*#__PURE__*/I.curry(function (propsToKeep, template) {
   var keys$$1 = I.keys(template);
   var keep = propsToKeep.length ? propsToKeep.concat(keys$$1) : keys$$1;
-  return [L.removable.apply(null, keys$$1), L.rewrite(L.get(L.props.apply(null, keep))), L.branch(template)];
+  return L.toFunction([L.removable.apply(null, keys$$1), L.rewrite(L.get(L.props.apply(null, keep))), L.branch(template)]);
 });
 
 var isNull = function isNull(x) {
@@ -19,11 +19,11 @@ var removeIfAllNull = function removeIfAllNull(xs) {
 };
 
 var arrayIx = function arrayIx(r) {
-  return [L.iso(I.id, removeIfAllNull), L.elems, L.required(null), r];
+  return L.toFunction([L.iso(I.id, removeIfAllNull), L.elems, L.required(null), r]);
 };
 
 var arrayId = function arrayId(r) {
-  return [L.defaults([]), L.elems, r];
+  return L.toFunction([L.defaults([]), L.elems, r]);
 };
 
 var pargs = function pargs(name, fn) {
@@ -44,9 +44,9 @@ var pargs = function pargs(name, fn) {
   );
 };
 
-var cases = /*#__PURE__*/pargs('cases', L.iftes);
+var cases = /*#__PURE__*/pargs('cases', L.ifElse);
 var unless = /*#__PURE__*/pargs('unless', function (c, a, r) {
-  return L.iftes(c, r, reject(a));
+  return L.ifElse(c, r, reject(a));
 });
 
 var accept = L.removeOp;

@@ -1,10 +1,10 @@
-import { all, branch, defaults, elems, get, iftes, iso, props, removable, removeOp, required, rewrite, setOp, transform } from 'partial.lenses';
+import { all, branch, defaults, elems, get, ifElse, iso, props, removable, removeOp, required, rewrite, setOp, toFunction, transform } from 'partial.lenses';
 import { curry, id, keys } from 'infestines';
 
 var object = /*#__PURE__*/curry(function (propsToKeep, template) {
   var keys$$1 = keys(template);
   var keep = propsToKeep.length ? propsToKeep.concat(keys$$1) : keys$$1;
-  return [removable.apply(null, keys$$1), rewrite(get(props.apply(null, keep))), branch(template)];
+  return toFunction([removable.apply(null, keys$$1), rewrite(get(props.apply(null, keep))), branch(template)]);
 });
 
 var isNull = function isNull(x) {
@@ -15,11 +15,11 @@ var removeIfAllNull = function removeIfAllNull(xs) {
 };
 
 var arrayIx = function arrayIx(r) {
-  return [iso(id, removeIfAllNull), elems, required(null), r];
+  return toFunction([iso(id, removeIfAllNull), elems, required(null), r]);
 };
 
 var arrayId = function arrayId(r) {
-  return [defaults([]), elems, r];
+  return toFunction([defaults([]), elems, r]);
 };
 
 var pargs = function pargs(name, fn) {
@@ -40,9 +40,9 @@ var pargs = function pargs(name, fn) {
   );
 };
 
-var cases = /*#__PURE__*/pargs('cases', iftes);
+var cases = /*#__PURE__*/pargs('cases', ifElse);
 var unless = /*#__PURE__*/pargs('unless', function (c, a, r) {
-  return iftes(c, r, reject(a));
+  return ifElse(c, r, reject(a));
 });
 
 var accept = removeOp;
