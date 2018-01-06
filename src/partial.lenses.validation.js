@@ -1,41 +1,46 @@
 import * as L from 'partial.lenses'
 import * as I from 'infestines'
 
-export const object = /*#__PURE__*/I.curry((propsToKeep, template) => {
+export const object = I.curry((propsToKeep, template) => {
   const keys = I.keys(template)
   const keep = propsToKeep.length ? propsToKeep.concat(keys) : keys
   return L.toFunction([
     L.removable.apply(null, keys),
     L.rewrite(L.get(L.props.apply(null, keep))),
-    L.branch(template)])
+    L.branch(template)
+  ])
 })
 
 const isNull = x => x === null
-const removeIfAllNull = xs => L.all(isNull, L.elems, xs) ? undefined : xs
+const removeIfAllNull = xs => (L.all(isNull, L.elems, xs) ? undefined : xs)
 
-export const arrayIx = r => L.toFunction([
-  L.iso(I.id, removeIfAllNull),
-  L.elems,
-  L.required(null),
-  r])
+export const arrayIx = r =>
+  L.toFunction([L.iso(I.id, removeIfAllNull), L.elems, L.required(null), r])
 
 export const arrayId = r => L.toFunction([L.defaults([]), L.elems, r])
 
-const pargs = (name, fn) => /*#__PURE__*/(process.env.NODE_ENV === 'production' ? I.id : fn => function () {
-  if (arguments.length & 1)
-    throw Error(`partial.lenses.validation: \`${name}\` must be given an even number of arguments.`)
-  return fn.apply(null, arguments)
-})(function () {
-  let r = accept, n = arguments.length
-  while (n) {
-    n -= 2
-    r = fn(arguments[n], arguments[n+1], r)
-  }
-  return r
-})
+const pargs = (name, fn) =>
+  (process.env.NODE_ENV === 'production'
+    ? I.id
+    : fn =>
+        function() {
+          if (arguments.length & 1)
+            throw Error(
+              `partial.lenses.validation: \`${name}\` must be given an even number of arguments.`
+            )
+          return fn.apply(null, arguments)
+        })(function() {
+    let r = accept,
+      n = arguments.length
+    while (n) {
+      n -= 2
+      r = fn(arguments[n], arguments[n + 1], r)
+    }
+    return r
+  })
 
-export const cases = /*#__PURE__*/pargs('cases', L.ifElse)
-export const unless = /*#__PURE__*/pargs('unless', (c, a, r) => L.ifElse(c, r, reject(a)))
+export const cases = pargs('cases', L.ifElse)
+export const unless = pargs('unless', (c, a, r) => L.ifElse(c, r, reject(a)))
 
 export { choose } from 'partial.lenses'
 
