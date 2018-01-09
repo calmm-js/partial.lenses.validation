@@ -2,10 +2,12 @@
 
 Validation [transform](https://github.com/calmm-js/partial.lenses/#transforms)
 [combinators](https://wiki.haskell.org/Combinator) for [Partial
-Lenses](https://github.com/calmm-js/partial.lenses/).  The main idea is to
-produce validation errors in the same shape as the data structure being
-validated.  This way validation errors can be mechanically associated with the
-corresponding elements of the validated data structure.
+Lenses](https://github.com/calmm-js/partial.lenses/).  This library is designed
+for sparse validation in UIs to give user feedback.  The main idea is to produce
+validation errors in the same shape as the data structure being validated.  This
+way validation errors can accessed at the same path as the data and can be
+mechanically associated with the corresponding elements of the validated data
+structure.
 
 [![npm version](https://badge.fury.io/js/partial.lenses.validation.svg)](http://badge.fury.io/js/partial.lenses.validation)
 [![Bower version](https://badge.fury.io/bo/partial.lenses.validation.svg)](https://badge.fury.io/bo/partial.lenses.validation)
