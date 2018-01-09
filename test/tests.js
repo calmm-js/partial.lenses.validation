@@ -66,6 +66,9 @@ describe('validation', () => {
         ]
       )
   )
+
+  testEq(undefined, () => V.validate(V.cases(), 'anything'))
+  testEq(undefined, () => V.validate(V.unless(), 'anything'))
 })
 
 describe('deprecated', () => {
