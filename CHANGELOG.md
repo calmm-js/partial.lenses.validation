@@ -1,3 +1,7 @@
+## 0.2.0
+
+Removed deprecated non-paired functionality from `V.cases` and `V.unless`.
+
 ## 0.1.4
 
 The behaviour of `V.arrayIx` and `V.arrayId` on non-arrays was not carefully
