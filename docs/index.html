@@ -75,6 +75,7 @@ structure.</p>
 <li><a href="#conditional-rules">Conditional rules</a><ul>
 <li><a href="#V-cases"><code>V.cases(...[(maybeValue, index) =&gt; testable, rules]) ~&gt; rules</code></a> <small><sup>v0.1.0</sup></small></li>
 <li><a href="#V-choose"><code>V.choose((maybeValue, index) =&gt; rules) ~&gt; rules</code></a> <small><sup>v0.1.0</sup></small></li>
+<li><a href="#V-optional"><code>V.optional(rules) ~&gt; rules</code></a> <small><sup>v0.1.3</sup></small></li>
 </ul>
 </li>
 </ul>
@@ -242,6 +243,19 @@ outside of the body of the function given to <code>V.choose</code>.  Also, when 
 conditional combinators like <a href="#V-cases"><code>V.cases</code></a> or <a href="#V-unless"><code>V.unless</code></a>
 are sufficient, they can be preferable for performance reasons, because they are
 given previously constructed rules.</p>
+<h4><a id="V-optional"></a> <a href="#contents">≡</a> <a href="https://github.com/calmm-js/partial.lenses.validation/blob/master/README.md#V-optional">■</a> <a href="#V-optional"><code>V.optional(rules) ~&gt; rules</code></a> <small><sup>v0.1.3</sup></small></h4>
+<p><code>V.optional</code> is for validating optional fields of objects.  The focus is
+accepted if it is <code>undefined</code>.  Otherwise the given rules are applied to the
+focus.</p>
+<p>For example:</p>
+<pre><code class="hljs lang-js">V.validate(V.arrayIx(V.object([], {
+  field: V.optional(V.unless(R.is(Number), &#39;Expected a number&#39;))
+})), [
+  {notTheField: []},
+  {field: &#39;Not a number&#39;},
+  {field: 76}
+])
+</code></pre>
 <h2><a id="known-caveats"></a> <a href="#contents">≡</a> <a href="https://github.com/calmm-js/partial.lenses.validation/blob/master/README.md#known-caveats">■</a> Known caveats</h2>
 <p>The implementation technique does not lend itself to an incremental
 implementation.  Every time <a href="#V-validate"><code>validate</code></a> is called, everything is

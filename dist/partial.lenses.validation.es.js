@@ -1,4 +1,4 @@
-import { all, branch, defaults, elems, get, ifElse, iso, props, removable, removeOp, required, rewrite, setOp, toFunction, transform } from 'partial.lenses';
+import { all, branch, defaults, elems, get, ifElse, iso, optional, props, removable, removeOp, required, rewrite, setOp, toFunction, transform } from 'partial.lenses';
 import { curry, id, isArray, keys } from 'infestines';
 
 var header = 'partial.lenses.validation: ';
@@ -72,9 +72,13 @@ var unless = /*#__PURE__*/pargs('unless', function (c, a, r) {
   return ifElse(c, r, reject(a));
 });
 
+var optional$1 = function optional$$1(rules) {
+  return toFunction([optional, rules]);
+};
+
 var accept = removeOp;
 var reject = setOp;
 var validate = transform;
 
-export { object, arrayIx, arrayId, cases, unless, accept, reject, validate };
+export { object, arrayIx, arrayId, cases, unless, optional$1 as optional, accept, reject, validate };
 export { choose } from 'partial.lenses';

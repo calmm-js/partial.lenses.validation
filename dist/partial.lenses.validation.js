@@ -75,6 +75,10 @@ var unless = /*#__PURE__*/pargs('unless', function (c, a, r) {
   return L.ifElse(c, r, reject(a));
 });
 
+var optional$1 = function optional$$1(rules) {
+  return L.toFunction([L.optional, rules]);
+};
+
 var accept = L.removeOp;
 var reject = L.setOp;
 var validate = L.transform;
@@ -84,6 +88,7 @@ exports.arrayIx = arrayIx;
 exports.arrayId = arrayId;
 exports.cases = cases;
 exports.unless = unless;
+exports.optional = optional$1;
 exports.accept = accept;
 exports.reject = reject;
 exports.validate = validate;

@@ -1,6 +1,6 @@
 {
   "name": "partial.lenses.validation",
-  "version": "0.1.2",
+  "version": "0.1.3",
   "description": "Validation transform combinators for Partial Lenses",
   "module": "dist/partial.lenses.validation.es.js",
   "main": "dist/partial.lenses.validation.cjs.js",
