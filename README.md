@@ -35,6 +35,7 @@ structure.
   * [Conditional rules](#conditional-rules)
     * [`V.cases(...[(maybeValue, index) => testable, rules]) ~> rules`](#V-cases) <small><sup>v0.1.0</sup></small>
     * [`V.choose((maybeValue, index) => rules) ~> rules`](#V-choose) <small><sup>v0.1.0</sup></small>
+    * [`V.optional(rules) ~> rules`](#V-optional) <small><sup>v0.1.3</sup></small>
 * [Known caveats](#known-caveats)
 * [Related work](#related-work)
 
@@ -282,6 +283,25 @@ outside of the body of the function given to `V.choose`.  Also, when simple
 conditional combinators like [`V.cases`](#V-cases) or [`V.unless`](#V-unless)
 are sufficient, they can be preferable for performance reasons, because they are
 given previously constructed rules.
+
+#### <a id="V-optional"></a> [≡](#contents) [▶](https://calmm-js.github.io/partial.lenses.validation/index.html#V-optional) [`V.optional(rules) ~> rules`](#V-optional) <small><sup>v0.1.3</sup></small>
+
+`V.optional` is for validating optional fields of objects.  The focus is
+accepted if it is `undefined`.  Otherwise the given rules are applied to the
+focus.
+
+For example:
+
+```js
+V.validate(V.arrayIx(V.object([], {
+  field: V.optional(V.unless(R.is(Number), 'Expected a number'))
+})), [
+  {notTheField: []},
+  {field: 'Not a number'},
+  {field: 76}
+])
+// [ null, { field: 'Expected a number' }, null ]
+```
 
 ## <a id="known-caveats"></a> [≡](#contents) [▶](https://calmm-js.github.io/partial.lenses.validation/index.html#known-caveats) Known caveats
 

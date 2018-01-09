@@ -80,6 +80,8 @@ export const unless = pargs('unless', (c, a, r) => L.ifElse(c, r, reject(a)))
 
 export { choose } from 'partial.lenses'
 
+export const optional = rules => L.toFunction([L.optional, rules])
+
 export const accept = L.removeOp
 export const reject = L.setOp
 export const validate = L.transform
