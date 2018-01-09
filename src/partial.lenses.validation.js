@@ -38,12 +38,17 @@ const pargs = (name, fn) =>
                   error(name + ' must be given pairs arguments.')
               }
             } else {
-              if (!pargs.warned) {
-                pargs.warned = 1
+              if (!pargs[name]) {
+                pargs[name] = 1
                 console.warn(
                   header +
+                    '`' +
                     name +
-                    ' now expects pairs as arguments.  Support for unpaired arguments will be removed in v0.2.0.'
+                    '` now expects pairs as arguments: call as `' +
+                    name +
+                    '([p1, x1], ..., [pN, xN])` instead of `' +
+                    name +
+                    '(p1, x1, ..., pM, xN)`.  Support for unpaired arguments will be removed in v0.2.0.'
                 )
               }
               if (n & 1)
