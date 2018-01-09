@@ -24,14 +24,14 @@ corresponding elements of the validated data structure.
     * [`V.accept ~> rules`](#V-accept) <small><sup>v0.1.0</sup></small>
     * [`V.reject(errorValue) ~> rules`](#V-reject) <small><sup>v0.1.0</sup></small>
   * [Rules on an element](#rules-on-an-element)
-    * [`V.unless((maybeValue, index) => testable, errorValue, ...) ~> rules`](#V-unless) <small><sup>v0.1.0</sup></small>
+    * [`V.unless(...[(maybeValue, index) => testable, errorValue]) ~> rules`](#V-unless) <small><sup>v0.1.0</sup></small>
   * [Rules on objects](#rules-on-objects)
     * [`V.object([...propNames], {prop: rules, ...}) ~> rules`](#V-object) <small><sup>v0.1.0</sup></small>
   * [Rules on arrays](#rules-on-arrays)
     * [`V.arrayIx(rules) ~> rules`](#V-arrayIx) <small><sup>v0.1.0</sup></small>
     * [`V.arrayId(rules) ~> rules`](#V-arrayId) <small><sup>v0.1.0</sup></small>
   * [Conditional rules](#conditional-rules)
-    * [`V.cases((maybeValue, index) => testable, rules, ...) ~> rules`](#V-cases) <small><sup>v0.1.0</sup></small>
+    * [`V.cases(...[(maybeValue, index) => testable, rules]) ~> rules`](#V-cases) <small><sup>v0.1.0</sup></small>
     * [`V.choose((maybeValue, index) => rules) ~> rules`](#V-choose) <small><sup>v0.1.0</sup></small>
 * [Known caveats](#known-caveats)
 * [Related work](#related-work)
@@ -58,12 +58,12 @@ Here is a sample set of rules
 ```js
 const rules = V.choose(events => V.arrayIx(V.object([], {
   date: V.unless(
-    isNonEmpty,                  'required',
-    isValidDate,                 'yyyy-mm-dd',
-    isUniqueBy('date', events),  'duplicate'),
+    [isNonEmpty,                  'required'],
+    [isValidDate,                 'yyyy-mm-dd'],
+    [isUniqueBy('date', events),  'duplicate']),
   event: V.unless(
-    isNonEmpty,                  'required',
-    isUniqueBy('event', events), 'duplicate')
+    [isNonEmpty,                  'required'],
+    [isUniqueBy('event', events), 'duplicate'])
 })))
 ```
 
@@ -129,7 +129,7 @@ For example:
 
 ```js
 V.validate(V.arrayId(V.object(['id'], {
-  toBeValidated: V.unless(R.equals(true), 'Must be true!')
+  toBeValidated: V.unless([R.equals(true), 'Must be true!'])
 })), [
   {id: 101, toBeValidated: true},
   {id: 42, toBeValidated: false}
@@ -163,18 +163,18 @@ V.validate(V.reject('error'), 'data')
 
 ### <a id="rules-on-an-element"></a> [≡](#contents) [▶](https://calmm-js.github.io/partial.lenses.validation/index.html#rules-on-an-element) Rules on an element
 
-#### <a id="V-unless"></a> [≡](#contents) [▶](https://calmm-js.github.io/partial.lenses.validation/index.html#V-unless) [`V.unless((maybeValue, index) => testable, errorValue, ...) ~> rules`](#V-unless) <small><sup>v0.1.0</sup></small>
+#### <a id="V-unless"></a> [≡](#contents) [▶](https://calmm-js.github.io/partial.lenses.validation/index.html#V-unless) [`V.unless(...[(maybeValue, index) => testable, errorValue]) ~> rules`](#V-unless) <small><sup>v0.1.0</sup></small>
 
-`V.unless` is given a list of *predicate - error* -pairs as arguments.  The
-predicates are called from first to last with the focus.  In case a predicate
-fails, the focus is overwritten with the corresponding error.  If all predicates
-pass, the focus is removed.
+`V.unless` is given `[predicate, error]` -pairs as arguments.  The predicates
+are called from first to last with the focus.  In case a predicate fails, the
+focus is overwritten with the corresponding error.  If all predicates pass, the
+focus is removed.
 
 For example:
 
 ```js
-V.validate(V.unless(R.contains(1), 'does not contain one',
-                    R.contains(2), 'does not contain two'),
+V.validate(V.unless([R.contains(1), 'does not contain one'],
+                    [R.contains(2), 'does not contain two']),
            [1])
 // 'does not contain two'
 ```
@@ -206,7 +206,7 @@ accepted, the array is removed.
 For example:
 
 ```js
-V.validate(V.arrayIx(V.unless(R.equals('a'), 'error')),
+V.validate(V.arrayIx(V.unless([R.equals('a'), 'error'])),
            ['a', 'b'])
 // [ null, 'error' ]
 ```
@@ -220,31 +220,32 @@ elements.  In case all elements are accepted, the array is removed.
 For example:
 
 ```js
-V.validate(V.arrayId(V.object(['id'], {x: V.unless(R.equals(1), 'error')})),
+V.validate(V.arrayId(V.object(['id'], {x: V.unless([R.equals(1), 'error'])})),
            [{id: 1, x: 2}, {id: 2, x: 1}])
 // [ { id: 1, x: 'error' } ]
 ```
 
 ### <a id="conditional-rules"></a> [≡](#contents) [▶](https://calmm-js.github.io/partial.lenses.validation/index.html#conditional-rules) Conditional rules
 
-#### <a id="V-cases"></a> [≡](#contents) [▶](https://calmm-js.github.io/partial.lenses.validation/index.html#V-cases) [`V.cases((maybeValue, index) => testable, rules, ...) ~> rules`](#V-cases) <small><sup>v0.1.0</sup></small>
+#### <a id="V-cases"></a> [≡](#contents) [▶](https://calmm-js.github.io/partial.lenses.validation/index.html#V-cases) [`V.cases(...[(maybeValue, index) => testable, rules]) ~> rules`](#V-cases) <small><sup>v0.1.0</sup></small>
 
-`V.cases` is given a list of *predicate - rule* -pairs as arguments.  The
-predicates are called from first to last with the focus.  In case a predicate
-passes, the corresponding rule is used on the focus and the remaining predicates
-are skipped and rules ignored.  In case all predicates fail, the focus is
-removed.
+`V.cases` is given `[predicate, rules]` -pairs as arguments.  The predicates are
+called from first to last with the focus.  In case a predicate passes, the
+corresponding rules are used on the focus and the remaining predicates are
+skipped and rules ignored.  In case all predicates fail, the focus is removed.
 
 For example:
 
 ```js
 V.validate(V.cases(
-  R.whereEq({type: 'a'}), V.object([], {
-    foo: V.unless(R.lt(0), 'Must be positive')
-  }),
-  R.whereEq({type: 'b'}), V.object([], {
-    foo: V.unless(R.gt(0), 'Must be negative')
-  })
+  [R.whereEq({type: 'a'}),
+   V.object([], {
+     foo: V.unless([R.lt(0), 'Must be positive'])
+   })],
+  [R.whereEq({type: 'b'}),
+   V.object([], {
+     foo: V.unless([R.gt(0), 'Must be negative'])
+   })]
 ), {
   type: 'b',
   foo: 10
@@ -262,8 +263,8 @@ For example:
 
 ```js
 V.validate(V.choose(({a, b}) => V.object([], {
-  a: V.unless(R.equals(b), "Must equal 'b'"),
-  b: V.unless(R.equals(a), "Must equal 'a'")
+  a: V.unless([R.equals(b), "Must equal 'b'"]),
+  b: V.unless([R.equals(a), "Must equal 'a'"])
 })), {
   a: 1,
   b: 2

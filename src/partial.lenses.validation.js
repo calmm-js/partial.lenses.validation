@@ -1,6 +1,11 @@
 import * as L from 'partial.lenses'
 import * as I from 'infestines'
 
+const header = 'partial.lenses.validation: '
+const error = msg => {
+  throw Error(header + msg)
+}
+
 export const object = I.curry((propsToKeep, template) => {
   const keys = I.keys(template)
   const keep = propsToKeep.length ? propsToKeep.concat(keys) : keys
@@ -24,17 +29,43 @@ const pargs = (name, fn) =>
     ? I.id
     : fn =>
         function() {
-          if (arguments.length & 1)
-            throw Error(
-              `partial.lenses.validation: \`${name}\` must be given an even number of arguments.`
-            )
+          const n = arguments.length
+          if (n) {
+            if (I.isArray(arguments[0])) {
+              for (let i = 0; i < n; ++i) {
+                const c = arguments[i]
+                if (!I.isArray(c) || c.length !== 2)
+                  error(name + ' must be given pairs arguments.')
+              }
+            } else {
+              if (!pargs.warned) {
+                pargs.warned = 1
+                console.warn(
+                  header +
+                    name +
+                    ' now expects pairs as arguments.  Support for unpaired arguments will be removed in v0.2.0.'
+                )
+              }
+              if (n & 1)
+                error(name + ' must be given an even number of arguments.')
+            }
+          }
           return fn.apply(null, arguments)
         })(function() {
     let r = accept,
       n = arguments.length
-    while (n) {
-      n -= 2
-      r = fn(arguments[n], arguments[n + 1], r)
+    if (n) {
+      if (I.isArray(arguments[0])) {
+        do {
+          const c = arguments[--n]
+          r = fn(c[0], c[1], r)
+        } while (n)
+      } else {
+        do {
+          n -= 2
+          r = fn(arguments[n], arguments[n + 1], r)
+        } while (n)
+      }
     }
     return r
   })
