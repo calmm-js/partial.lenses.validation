@@ -4,6 +4,11 @@
 	(factory((global.V = {}),global.L,global.I));
 }(this, (function (exports,L,I) { 'use strict';
 
+var header = 'partial.lenses.validation: ';
+var error = function error(msg) {
+  throw Error(header + msg);
+};
+
 var object = /*#__PURE__*/I.curry(function (propsToKeep, template) {
   var keys$$1 = I.keys(template);
   var keep = propsToKeep.length ? propsToKeep.concat(keys$$1) : keys$$1;
@@ -26,21 +31,43 @@ var arrayId = function arrayId(r) {
 };
 
 var pargs = function pargs(name, fn) {
-  return (/*#__PURE__*/(function (fn) {
-      return function () {
-        if (arguments.length & 1) throw Error('partial.lenses.validation: `' + name + '` must be given an even number of arguments.');
-        return fn.apply(null, arguments);
-      };
-    })(function () {
-      var r = accept,
-          n = arguments.length;
-      while (n) {
-        n -= 2;
-        r = fn(arguments[n], arguments[n + 1], r);
+  return (function (fn) {
+    return function () {
+      var n = arguments.length;
+      if (n) {
+        if (I.isArray(arguments[0])) {
+          for (var i = 0; i < n; ++i) {
+            var c = arguments[i];
+            if (!I.isArray(c) || c.length !== 2) error(name + ' must be given pairs arguments.');
+          }
+        } else {
+          if (!pargs[name]) {
+            pargs[name] = 1;
+            console.warn(header + '`' + name + '` now expects pairs as arguments: call as `' + name + '([p1, x1], ..., [pN, xN])` instead of `' + name + '(p1, x1, ..., pM, xN)`.  Support for unpaired arguments will be removed in v0.2.0.');
+          }
+          if (n & 1) error(name + ' must be given an even number of arguments.');
+        }
       }
-      return r;
-    })
-  );
+      return fn.apply(null, arguments);
+    };
+  })(function () {
+    var r = accept,
+        n = arguments.length;
+    if (n) {
+      if (I.isArray(arguments[0])) {
+        do {
+          var c = arguments[--n];
+          r = fn(c[0], c[1], r);
+        } while (n);
+      } else {
+        do {
+          n -= 2;
+          r = fn(arguments[n], arguments[n + 1], r);
+        } while (n);
+      }
+    }
+    return r;
+  });
 };
 
 var cases = /*#__PURE__*/pargs('cases', L.ifElse);

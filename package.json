@@ -1,6 +1,6 @@
 {
   "name": "partial.lenses.validation",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "description": "Validation transform combinators for Partial Lenses",
   "module": "dist/partial.lenses.validation.es.js",
   "main": "dist/partial.lenses.validation.cjs.js",
@@ -41,7 +41,7 @@
   },
   "devDependencies": {
     "babel-cli": "^6.26.0",
-    "babel-eslint": "^8.1.2",
+    "babel-eslint": "^8.2.1",
     "babel-plugin-annotate-pure-calls": "^0.2.2",
     "babel-plugin-check-es2015-constants": "^6.22.0",
     "babel-plugin-transform-es2015-arrow-functions": "^6.22.0",
@@ -65,7 +65,7 @@
     "babel-polyfill": "^6.26.0",
     "babel-register": "^6.26.0",
     "codecov": "^3.0.0",
-    "eslint": "^4.14.0",
+    "eslint": "^4.15.0",
     "klipse-github-docs-generator": "^0.3.1",
     "livereload": "^0.6.3",
     "mocha": "^4.1.0",
@@ -77,7 +77,7 @@
     "rollup-plugin-replace": "^2.0.0",
     "rollup-plugin-uglify": "^2.0.1",
     "sprintf-js": "^1.1.1",
-    "uglify-js": "^3.3.4",
+    "uglify-js": "^3.3.5",
     "watch-run": "^1.2.5"
   }
 }

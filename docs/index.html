@@ -58,7 +58,7 @@ corresponding elements of the validated data structure.</p>
 </ul>
 </li>
 <li><a href="#rules-on-an-element">Rules on an element</a><ul>
-<li><a href="#V-unless"><code>V.unless((maybeValue, index) =&gt; testable, errorValue, ...) ~&gt; rules</code></a> <small><sup>v0.1.0</sup></small></li>
+<li><a href="#V-unless"><code>V.unless(...[(maybeValue, index) =&gt; testable, errorValue]) ~&gt; rules</code></a> <small><sup>v0.1.0</sup></small></li>
 </ul>
 </li>
 <li><a href="#rules-on-objects">Rules on objects</a><ul>
@@ -71,7 +71,7 @@ corresponding elements of the validated data structure.</p>
 </ul>
 </li>
 <li><a href="#conditional-rules">Conditional rules</a><ul>
-<li><a href="#V-cases"><code>V.cases((maybeValue, index) =&gt; testable, rules, ...) ~&gt; rules</code></a> <small><sup>v0.1.0</sup></small></li>
+<li><a href="#V-cases"><code>V.cases(...[(maybeValue, index) =&gt; testable, rules]) ~&gt; rules</code></a> <small><sup>v0.1.0</sup></small></li>
 <li><a href="#V-choose"><code>V.choose((maybeValue, index) =&gt; rules) ~&gt; rules</code></a> <small><sup>v0.1.0</sup></small></li>
 </ul>
 </li>
@@ -95,12 +95,12 @@ elements with errors so as to guide the user.</p>
 <p>Here is a sample set of rules</p>
 <pre><code class="hljs lang-js">var rules = V.choose(events =&gt; V.arrayIx(V.object([], {
   date: V.unless(
-    isNonEmpty,                  &#39;required&#39;,
-    isValidDate,                 &#39;yyyy-mm-dd&#39;,
-    isUniqueBy(&#39;date&#39;, events),  &#39;duplicate&#39;),
+    [isNonEmpty,                  &#39;required&#39;],
+    [isValidDate,                 &#39;yyyy-mm-dd&#39;],
+    [isUniqueBy(&#39;date&#39;, events),  &#39;duplicate&#39;]),
   event: V.unless(
-    isNonEmpty,                  &#39;required&#39;,
-    isUniqueBy(&#39;event&#39;, events), &#39;duplicate&#39;)
+    [isNonEmpty,                  &#39;required&#39;],
+    [isUniqueBy(&#39;event&#39;, events), &#39;duplicate&#39;])
 })))
 </code></pre>
 <p>where</p>
@@ -144,7 +144,7 @@ of the data structure containing the validation errors.  In case there are no
 validation errors, the result is <code>undefined</code>.</p>
 <p>For example:</p>
 <pre><code class="hljs lang-js">V.validate(V.arrayId(V.object([&#39;id&#39;], {
-  toBeValidated: V.unless(R.equals(true), &#39;Must be true!&#39;)
+  toBeValidated: V.unless([R.equals(true), &#39;Must be true!&#39;])
 })), [
   {id: 101, toBeValidated: true},
   {id: 42, toBeValidated: false}
@@ -162,14 +162,14 @@ validation errors, the result is <code>undefined</code>.</p>
 <pre><code class="hljs lang-js">V.validate(V.reject(&#39;error&#39;), &#39;data&#39;)
 </code></pre>
 <h3><a id="rules-on-an-element"></a> <a href="#contents">≡</a> <a href="https://github.com/calmm-js/partial.lenses.validation/blob/master/README.md#rules-on-an-element">■</a> Rules on an element</h3>
-<h4><a id="V-unless"></a> <a href="#contents">≡</a> <a href="https://github.com/calmm-js/partial.lenses.validation/blob/master/README.md#V-unless">■</a> <a href="#V-unless"><code>V.unless((maybeValue, index) =&gt; testable, errorValue, ...) ~&gt; rules</code></a> <small><sup>v0.1.0</sup></small></h4>
-<p><code>V.unless</code> is given a list of <em>predicate - error</em> -pairs as arguments.  The
-predicates are called from first to last with the focus.  In case a predicate
-fails, the focus is overwritten with the corresponding error.  If all predicates
-pass, the focus is removed.</p>
+<h4><a id="V-unless"></a> <a href="#contents">≡</a> <a href="https://github.com/calmm-js/partial.lenses.validation/blob/master/README.md#V-unless">■</a> <a href="#V-unless"><code>V.unless(...[(maybeValue, index) =&gt; testable, errorValue]) ~&gt; rules</code></a> <small><sup>v0.1.0</sup></small></h4>
+<p><code>V.unless</code> is given <code>[predicate, error]</code> -pairs as arguments.  The predicates
+are called from first to last with the focus.  In case a predicate fails, the
+focus is overwritten with the corresponding error.  If all predicates pass, the
+focus is removed.</p>
 <p>For example:</p>
-<pre><code class="hljs lang-js">V.validate(V.unless(R.contains(1), &#39;does not contain one&#39;,
-                    R.contains(2), &#39;does not contain two&#39;),
+<pre><code class="hljs lang-js">V.validate(V.unless([R.contains(1), &#39;does not contain one&#39;],
+                    [R.contains(2), &#39;does not contain two&#39;]),
            [1])
 </code></pre>
 <h3><a id="rules-on-objects"></a> <a href="#contents">≡</a> <a href="https://github.com/calmm-js/partial.lenses.validation/blob/master/README.md#rules-on-objects">■</a> Rules on objects</h3>
@@ -187,7 +187,7 @@ index and have no identities.  The result is an array of the same length as the
 input with accepted elements having value <code>null</code>.  In case all elements are
 accepted, the array is removed.</p>
 <p>For example:</p>
-<pre><code class="hljs lang-js">V.validate(V.arrayIx(V.unless(R.equals(&#39;a&#39;), &#39;error&#39;)),
+<pre><code class="hljs lang-js">V.validate(V.arrayIx(V.unless([R.equals(&#39;a&#39;), &#39;error&#39;])),
            [&#39;a&#39;, &#39;b&#39;])
 </code></pre>
 <h4><a id="V-arrayId"></a> <a href="#contents">≡</a> <a href="https://github.com/calmm-js/partial.lenses.validation/blob/master/README.md#V-arrayId">■</a> <a href="#V-arrayId"><code>V.arrayId(rules) ~&gt; rules</code></a> <small><sup>v0.1.0</sup></small></h4>
@@ -195,24 +195,25 @@ accepted, the array is removed.</p>
 unique identities.  The result is an array containing only the rejected
 elements.  In case all elements are accepted, the array is removed.</p>
 <p>For example:</p>
-<pre><code class="hljs lang-js">V.validate(V.arrayId(V.object([&#39;id&#39;], {x: V.unless(R.equals(1), &#39;error&#39;)})),
+<pre><code class="hljs lang-js">V.validate(V.arrayId(V.object([&#39;id&#39;], {x: V.unless([R.equals(1), &#39;error&#39;])})),
            [{id: 1, x: 2}, {id: 2, x: 1}])
 </code></pre>
 <h3><a id="conditional-rules"></a> <a href="#contents">≡</a> <a href="https://github.com/calmm-js/partial.lenses.validation/blob/master/README.md#conditional-rules">■</a> Conditional rules</h3>
-<h4><a id="V-cases"></a> <a href="#contents">≡</a> <a href="https://github.com/calmm-js/partial.lenses.validation/blob/master/README.md#V-cases">■</a> <a href="#V-cases"><code>V.cases((maybeValue, index) =&gt; testable, rules, ...) ~&gt; rules</code></a> <small><sup>v0.1.0</sup></small></h4>
-<p><code>V.cases</code> is given a list of <em>predicate - rule</em> -pairs as arguments.  The
-predicates are called from first to last with the focus.  In case a predicate
-passes, the corresponding rule is used on the focus and the remaining predicates
-are skipped and rules ignored.  In case all predicates fail, the focus is
-removed.</p>
+<h4><a id="V-cases"></a> <a href="#contents">≡</a> <a href="https://github.com/calmm-js/partial.lenses.validation/blob/master/README.md#V-cases">■</a> <a href="#V-cases"><code>V.cases(...[(maybeValue, index) =&gt; testable, rules]) ~&gt; rules</code></a> <small><sup>v0.1.0</sup></small></h4>
+<p><code>V.cases</code> is given <code>[predicate, rules]</code> -pairs as arguments.  The predicates are
+called from first to last with the focus.  In case a predicate passes, the
+corresponding rules are used on the focus and the remaining predicates are
+skipped and rules ignored.  In case all predicates fail, the focus is removed.</p>
 <p>For example:</p>
 <pre><code class="hljs lang-js">V.validate(V.cases(
-  R.whereEq({type: &#39;a&#39;}), V.object([], {
-    foo: V.unless(R.lt(0), &#39;Must be positive&#39;)
-  }),
-  R.whereEq({type: &#39;b&#39;}), V.object([], {
-    foo: V.unless(R.gt(0), &#39;Must be negative&#39;)
-  })
+  [R.whereEq({type: &#39;a&#39;}),
+   V.object([], {
+     foo: V.unless([R.lt(0), &#39;Must be positive&#39;])
+   })],
+  [R.whereEq({type: &#39;b&#39;}),
+   V.object([], {
+     foo: V.unless([R.gt(0), &#39;Must be negative&#39;])
+   })]
 ), {
   type: &#39;b&#39;,
   foo: 10
@@ -224,8 +225,8 @@ rules to be used on the focus.  This allows rules to depend on the data and
 allows rules that examine multiple parts of the data.</p>
 <p>For example:</p>
 <pre><code class="hljs lang-js">V.validate(V.choose(({a, b}) =&gt; V.object([], {
-  a: V.unless(R.equals(b), &quot;Must equal &#39;b&#39;&quot;),
-  b: V.unless(R.equals(a), &quot;Must equal &#39;a&#39;&quot;)
+  a: V.unless([R.equals(b), &quot;Must equal &#39;b&#39;&quot;]),
+  b: V.unless([R.equals(a), &quot;Must equal &#39;a&#39;&quot;])
 })), {
   a: 1,
   b: 2
