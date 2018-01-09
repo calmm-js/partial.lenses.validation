@@ -6,7 +6,7 @@ more readable output for the paired style.
 
 ```diff
 -V.cases(p1, c1, ..., pN, cN)
-+V.cases([p1, c1], ..., [pN, CN])
++V.cases([p1, c1], ..., [pN, cN])
 ```
 
 ```diff
