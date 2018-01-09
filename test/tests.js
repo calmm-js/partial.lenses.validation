@@ -67,6 +67,17 @@ describe('validation', () => {
       )
   )
 
+  testEq([null, null, { x: 'not one' }], () =>
+    V.validate(
+      V.arrayIx(
+        V.object([], {
+          x: V.optional(V.unless([R.equals(1), 'not one']))
+        })
+      ),
+      [{ y: 1 }, { x: 1 }, { x: 2 }]
+    )
+  )
+
   testEq(undefined, () => V.validate(V.cases(), 'anything'))
   testEq(undefined, () => V.validate(V.unless(), 'anything'))
 })
