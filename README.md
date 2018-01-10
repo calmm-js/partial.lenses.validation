@@ -337,7 +337,7 @@ For example:
 
 ```js
 V.validate(V.arrayIx(V.object([], {
-  field: V.optional(V.unless(R.is(Number), 'Expected a number'))
+  field: V.optional(V.unless([R.is(Number), 'Expected a number']))
 })), [
   {notTheField: []},
   {field: 'Not a number'},
