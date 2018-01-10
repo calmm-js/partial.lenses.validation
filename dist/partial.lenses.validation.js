@@ -29,17 +29,21 @@ var objectWith = /*#__PURE__*/I.curry(function (onOthers, propsToKeep, template)
   onOthers = L.toFunction(onOthers);
   var op = {};
   var n = propsToKeep && propsToKeep.length;
+  var toKeep = n ? {} : I.object0;
   for (var i = 0; i < n; ++i) {
-    op[propsToKeep[i]] = L.zero;
-  }for (var k in template) {
-    op[k] = L.toFunction(template[k]);
-  }var min = {};
+    var k = propsToKeep[i];
+    op[k] = L.zero;
+    toKeep[k] = 1;
+  }
   for (var _k in template) {
-    min[_k] = undefined;
+    op[_k] = L.toFunction(template[_k]);
+  }var min = {};
+  for (var _k2 in template) {
+    min[_k2] = undefined;
   }return L.toFunction([function (x, i, C, xi2yC) {
     return C.map(function (o) {
-      for (var _k2 in min) {
-        if (undefined !== o[_k2]) return o;
+      for (var _k3 in o) {
+        if (undefined === toKeep[_k3]) return o;
       }
     }, xi2yC(I.assign({}, min, x, i)));
   }, L.values, function (x, i, C, xi2yC) {

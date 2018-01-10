@@ -1,5 +1,5 @@
 import { all, defaults, elems, ifElse, optional, removeOp, required, rewrite, setOp, toFunction, transform, values, zero } from 'partial.lenses';
-import { assign, curry, id, isArray } from 'infestines';
+import { assign, curry, id, isArray, object0 } from 'infestines';
 
 var header = 'partial.lenses.validation: ';
 function error(msg) {
@@ -26,17 +26,21 @@ var objectWith = /*#__PURE__*/curry(function (onOthers, propsToKeep, template) {
   onOthers = toFunction(onOthers);
   var op = {};
   var n = propsToKeep && propsToKeep.length;
+  var toKeep = n ? {} : object0;
   for (var i = 0; i < n; ++i) {
-    op[propsToKeep[i]] = zero;
-  }for (var k in template) {
-    op[k] = toFunction(template[k]);
-  }var min = {};
+    var k = propsToKeep[i];
+    op[k] = zero;
+    toKeep[k] = 1;
+  }
   for (var _k in template) {
-    min[_k] = undefined;
+    op[_k] = toFunction(template[_k]);
+  }var min = {};
+  for (var _k2 in template) {
+    min[_k2] = undefined;
   }return toFunction([function (x, i, C, xi2yC) {
     return C.map(function (o) {
-      for (var _k2 in min) {
-        if (undefined !== o[_k2]) return o;
+      for (var _k3 in o) {
+        if (undefined === toKeep[_k3]) return o;
       }
     }, xi2yC(assign({}, min, x, i)));
   }, values, function (x, i, C, xi2yC) {
