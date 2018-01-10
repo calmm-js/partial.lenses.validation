@@ -12,7 +12,7 @@
     "dist:umd.min": "NODE_ENV=production rollup -c -n V -i src/partial.lenses.validation.js -f umd -o dist/partial.lenses.validation.min.js",
     "docs": "klipse-github-docs-generator",
     "lint": "eslint src test",
-    "prepare": "npm run lint & npm run docs & (npm run dist && npm run test) & wait",
+    "prepare": "npm run lint && npm run docs && npm run dist && npm run test",
     "report-coverage": "nyc report --reporter=lcov > coverage.lcov && codecov",
     "test": "nyc mocha",
     "watch": "npm run watch:dist & npm run watch:docs & npm run watch:test & wait",
