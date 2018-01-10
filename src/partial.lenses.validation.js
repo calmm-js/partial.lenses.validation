@@ -28,10 +28,28 @@ export const object = I.curry((propsToKeep, template) => {
   ])
 })
 
-export const arrayIx = rules =>
-  L.toFunction([removeIfAllNull, L.elems, requiredNull, rules])
+const warnNonArrays = msg => fn => rules => {
+  rules = fn(rules)
+  return L.choose(x => {
+    if (!I.isArray(x) && !fn.warned) {
+      fn.warned = 1
+      console.warn(header + msg)
+    }
+    return rules
+  })
+}
 
-export const arrayId = rules => L.toFunction([defaultsArray, L.elems, rules])
+export const arrayIx = (process.env.NODE_ENV === 'production'
+  ? I.id
+  : warnNonArrays(
+      'Currently `arrayIx` accepts non-array like objects, but in v0.2.0 it rejects them with `[]`'
+    ))(rules => L.toFunction([removeIfAllNull, L.elems, requiredNull, rules]))
+
+export const arrayId = (process.env.NODE_ENV === 'production'
+  ? I.id
+  : warnNonArrays(
+      'Currently `arrayId` ignores non-array like objects, but in v0.2.0 it rejects them with `[]`'
+    ))(rules => L.toFunction([defaultsArray, L.elems, rules]))
 
 const pargs = (name, fn) =>
   (process.env.NODE_ENV === 'production'

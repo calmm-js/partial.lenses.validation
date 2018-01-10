@@ -1,3 +1,13 @@
+## 0.1.4
+
+The behaviour of `V.arrayIx` and `V.arrayId` on non-arrays was not carefully
+defined and has now been deprecated.  In version 0.2.0 `V.arrayId` and
+`V.arrayIx` will reject with `[]` as the error value in case the focus is not an
+array.  The choice of `[]` as the validation error is motivated by the idea that
+the user of the validation combinators can freely choose the format of error
+messages.  Version 0.2.0 will also include `V.arrayIxOr` and `V.arrayIdOr`
+combinators that allow the user to specify the desired rejection error.
+
 ## 0.1.2
 
 `V.cases` and `V.unless` were changed to take pairs as arguments.  The main
