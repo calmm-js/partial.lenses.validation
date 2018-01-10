@@ -24,14 +24,19 @@ export const objectWith = I.curry((onOthers, propsToKeep, template) => {
   onOthers = L.toFunction(onOthers)
   const op = {}
   const n = propsToKeep && propsToKeep.length
-  for (let i = 0; i < n; ++i) op[propsToKeep[i]] = L.zero
+  const toKeep = n ? {} : I.object0
+  for (let i = 0; i < n; ++i) {
+    const k = propsToKeep[i]
+    op[k] = L.zero
+    toKeep[k] = 1
+  }
   for (const k in template) op[k] = L.toFunction(template[k])
   const min = {}
   for (const k in template) min[k] = undefined
   return L.toFunction([
     (x, i, C, xi2yC) =>
       C.map(o => {
-        for (const k in min) if (undefined !== o[k]) return o
+        for (const k in o) if (undefined === toKeep[k]) return o
       }, xi2yC(I.assign({}, min, x, i))),
     L.values,
     (x, i, C, xi2yC) => (op[i] || onOthers)(x, i, C, xi2yC)
