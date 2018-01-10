@@ -1,10 +1,24 @@
-import { all, branch, defaults, elems, get, ifElse, iso, optional, props, removable, removeOp, required, rewrite, setOp, toFunction, transform } from 'partial.lenses';
+import { all, branch, choose, defaults, elems, get, ifElse, optional, props, removable, removeOp, required, rewrite, setOp, toFunction, transform } from 'partial.lenses';
 import { curry, id, isArray, keys } from 'infestines';
 
 var header = 'partial.lenses.validation: ';
-var error = function error(msg) {
+function error(msg) {
   throw Error(header + msg);
+}
+
+var isNull = function isNull(x) {
+  return x === null;
 };
+
+var defaultsArray = /*#__PURE__*/defaults([]);
+var requiredNull = /*#__PURE__*/required(null);
+
+var removeIfAllNull = /*#__PURE__*/rewrite(function (xs) {
+  return all(isNull, elems, xs) ? undefined : xs;
+});
+
+var accept = removeOp;
+var reject = setOp;
 
 var object = /*#__PURE__*/curry(function (propsToKeep, template) {
   var keys$$1 = keys(template);
@@ -12,20 +26,28 @@ var object = /*#__PURE__*/curry(function (propsToKeep, template) {
   return toFunction([removable.apply(null, keys$$1), rewrite(get(props.apply(null, keep))), branch(template)]);
 });
 
-var isNull = function isNull(x) {
-  return x === null;
-};
-var removeIfAllNull = function removeIfAllNull(xs) {
-  return all(isNull, elems, xs) ? undefined : xs;
+var warnNonArrays = function warnNonArrays(msg) {
+  return function (fn) {
+    return function (rules) {
+      rules = fn(rules);
+      return choose(function (x) {
+        if (!isArray(x) && !fn.warned) {
+          fn.warned = 1;
+          console.warn(header + msg);
+        }
+        return rules;
+      });
+    };
+  };
 };
 
-var arrayIx = function arrayIx(r) {
-  return toFunction([iso(id, removeIfAllNull), elems, required(null), r]);
-};
+var arrayIx = /*#__PURE__*/(process.env.NODE_ENV === 'production' ? id : warnNonArrays('Currently `arrayIx` accepts non-array like objects, but in v0.2.0 it rejects them with `[]`'))(function (rules) {
+  return toFunction([removeIfAllNull, elems, requiredNull, rules]);
+});
 
-var arrayId = function arrayId(r) {
-  return toFunction([defaults([]), elems, r]);
-};
+var arrayId = /*#__PURE__*/(process.env.NODE_ENV === 'production' ? id : warnNonArrays('Currently `arrayId` ignores non-array like objects, but in v0.2.0 it rejects them with `[]`'))(function (rules) {
+  return toFunction([defaultsArray, elems, rules]);
+});
 
 var pargs = function pargs(name, fn) {
   return (process.env.NODE_ENV === 'production' ? id : function (fn) {
@@ -76,9 +98,7 @@ var optional$1 = function optional$$1(rules) {
   return toFunction([optional, rules]);
 };
 
-var accept = removeOp;
-var reject = setOp;
 var validate = transform;
 
-export { object, arrayIx, arrayId, cases, unless, optional$1 as optional, accept, reject, validate };
+export { accept, reject, object, arrayIx, arrayId, cases, unless, optional$1 as optional, validate };
 export { choose } from 'partial.lenses';

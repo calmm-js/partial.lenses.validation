@@ -5,9 +5,23 @@
 }(this, (function (exports,L,I) { 'use strict';
 
 var header = 'partial.lenses.validation: ';
-var error = function error(msg) {
+function error(msg) {
   throw Error(header + msg);
+}
+
+var isNull = function isNull(x) {
+  return x === null;
 };
+
+var defaultsArray = /*#__PURE__*/L.defaults([]);
+var requiredNull = /*#__PURE__*/L.required(null);
+
+var removeIfAllNull = /*#__PURE__*/L.rewrite(function (xs) {
+  return L.all(isNull, L.elems, xs) ? undefined : xs;
+});
+
+var accept = L.removeOp;
+var reject = L.setOp;
 
 var object = /*#__PURE__*/I.curry(function (propsToKeep, template) {
   var keys$$1 = I.keys(template);
@@ -15,20 +29,28 @@ var object = /*#__PURE__*/I.curry(function (propsToKeep, template) {
   return L.toFunction([L.removable.apply(null, keys$$1), L.rewrite(L.get(L.props.apply(null, keep))), L.branch(template)]);
 });
 
-var isNull = function isNull(x) {
-  return x === null;
-};
-var removeIfAllNull = function removeIfAllNull(xs) {
-  return L.all(isNull, L.elems, xs) ? undefined : xs;
+var warnNonArrays = function warnNonArrays(msg) {
+  return function (fn) {
+    return function (rules) {
+      rules = fn(rules);
+      return L.choose(function (x) {
+        if (!I.isArray(x) && !fn.warned) {
+          fn.warned = 1;
+          console.warn(header + msg);
+        }
+        return rules;
+      });
+    };
+  };
 };
 
-var arrayIx = function arrayIx(r) {
-  return L.toFunction([L.iso(I.id, removeIfAllNull), L.elems, L.required(null), r]);
-};
+var arrayIx = /*#__PURE__*/(warnNonArrays('Currently `arrayIx` accepts non-array like objects, but in v0.2.0 it rejects them with `[]`'))(function (rules) {
+  return L.toFunction([removeIfAllNull, L.elems, requiredNull, rules]);
+});
 
-var arrayId = function arrayId(r) {
-  return L.toFunction([L.defaults([]), L.elems, r]);
-};
+var arrayId = /*#__PURE__*/(warnNonArrays('Currently `arrayId` ignores non-array like objects, but in v0.2.0 it rejects them with `[]`'))(function (rules) {
+  return L.toFunction([defaultsArray, L.elems, rules]);
+});
 
 var pargs = function pargs(name, fn) {
   return (function (fn) {
@@ -79,18 +101,16 @@ var optional$1 = function optional$$1(rules) {
   return L.toFunction([L.optional, rules]);
 };
 
-var accept = L.removeOp;
-var reject = L.setOp;
 var validate = L.transform;
 
+exports.accept = accept;
+exports.reject = reject;
 exports.object = object;
 exports.arrayIx = arrayIx;
 exports.arrayId = arrayId;
 exports.cases = cases;
 exports.unless = unless;
 exports.optional = optional$1;
-exports.accept = accept;
-exports.reject = reject;
 exports.validate = validate;
 exports.choose = L.choose;
 
