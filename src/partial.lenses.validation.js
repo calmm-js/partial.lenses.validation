@@ -2,9 +2,21 @@ import * as L from 'partial.lenses'
 import * as I from 'infestines'
 
 const header = 'partial.lenses.validation: '
-const error = msg => {
+function error(msg) {
   throw Error(header + msg)
 }
+
+const isNull = x => x === null
+
+const defaultsArray = L.defaults([])
+const requiredNull = L.required(null)
+
+const removeIfAllNull = L.rewrite(
+  xs => (L.all(isNull, L.elems, xs) ? undefined : xs)
+)
+
+export const accept = L.removeOp
+export const reject = L.setOp
 
 export const object = I.curry((propsToKeep, template) => {
   const keys = I.keys(template)
@@ -16,13 +28,10 @@ export const object = I.curry((propsToKeep, template) => {
   ])
 })
 
-const isNull = x => x === null
-const removeIfAllNull = xs => (L.all(isNull, L.elems, xs) ? undefined : xs)
+export const arrayIx = rules =>
+  L.toFunction([removeIfAllNull, L.elems, requiredNull, rules])
 
-export const arrayIx = r =>
-  L.toFunction([L.iso(I.id, removeIfAllNull), L.elems, L.required(null), r])
-
-export const arrayId = r => L.toFunction([L.defaults([]), L.elems, r])
+export const arrayId = rules => L.toFunction([defaultsArray, L.elems, rules])
 
 const pargs = (name, fn) =>
   (process.env.NODE_ENV === 'production'
@@ -82,6 +91,4 @@ export { choose } from 'partial.lenses'
 
 export const optional = rules => L.toFunction([L.optional, rules])
 
-export const accept = L.removeOp
-export const reject = L.setOp
 export const validate = L.transform
