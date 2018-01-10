@@ -78,6 +78,17 @@ describe('validation', () => {
     )
   )
 
+  R.forEach(
+    v =>
+      testEq({ required: 'error' }, () =>
+        V.validate(
+          V.object([], { required: V.unless([R.identity, 'error']) }),
+          v
+        )
+      ),
+    [{}, null, 42, 'anything', []]
+  )
+
   testEq(undefined, () => V.validate(V.cases(), 'anything'))
   testEq(undefined, () => V.validate(V.unless(), 'anything'))
 })
