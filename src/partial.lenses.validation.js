@@ -20,15 +20,24 @@ export const reject = L.setOp
 
 const rejectArray = reject([])
 
-export const object = I.curry((propsToKeep, template) => {
-  const keys = I.keys(template)
-  const keep = propsToKeep.length ? propsToKeep.concat(keys) : keys
+const emptyToUndefined = x => (I.acyclicEqualsU(x, I.object0) ? undefined : x)
+
+export const objectWith = I.curry((onOthers, propsToKeep, template) => {
+  onOthers = L.toFunction(onOthers)
+  const op = {}
+  const n = propsToKeep && propsToKeep.length
+  for (let i = 0; i < n; ++i) op[propsToKeep[i]] = L.zero
+  for (const k in template) op[k] = L.toFunction(template[k])
+  const min = {}
+  for (const k in template) min[k] = undefined
   return L.toFunction([
-    L.removable.apply(null, keys),
-    L.rewrite(L.get(L.props.apply(null, keep))),
-    L.branch(template)
+    (x, i, C, xi2yC) => C.map(emptyToUndefined, xi2yC(I.assign({}, min, x, i))),
+    L.values,
+    (x, i, C, xi2yC) => (op[i] || onOthers)(x, i, C, xi2yC)
   ])
 })
+
+export const object = objectWith(accept)
 
 export const arrayIxOr = I.curry((onOther, rules) =>
   L.ifElse(I.isArray, [removeIfAllNull, L.elems, requiredNull, rules], onOther)
