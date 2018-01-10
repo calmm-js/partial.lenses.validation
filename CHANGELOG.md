@@ -2,6 +2,8 @@
 
 Removed deprecated non-paired functionality from `V.cases` and `V.unless`.
 
+`V.arrayIx` and `V.arrayId` now produce `[]` in case the focus is not an array.
+
 ## 0.1.4
 
 The behaviour of `V.arrayIx` and `V.arrayId` on non-arrays was not carefully
