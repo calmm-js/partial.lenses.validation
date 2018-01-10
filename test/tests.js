@@ -89,6 +89,23 @@ describe('validation', () => {
     [{}, null, 42, 'anything', []]
   )
 
+  testEq(
+    [{ optional: 'not one', required: 'not one', id: 2, extra: 'unexpeted' }],
+    () =>
+      V.validate(
+        V.arrayId(
+          V.objectWith(V.reject('unexpeted'), ['id'], {
+            optional: V.optional(V.unless([R.equals(1), 'not one'])),
+            required: V.unless([R.equals(1), 'not one'])
+          })
+        ),
+        [
+          { id: 1, optional: 1, required: 1 },
+          { id: 2, optional: 2, required: 2, extra: 2 }
+        ]
+      )
+  )
+
   testEq(undefined, () => V.validate(V.cases(), 'anything'))
   testEq(undefined, () => V.validate(V.unless(), 'anything'))
 
