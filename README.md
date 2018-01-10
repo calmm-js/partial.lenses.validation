@@ -29,6 +29,7 @@ structure.
     * [`V.unless(...[(maybeValue, index) => testable, errorValue]) ~> rules`](#V-unless) <small><sup>v0.1.0</sup></small>
   * [Rules on objects](#rules-on-objects)
     * [`V.object([...propNames], {prop: rules, ...}) ~> rules`](#V-object) <small><sup>v0.1.0</sup></small>
+    * [`V.objectWith(rules, [...propNames], {prop: rules, ...}) ~> rules`](#V-objectWith) <small><sup>v0.2.0</sup></small>
   * [Rules on arrays](#rules-on-arrays)
     * [`V.arrayId(rules) ~> rules`](#V-arrayId) <small><sup>v0.1.0</sup></small>
     * [`V.arrayIdOr(rules, rules) ~> rules`](#V-arrayIdOr) <small><sup>v0.2.0</sup></small>
@@ -188,15 +189,32 @@ V.validate(V.unless([R.contains(1), 'does not contain one'],
 
 #### <a id="V-object"></a> [≡](#contents) [▶](https://calmm-js.github.io/partial.lenses.validation/index.html#V-object) [`V.object([...propNames], {prop: rules, ...}) ~> rules`](#V-object) <small><sup>v0.1.0</sup></small>
 
-`V.object` is given a list or property names to preserve in case of errors and a
-template object of rules with which to validate the corresponding fields.
+`V.object` is for validating an object and is given a list of property names to
+preserve in case of errors and a template object of rules with which to validate
+the corresponding fields.  Other fields are ignored.  `V.object` is equivalent
+to [`V.objectWith(V.accept)`](#V-objectWith).
 
 For example:
 
 ```js
 V.validate(V.object(['id'], {a: V.accept, b: V.reject('error')}),
-           {id: 101, a: 1, b: 2})
+           {id: 101, a: 1, b: 2, extra: 'field'})
 // { id: 101, b: 'error' }
+```
+
+#### <a id="V-objectWith"></a> [≡](#contents) [▶](https://calmm-js.github.io/partial.lenses.validation/index.html#V-objectWith) [`V.objectWith(rules, [...propNames], {prop: rules, ...}) ~> rules`](#V-objectWith) <small><sup>v0.2.0</sup></small>
+
+`V.objectWith` is for validating an object and is given rules to apply to fields
+not otherwise specified, a list of property names to preserve in case of errors
+and a template object of rules with which to validate the corresponding fields.
+[`V.object`](#V-object) is equivalent to `V.objectWith(V.accept)`.
+
+```js
+V.validate(V.objectWith(V.reject('Unexpected field'),
+                        ['id'],
+                        {a: V.accept, b: V.reject('error')}),
+           {id: 101, a: 1, b: 2, extra: 'field'})
+// { id: 101, b: 'error', extra: 'Unexpected field' }
 ```
 
 ### <a id="rules-on-arrays"></a> [≡](#contents) [▶](https://calmm-js.github.io/partial.lenses.validation/index.html#rules-on-arrays) Rules on arrays
