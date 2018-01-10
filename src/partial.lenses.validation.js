@@ -20,8 +20,6 @@ export const reject = L.setOp
 
 const rejectArray = reject([])
 
-const emptyToUndefined = x => (I.acyclicEqualsU(x, I.object0) ? undefined : x)
-
 export const objectWith = I.curry((onOthers, propsToKeep, template) => {
   onOthers = L.toFunction(onOthers)
   const op = {}
@@ -31,7 +29,10 @@ export const objectWith = I.curry((onOthers, propsToKeep, template) => {
   const min = {}
   for (const k in template) min[k] = undefined
   return L.toFunction([
-    (x, i, C, xi2yC) => C.map(emptyToUndefined, xi2yC(I.assign({}, min, x, i))),
+    (x, i, C, xi2yC) =>
+      C.map(o => {
+        for (const k in min) if (undefined !== o[k]) return o
+      }, xi2yC(I.assign({}, min, x, i))),
     L.values,
     (x, i, C, xi2yC) => (op[i] || onOthers)(x, i, C, xi2yC)
   ])
