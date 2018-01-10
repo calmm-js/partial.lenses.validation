@@ -86,6 +86,10 @@ describe('deprecated', () => {
   testEq('yes', () =>
     V.validate(V.unless(R.equals(1), 'no', R.equals(2), 'yes'), 1)
   )
+
+  testEq(undefined, () => V.validate(V.arrayIx(V.reject('never')), 42))
+  testEq({}, () => V.validate(V.arrayId(V.reject('never')), {}))
+  testEq(42, () => V.validate(V.arrayId(V.reject('never')), 42))
 })
 
 if (process.env.NODE_ENV !== 'production') {
