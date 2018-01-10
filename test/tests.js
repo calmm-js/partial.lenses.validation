@@ -90,18 +90,22 @@ describe('validation', () => {
   )
 
   testEq(
-    [{ optional: 'not one', required: 'not one', id: 2, extra: 'unexpeted' }],
+    [
+      { optional: 'not one', required: 'not one', id: 2, extra: 'unexpected' },
+      { id: 3, extra: 'unexpected' }
+    ],
     () =>
       V.validate(
         V.arrayId(
-          V.objectWith(V.reject('unexpeted'), ['id'], {
+          V.objectWith(V.reject('unexpected'), ['id'], {
             optional: V.optional(V.unless([R.equals(1), 'not one'])),
             required: V.unless([R.equals(1), 'not one'])
           })
         ),
         [
           { id: 1, optional: 1, required: 1 },
-          { id: 2, optional: 2, required: 2, extra: 2 }
+          { id: 2, optional: 2, required: 2, extra: 2 },
+          { id: 3, required: 1, extra: 2 }
         ]
       )
   )
