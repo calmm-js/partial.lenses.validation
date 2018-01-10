@@ -18,6 +18,8 @@ const removeIfAllNull = L.rewrite(
 export const accept = L.removeOp
 export const reject = L.setOp
 
+const rejectArray = reject([])
+
 export const object = I.curry((propsToKeep, template) => {
   const keys = I.keys(template)
   const keep = propsToKeep.length ? propsToKeep.concat(keys) : keys
@@ -28,28 +30,17 @@ export const object = I.curry((propsToKeep, template) => {
   ])
 })
 
-const warnNonArrays = msg => fn => rules => {
-  rules = fn(rules)
-  return L.choose(x => {
-    if (!I.isArray(x) && !fn.warned) {
-      fn.warned = 1
-      console.warn(header + msg)
-    }
-    return rules
-  })
-}
+export const arrayIxOr = I.curry((onOther, rules) =>
+  L.ifElse(I.isArray, [removeIfAllNull, L.elems, requiredNull, rules], onOther)
+)
 
-export const arrayIx = (process.env.NODE_ENV === 'production'
-  ? I.id
-  : warnNonArrays(
-      'Currently `arrayIx` accepts non-array like objects, but in v0.2.0 it rejects them with `[]`'
-    ))(rules => L.toFunction([removeIfAllNull, L.elems, requiredNull, rules]))
+export const arrayIx = arrayIxOr(rejectArray)
 
-export const arrayId = (process.env.NODE_ENV === 'production'
-  ? I.id
-  : warnNonArrays(
-      'Currently `arrayId` ignores non-array like objects, but in v0.2.0 it rejects them with `[]`'
-    ))(rules => L.toFunction([defaultsArray, L.elems, rules]))
+export const arrayIdOr = I.curry((onOther, rules) =>
+  L.ifElse(I.isArray, [defaultsArray, L.elems, rules], onOther)
+)
+
+export const arrayId = arrayIdOr(rejectArray)
 
 const pargs = (name, fn) =>
   (process.env.NODE_ENV === 'production'

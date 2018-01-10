@@ -91,12 +91,10 @@ describe('validation', () => {
 
   testEq(undefined, () => V.validate(V.cases(), 'anything'))
   testEq(undefined, () => V.validate(V.unless(), 'anything'))
-})
 
-describe('deprecated', () => {
-  testEq(undefined, () => V.validate(V.arrayIx(V.reject('never')), 42))
-  testEq({}, () => V.validate(V.arrayId(V.reject('never')), {}))
-  testEq(42, () => V.validate(V.arrayId(V.reject('never')), 42))
+  testEq([], () => V.validate(V.arrayIx(V.reject('never')), 42))
+  testEq([], () => V.validate(V.arrayId(V.reject('never')), {}))
+  testEq([], () => V.validate(V.arrayId(V.reject('never')), 42))
 })
 
 if (process.env.NODE_ENV !== 'production') {

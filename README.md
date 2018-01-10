@@ -30,8 +30,10 @@ structure.
   * [Rules on objects](#rules-on-objects)
     * [`V.object([...propNames], {prop: rules, ...}) ~> rules`](#V-object) <small><sup>v0.1.0</sup></small>
   * [Rules on arrays](#rules-on-arrays)
-    * [`V.arrayIx(rules) ~> rules`](#V-arrayIx) <small><sup>v0.1.0</sup></small>
     * [`V.arrayId(rules) ~> rules`](#V-arrayId) <small><sup>v0.1.0</sup></small>
+    * [`V.arrayIdOr(rules, rules) ~> rules`](#V-arrayIdOr) <small><sup>v0.2.0</sup></small>
+    * [`V.arrayIx(rules) ~> rules`](#V-arrayIx) <small><sup>v0.1.0</sup></small>
+    * [`V.arrayIxOr(rules, rules) ~> rules`](#V-arrayIxOr) <small><sup>v0.2.0</sup></small>
   * [Conditional rules](#conditional-rules)
     * [`V.cases(...[(maybeValue, index) => testable, rules]) ~> rules`](#V-cases) <small><sup>v0.1.0</sup></small>
     * [`V.choose((maybeValue, index) => rules) ~> rules`](#V-choose) <small><sup>v0.1.0</sup></small>
@@ -199,12 +201,48 @@ V.validate(V.object(['id'], {a: V.accept, b: V.reject('error')}),
 
 ### <a id="rules-on-arrays"></a> [≡](#contents) [▶](https://calmm-js.github.io/partial.lenses.validation/index.html#rules-on-arrays) Rules on arrays
 
+#### <a id="V-arrayId"></a> [≡](#contents) [▶](https://calmm-js.github.io/partial.lenses.validation/index.html#V-arrayId) [`V.arrayId(rules) ~> rules`](#V-arrayId) <small><sup>v0.1.0</sup></small>
+
+`V.arrayId` is for validating an array of things that are addressed by and have
+unique identities.  The result is an array containing only the rejected
+elements.  In case all elements are accepted, the array is removed.  If the
+focus is not an array, an empty array `[]` is written as the validation error.
+`V.arrayId` is equivalent to [`V.arrayIdOr(V.reject([]))`](#V-arrayIdOr).
+
+For example:
+
+```js
+V.validate(V.arrayId(V.object(['id'], {x: V.unless([R.equals(1), 'error'])})),
+           [{id: 1, x: 2}, {id: 2, x: 1}])
+// [ { id: 1, x: 'error' } ]
+```
+
+#### <a id="V-arrayIdOr"></a> [≡](#contents) [▶](https://calmm-js.github.io/partial.lenses.validation/index.html#V-arrayIdOr) [`V.arrayIdOr(rules, rules) ~> rules`](#V-arrayIdOr) <small><sup>v0.2.0</sup></small>
+
+`V.arrayIdOr` is for validating an array of things that are addressed by and
+have unique identities.  The first rules given are used in case the focus is not
+an array.  Otherwise the second rules are used on the elements of the array at
+focus.  The result is an array containing only the rejected elements.  In case
+all elements are accepted, the array is removed.  [`V.arrayId`](#V-arrayId) is
+equivalent to `V.arrayIdOr(V.reject([]))`.
+
+For example:
+
+```js
+V.validate(V.arrayIdOr(V.reject('Expected an array'),
+                       V.object(['id'], {x: V.unless([R.equals(1), 'error'])})),
+           [{id: 1, x: 2}, {id: 2, x: 1}])
+// [ { id: 1, x: 'error' } ]
+```
+
 #### <a id="V-arrayIx"></a> [≡](#contents) [▶](https://calmm-js.github.io/partial.lenses.validation/index.html#V-arrayIx) [`V.arrayIx(rules) ~> rules`](#V-arrayIx) <small><sup>v0.1.0</sup></small>
 
 `V.arrayIx` is for validating an array of things that are addressed by their
 index and have no identities.  The result is an array of the same length as the
 input with accepted elements having value `null`.  In case all elements are
-accepted, the array is removed.
+accepted, the array is removed.  If the focus is not an array, an empty array
+`[]` is written as the validation error.  `V.arrayIx` is equivalent to
+[`V.arrayIxOr(V.reject([]))`](#V-arrayIxOr).
 
 For example:
 
@@ -214,18 +252,23 @@ V.validate(V.arrayIx(V.unless([R.equals('a'), 'error'])),
 // [ null, 'error' ]
 ```
 
-#### <a id="V-arrayId"></a> [≡](#contents) [▶](https://calmm-js.github.io/partial.lenses.validation/index.html#V-arrayId) [`V.arrayId(rules) ~> rules`](#V-arrayId) <small><sup>v0.1.0</sup></small>
+#### <a id="V-arrayIxOr"></a> [≡](#contents) [▶](https://calmm-js.github.io/partial.lenses.validation/index.html#V-arrayIxOr) [`V.arrayIxOr(rules, rules) ~> rules`](#V-arrayIxOr) <small><sup>v0.2.0</sup></small>
 
-`V.arrayId` is for validating an array of things that are addressed by and have
-unique identities.  The result is an array containing only the rejected
-elements.  In case all elements are accepted, the array is removed.
+`V.arrayIxOr` is for validating an array of things that are addressed by their
+index and have no identities.  The first rules given are used in case the focus
+is not an array.  Otherwise the second rules are used on the elements of the
+array at focus.  The result is an array of the same length as the input with
+accepted elements having value `null`.  In case all elements are accepted, the
+array is removed.  [`V.arrayIx`](#V-arrayIx) is equivalent to
+`V.arrayIxOr(V.reject([]))`.
 
 For example:
 
 ```js
-V.validate(V.arrayId(V.object(['id'], {x: V.unless([R.equals(1), 'error'])})),
-           [{id: 1, x: 2}, {id: 2, x: 1}])
-// [ { id: 1, x: 'error' } ]
+V.validate(V.arrayIxOr(V.reject('Expected an array'),
+                       V.unless([R.equals('a'), 'error'])),
+           ['a', 'b'])
+// [ null, 'error' ]
 ```
 
 ### <a id="conditional-rules"></a> [≡](#contents) [▶](https://calmm-js.github.io/partial.lenses.validation/index.html#conditional-rules) Conditional rules
