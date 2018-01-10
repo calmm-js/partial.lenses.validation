@@ -56,48 +56,18 @@ const pargs = (name, fn) =>
     ? I.id
     : fn =>
         function() {
-          const n = arguments.length
-          if (n) {
-            if (I.isArray(arguments[0])) {
-              for (let i = 0; i < n; ++i) {
-                const c = arguments[i]
-                if (!I.isArray(c) || c.length !== 2)
-                  error(name + ' must be given pairs arguments.')
-              }
-            } else {
-              if (!pargs[name]) {
-                pargs[name] = 1
-                console.warn(
-                  header +
-                    '`' +
-                    name +
-                    '` now expects pairs as arguments: call as `' +
-                    name +
-                    '([p1, x1], ..., [pN, xN])` instead of `' +
-                    name +
-                    '(p1, x1, ..., pM, xN)`.  Support for unpaired arguments will be removed in v0.2.0.'
-                )
-              }
-              if (n & 1)
-                error(name + ' must be given an even number of arguments.')
-            }
+          for (let i = 0, n = arguments.length; i < n; ++i) {
+            const c = arguments[i]
+            if (!I.isArray(c) || c.length !== 2)
+              error(name + ' must be given pairs arguments.')
           }
           return fn.apply(null, arguments)
         })(function() {
-    let r = accept,
-      n = arguments.length
-    if (n) {
-      if (I.isArray(arguments[0])) {
-        do {
-          const c = arguments[--n]
-          r = fn(c[0], c[1], r)
-        } while (n)
-      } else {
-        do {
-          n -= 2
-          r = fn(arguments[n], arguments[n + 1], r)
-        } while (n)
-      }
+    let r = accept
+    let n = arguments.length
+    while (n) {
+      const c = arguments[--n]
+      r = fn(c[0], c[1], r)
     }
     return r
   })

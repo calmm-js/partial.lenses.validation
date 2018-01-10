@@ -83,10 +83,6 @@ describe('validation', () => {
 })
 
 describe('deprecated', () => {
-  testEq('yes', () =>
-    V.validate(V.unless(R.equals(1), 'no', R.equals(2), 'yes'), 1)
-  )
-
   testEq(undefined, () => V.validate(V.arrayIx(V.reject('never')), 42))
   testEq({}, () => V.validate(V.arrayId(V.reject('never')), {}))
   testEq(42, () => V.validate(V.arrayId(V.reject('never')), 42))
@@ -94,22 +90,18 @@ describe('deprecated', () => {
 
 if (process.env.NODE_ENV !== 'production') {
   describe('diagnostics', () => {
-    it('V.cases throws if not given an even number of arguments', () => {
-      try {
-        V.cases(R.T)
-      } catch (_) {
-        return
-      }
-      throw Error('unexpected')
-    })
-
     it('V.cases throws if not given pairs as arguments', () => {
-      try {
-        V.cases([R.T])
-      } catch (_) {
-        return
-      }
-      throw Error('unexpected')
+      R.forEach(
+        args => {
+          try {
+            V.cases(...args)
+          } catch (_) {
+            return
+          }
+          throw Error('unexpected')
+        },
+        [[R.T, R.accept], [[R.T]]]
+      )
     })
   })
 }
