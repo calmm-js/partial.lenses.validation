@@ -23,70 +23,59 @@ var removeIfAllNull = /*#__PURE__*/L.rewrite(function (xs) {
 var accept = L.removeOp;
 var reject = L.setOp;
 
-var object = /*#__PURE__*/I.curry(function (propsToKeep, template) {
-  var keys$$1 = I.keys(template);
-  var keep = propsToKeep.length ? propsToKeep.concat(keys$$1) : keys$$1;
-  return L.toFunction([L.removable.apply(null, keys$$1), L.rewrite(L.get(L.props.apply(null, keep))), L.branch(template)]);
-});
+var rejectArray = /*#__PURE__*/reject([]);
 
-var warnNonArrays = function warnNonArrays(msg) {
-  return function (fn) {
-    return function (rules) {
-      rules = fn(rules);
-      return L.choose(function (x) {
-        if (!I.isArray(x) && !fn.warned) {
-          fn.warned = 1;
-          console.warn(header + msg);
-        }
-        return rules;
-      });
-    };
-  };
+var emptyToUndefined = function emptyToUndefined(x) {
+  return I.acyclicEqualsU(x, I.object0) ? undefined : x;
 };
 
-var arrayIx = /*#__PURE__*/(warnNonArrays('Currently `arrayIx` accepts non-array like objects, but in v0.2.0 it rejects them with `[]`'))(function (rules) {
-  return L.toFunction([removeIfAllNull, L.elems, requiredNull, rules]);
+var objectWith = /*#__PURE__*/I.curry(function (onOthers, propsToKeep, template) {
+  onOthers = L.toFunction(onOthers);
+  var op = {};
+  var n = propsToKeep && propsToKeep.length;
+  for (var i = 0; i < n; ++i) {
+    op[propsToKeep[i]] = L.zero;
+  }for (var k in template) {
+    op[k] = L.toFunction(template[k]);
+  }var min = {};
+  for (var _k in template) {
+    min[_k] = undefined;
+  }return L.toFunction([function (x, i, C, xi2yC) {
+    return C.map(emptyToUndefined, xi2yC(I.assign({}, min, x, i)));
+  }, L.values, function (x, i, C, xi2yC) {
+    return (op[i] || onOthers)(x, i, C, xi2yC);
+  }]);
 });
 
-var arrayId = /*#__PURE__*/(warnNonArrays('Currently `arrayId` ignores non-array like objects, but in v0.2.0 it rejects them with `[]`'))(function (rules) {
-  return L.toFunction([defaultsArray, L.elems, rules]);
+var object = /*#__PURE__*/objectWith(accept);
+
+var arrayIxOr = /*#__PURE__*/I.curry(function (onOther, rules) {
+  return L.ifElse(I.isArray, [removeIfAllNull, L.elems, requiredNull, rules], onOther);
 });
+
+var arrayIx = /*#__PURE__*/arrayIxOr(rejectArray);
+
+var arrayIdOr = /*#__PURE__*/I.curry(function (onOther, rules) {
+  return L.ifElse(I.isArray, [defaultsArray, L.elems, rules], onOther);
+});
+
+var arrayId = /*#__PURE__*/arrayIdOr(rejectArray);
 
 var pargs = function pargs(name, fn) {
   return (function (fn) {
     return function () {
-      var n = arguments.length;
-      if (n) {
-        if (I.isArray(arguments[0])) {
-          for (var i = 0; i < n; ++i) {
-            var c = arguments[i];
-            if (!I.isArray(c) || c.length !== 2) error(name + ' must be given pairs arguments.');
-          }
-        } else {
-          if (!pargs[name]) {
-            pargs[name] = 1;
-            console.warn(header + '`' + name + '` now expects pairs as arguments: call as `' + name + '([p1, x1], ..., [pN, xN])` instead of `' + name + '(p1, x1, ..., pM, xN)`.  Support for unpaired arguments will be removed in v0.2.0.');
-          }
-          if (n & 1) error(name + ' must be given an even number of arguments.');
-        }
+      for (var i = 0, n = arguments.length; i < n; ++i) {
+        var c = arguments[i];
+        if (!I.isArray(c) || c.length !== 2) error(name + ' must be given pairs arguments.');
       }
       return fn.apply(null, arguments);
     };
   })(function () {
-    var r = accept,
-        n = arguments.length;
-    if (n) {
-      if (I.isArray(arguments[0])) {
-        do {
-          var c = arguments[--n];
-          r = fn(c[0], c[1], r);
-        } while (n);
-      } else {
-        do {
-          n -= 2;
-          r = fn(arguments[n], arguments[n + 1], r);
-        } while (n);
-      }
+    var r = accept;
+    var n = arguments.length;
+    while (n) {
+      var c = arguments[--n];
+      r = fn(c[0], c[1], r);
     }
     return r;
   });
@@ -105,8 +94,11 @@ var validate = L.transform;
 
 exports.accept = accept;
 exports.reject = reject;
+exports.objectWith = objectWith;
 exports.object = object;
+exports.arrayIxOr = arrayIxOr;
 exports.arrayIx = arrayIx;
+exports.arrayIdOr = arrayIdOr;
 exports.arrayId = arrayId;
 exports.cases = cases;
 exports.unless = unless;

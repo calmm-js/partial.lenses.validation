@@ -65,11 +65,14 @@ structure.</p>
 </li>
 <li><a href="#rules-on-objects">Rules on objects</a><ul>
 <li><a href="#V-object"><code>V.object([...propNames], {prop: rules, ...}) ~&gt; rules</code></a> <small><sup>v0.1.0</sup></small></li>
+<li><a href="#V-objectWith"><code>V.objectWith(rules, [...propNames], {prop: rules, ...}) ~&gt; rules</code></a> <small><sup>v0.2.0</sup></small></li>
 </ul>
 </li>
 <li><a href="#rules-on-arrays">Rules on arrays</a><ul>
-<li><a href="#V-arrayIx"><code>V.arrayIx(rules) ~&gt; rules</code></a> <small><sup>v0.1.0</sup></small></li>
 <li><a href="#V-arrayId"><code>V.arrayId(rules) ~&gt; rules</code></a> <small><sup>v0.1.0</sup></small></li>
+<li><a href="#V-arrayIdOr"><code>V.arrayIdOr(rules, rules) ~&gt; rules</code></a> <small><sup>v0.2.0</sup></small></li>
+<li><a href="#V-arrayIx"><code>V.arrayIx(rules) ~&gt; rules</code></a> <small><sup>v0.1.0</sup></small></li>
+<li><a href="#V-arrayIxOr"><code>V.arrayIxOr(rules, rules) ~&gt; rules</code></a> <small><sup>v0.2.0</sup></small></li>
 </ul>
 </li>
 <li><a href="#conditional-rules">Conditional rules</a><ul>
@@ -177,29 +180,70 @@ focus is removed.</p>
 </code></pre>
 <h3><a id="rules-on-objects"></a> <a href="#contents">≡</a> <a href="https://github.com/calmm-js/partial.lenses.validation/blob/master/README.md#rules-on-objects">■</a> Rules on objects</h3>
 <h4><a id="V-object"></a> <a href="#contents">≡</a> <a href="https://github.com/calmm-js/partial.lenses.validation/blob/master/README.md#V-object">■</a> <a href="#V-object"><code>V.object([...propNames], {prop: rules, ...}) ~&gt; rules</code></a> <small><sup>v0.1.0</sup></small></h4>
-<p><code>V.object</code> is given a list or property names to preserve in case of errors and a
-template object of rules with which to validate the corresponding fields.</p>
+<p><code>V.object</code> is for validating an object and is given a list of property names to
+preserve in case of errors and a template object of rules with which to validate
+the corresponding fields.  Other fields are ignored.  <code>V.object</code> is equivalent
+to <a href="#V-objectWith"><code>V.objectWith(V.accept)</code></a>.</p>
 <p>For example:</p>
 <pre><code class="hljs lang-js">V.validate(V.object([&#39;id&#39;], {a: V.accept, b: V.reject(&#39;error&#39;)}),
-           {id: 101, a: 1, b: 2})
+           {id: 101, a: 1, b: 2, extra: &#39;field&#39;})
+</code></pre>
+<h4><a id="V-objectWith"></a> <a href="#contents">≡</a> <a href="https://github.com/calmm-js/partial.lenses.validation/blob/master/README.md#V-objectWith">■</a> <a href="#V-objectWith"><code>V.objectWith(rules, [...propNames], {prop: rules, ...}) ~&gt; rules</code></a> <small><sup>v0.2.0</sup></small></h4>
+<p><code>V.objectWith</code> is for validating an object and is given rules to apply to fields
+not otherwise specified, a list of property names to preserve in case of errors
+and a template object of rules with which to validate the corresponding fields.
+<a href="#V-object"><code>V.object</code></a> is equivalent to <code>V.objectWith(V.accept)</code>.</p>
+<pre><code class="hljs lang-js">V.validate(V.objectWith(V.reject(&#39;Unexpected field&#39;),
+                        [&#39;id&#39;],
+                        {a: V.accept, b: V.reject(&#39;error&#39;)}),
+           {id: 101, a: 1, b: 2, extra: &#39;field&#39;})
 </code></pre>
 <h3><a id="rules-on-arrays"></a> <a href="#contents">≡</a> <a href="https://github.com/calmm-js/partial.lenses.validation/blob/master/README.md#rules-on-arrays">■</a> Rules on arrays</h3>
+<h4><a id="V-arrayId"></a> <a href="#contents">≡</a> <a href="https://github.com/calmm-js/partial.lenses.validation/blob/master/README.md#V-arrayId">■</a> <a href="#V-arrayId"><code>V.arrayId(rules) ~&gt; rules</code></a> <small><sup>v0.1.0</sup></small></h4>
+<p><code>V.arrayId</code> is for validating an array of things that are addressed by and have
+unique identities.  The result is an array containing only the rejected
+elements.  In case all elements are accepted, the array is removed.  If the
+focus is not an array, an empty array <code>[]</code> is written as the validation error.
+<code>V.arrayId</code> is equivalent to <a href="#V-arrayIdOr"><code>V.arrayIdOr(V.reject([]))</code></a>.</p>
+<p>For example:</p>
+<pre><code class="hljs lang-js">V.validate(V.arrayId(V.object([&#39;id&#39;], {x: V.unless([R.equals(1), &#39;error&#39;])})),
+           [{id: 1, x: 2}, {id: 2, x: 1}])
+</code></pre>
+<h4><a id="V-arrayIdOr"></a> <a href="#contents">≡</a> <a href="https://github.com/calmm-js/partial.lenses.validation/blob/master/README.md#V-arrayIdOr">■</a> <a href="#V-arrayIdOr"><code>V.arrayIdOr(rules, rules) ~&gt; rules</code></a> <small><sup>v0.2.0</sup></small></h4>
+<p><code>V.arrayIdOr</code> is for validating an array of things that are addressed by and
+have unique identities.  The first rules given are used in case the focus is not
+an array.  Otherwise the second rules are used on the elements of the array at
+focus.  The result is an array containing only the rejected elements.  In case
+all elements are accepted, the array is removed.  <a href="#V-arrayId"><code>V.arrayId</code></a> is
+equivalent to <code>V.arrayIdOr(V.reject([]))</code>.</p>
+<p>For example:</p>
+<pre><code class="hljs lang-js">V.validate(V.arrayIdOr(V.reject(&#39;Expected an array&#39;),
+                       V.object([&#39;id&#39;], {x: V.unless([R.equals(1), &#39;error&#39;])})),
+           [{id: 1, x: 2}, {id: 2, x: 1}])
+</code></pre>
 <h4><a id="V-arrayIx"></a> <a href="#contents">≡</a> <a href="https://github.com/calmm-js/partial.lenses.validation/blob/master/README.md#V-arrayIx">■</a> <a href="#V-arrayIx"><code>V.arrayIx(rules) ~&gt; rules</code></a> <small><sup>v0.1.0</sup></small></h4>
 <p><code>V.arrayIx</code> is for validating an array of things that are addressed by their
 index and have no identities.  The result is an array of the same length as the
 input with accepted elements having value <code>null</code>.  In case all elements are
-accepted, the array is removed.</p>
+accepted, the array is removed.  If the focus is not an array, an empty array
+<code>[]</code> is written as the validation error.  <code>V.arrayIx</code> is equivalent to
+<a href="#V-arrayIxOr"><code>V.arrayIxOr(V.reject([]))</code></a>.</p>
 <p>For example:</p>
 <pre><code class="hljs lang-js">V.validate(V.arrayIx(V.unless([R.equals(&#39;a&#39;), &#39;error&#39;])),
            [&#39;a&#39;, &#39;b&#39;])
 </code></pre>
-<h4><a id="V-arrayId"></a> <a href="#contents">≡</a> <a href="https://github.com/calmm-js/partial.lenses.validation/blob/master/README.md#V-arrayId">■</a> <a href="#V-arrayId"><code>V.arrayId(rules) ~&gt; rules</code></a> <small><sup>v0.1.0</sup></small></h4>
-<p><code>V.arrayId</code> is for validating an array of things that are addressed by and have
-unique identities.  The result is an array containing only the rejected
-elements.  In case all elements are accepted, the array is removed.</p>
+<h4><a id="V-arrayIxOr"></a> <a href="#contents">≡</a> <a href="https://github.com/calmm-js/partial.lenses.validation/blob/master/README.md#V-arrayIxOr">■</a> <a href="#V-arrayIxOr"><code>V.arrayIxOr(rules, rules) ~&gt; rules</code></a> <small><sup>v0.2.0</sup></small></h4>
+<p><code>V.arrayIxOr</code> is for validating an array of things that are addressed by their
+index and have no identities.  The first rules given are used in case the focus
+is not an array.  Otherwise the second rules are used on the elements of the
+array at focus.  The result is an array of the same length as the input with
+accepted elements having value <code>null</code>.  In case all elements are accepted, the
+array is removed.  <a href="#V-arrayIx"><code>V.arrayIx</code></a> is equivalent to
+<code>V.arrayIxOr(V.reject([]))</code>.</p>
 <p>For example:</p>
-<pre><code class="hljs lang-js">V.validate(V.arrayId(V.object([&#39;id&#39;], {x: V.unless([R.equals(1), &#39;error&#39;])})),
-           [{id: 1, x: 2}, {id: 2, x: 1}])
+<pre><code class="hljs lang-js">V.validate(V.arrayIxOr(V.reject(&#39;Expected an array&#39;),
+                       V.unless([R.equals(&#39;a&#39;), &#39;error&#39;])),
+           [&#39;a&#39;, &#39;b&#39;])
 </code></pre>
 <h3><a id="conditional-rules"></a> <a href="#contents">≡</a> <a href="https://github.com/calmm-js/partial.lenses.validation/blob/master/README.md#conditional-rules">■</a> Conditional rules</h3>
 <h4><a id="V-cases"></a> <a href="#contents">≡</a> <a href="https://github.com/calmm-js/partial.lenses.validation/blob/master/README.md#V-cases">■</a> <a href="#V-cases"><code>V.cases(...[(maybeValue, index) =&gt; testable, rules]) ~&gt; rules</code></a> <small><sup>v0.1.0</sup></small></h4>
@@ -249,7 +293,7 @@ accepted if it is <code>undefined</code>.  Otherwise the given rules are applied
 focus.</p>
 <p>For example:</p>
 <pre><code class="hljs lang-js">V.validate(V.arrayIx(V.object([], {
-  field: V.optional(V.unless(R.is(Number), &#39;Expected a number&#39;))
+  field: V.optional(V.unless([R.is(Number), &#39;Expected a number&#39;]))
 })), [
   {notTheField: []},
   {field: &#39;Not a number&#39;},

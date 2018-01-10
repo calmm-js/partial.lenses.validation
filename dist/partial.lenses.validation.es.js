@@ -1,5 +1,5 @@
-import { all, branch, choose, defaults, elems, get, ifElse, optional, props, removable, removeOp, required, rewrite, setOp, toFunction, transform } from 'partial.lenses';
-import { curry, id, isArray, keys } from 'infestines';
+import { all, defaults, elems, ifElse, optional, removeOp, required, rewrite, setOp, toFunction, transform, values, zero } from 'partial.lenses';
+import { acyclicEqualsU, assign, curry, id, isArray, object0 } from 'infestines';
 
 var header = 'partial.lenses.validation: ';
 function error(msg) {
@@ -20,70 +20,59 @@ var removeIfAllNull = /*#__PURE__*/rewrite(function (xs) {
 var accept = removeOp;
 var reject = setOp;
 
-var object = /*#__PURE__*/curry(function (propsToKeep, template) {
-  var keys$$1 = keys(template);
-  var keep = propsToKeep.length ? propsToKeep.concat(keys$$1) : keys$$1;
-  return toFunction([removable.apply(null, keys$$1), rewrite(get(props.apply(null, keep))), branch(template)]);
-});
+var rejectArray = /*#__PURE__*/reject([]);
 
-var warnNonArrays = function warnNonArrays(msg) {
-  return function (fn) {
-    return function (rules) {
-      rules = fn(rules);
-      return choose(function (x) {
-        if (!isArray(x) && !fn.warned) {
-          fn.warned = 1;
-          console.warn(header + msg);
-        }
-        return rules;
-      });
-    };
-  };
+var emptyToUndefined = function emptyToUndefined(x) {
+  return acyclicEqualsU(x, object0) ? undefined : x;
 };
 
-var arrayIx = /*#__PURE__*/(process.env.NODE_ENV === 'production' ? id : warnNonArrays('Currently `arrayIx` accepts non-array like objects, but in v0.2.0 it rejects them with `[]`'))(function (rules) {
-  return toFunction([removeIfAllNull, elems, requiredNull, rules]);
+var objectWith = /*#__PURE__*/curry(function (onOthers, propsToKeep, template) {
+  onOthers = toFunction(onOthers);
+  var op = {};
+  var n = propsToKeep && propsToKeep.length;
+  for (var i = 0; i < n; ++i) {
+    op[propsToKeep[i]] = zero;
+  }for (var k in template) {
+    op[k] = toFunction(template[k]);
+  }var min = {};
+  for (var _k in template) {
+    min[_k] = undefined;
+  }return toFunction([function (x, i, C, xi2yC) {
+    return C.map(emptyToUndefined, xi2yC(assign({}, min, x, i)));
+  }, values, function (x, i, C, xi2yC) {
+    return (op[i] || onOthers)(x, i, C, xi2yC);
+  }]);
 });
 
-var arrayId = /*#__PURE__*/(process.env.NODE_ENV === 'production' ? id : warnNonArrays('Currently `arrayId` ignores non-array like objects, but in v0.2.0 it rejects them with `[]`'))(function (rules) {
-  return toFunction([defaultsArray, elems, rules]);
+var object = /*#__PURE__*/objectWith(accept);
+
+var arrayIxOr = /*#__PURE__*/curry(function (onOther, rules) {
+  return ifElse(isArray, [removeIfAllNull, elems, requiredNull, rules], onOther);
 });
+
+var arrayIx = /*#__PURE__*/arrayIxOr(rejectArray);
+
+var arrayIdOr = /*#__PURE__*/curry(function (onOther, rules) {
+  return ifElse(isArray, [defaultsArray, elems, rules], onOther);
+});
+
+var arrayId = /*#__PURE__*/arrayIdOr(rejectArray);
 
 var pargs = function pargs(name, fn) {
   return (process.env.NODE_ENV === 'production' ? id : function (fn) {
     return function () {
-      var n = arguments.length;
-      if (n) {
-        if (isArray(arguments[0])) {
-          for (var i = 0; i < n; ++i) {
-            var c = arguments[i];
-            if (!isArray(c) || c.length !== 2) error(name + ' must be given pairs arguments.');
-          }
-        } else {
-          if (!pargs[name]) {
-            pargs[name] = 1;
-            console.warn(header + '`' + name + '` now expects pairs as arguments: call as `' + name + '([p1, x1], ..., [pN, xN])` instead of `' + name + '(p1, x1, ..., pM, xN)`.  Support for unpaired arguments will be removed in v0.2.0.');
-          }
-          if (n & 1) error(name + ' must be given an even number of arguments.');
-        }
+      for (var i = 0, n = arguments.length; i < n; ++i) {
+        var c = arguments[i];
+        if (!isArray(c) || c.length !== 2) error(name + ' must be given pairs arguments.');
       }
       return fn.apply(null, arguments);
     };
   })(function () {
-    var r = accept,
-        n = arguments.length;
-    if (n) {
-      if (isArray(arguments[0])) {
-        do {
-          var c = arguments[--n];
-          r = fn(c[0], c[1], r);
-        } while (n);
-      } else {
-        do {
-          n -= 2;
-          r = fn(arguments[n], arguments[n + 1], r);
-        } while (n);
-      }
+    var r = accept;
+    var n = arguments.length;
+    while (n) {
+      var c = arguments[--n];
+      r = fn(c[0], c[1], r);
     }
     return r;
   });
@@ -100,5 +89,5 @@ var optional$1 = function optional$$1(rules) {
 
 var validate = transform;
 
-export { accept, reject, object, arrayIx, arrayId, cases, unless, optional$1 as optional, validate };
+export { accept, reject, objectWith, object, arrayIxOr, arrayIx, arrayIdOr, arrayId, cases, unless, optional$1 as optional, validate };
 export { choose } from 'partial.lenses';
