@@ -25,10 +25,6 @@ var reject = L.setOp;
 
 var rejectArray = /*#__PURE__*/reject([]);
 
-var emptyToUndefined = function emptyToUndefined(x) {
-  return I.acyclicEqualsU(x, I.object0) ? undefined : x;
-};
-
 var objectWith = /*#__PURE__*/I.curry(function (onOthers, propsToKeep, template) {
   onOthers = L.toFunction(onOthers);
   var op = {};
@@ -41,7 +37,11 @@ var objectWith = /*#__PURE__*/I.curry(function (onOthers, propsToKeep, template)
   for (var _k in template) {
     min[_k] = undefined;
   }return L.toFunction([function (x, i, C, xi2yC) {
-    return C.map(emptyToUndefined, xi2yC(I.assign({}, min, x, i)));
+    return C.map(function (o) {
+      for (var _k2 in min) {
+        if (undefined !== o[_k2]) return o;
+      }
+    }, xi2yC(I.assign({}, min, x, i)));
   }, L.values, function (x, i, C, xi2yC) {
     return (op[i] || onOthers)(x, i, C, xi2yC);
   }]);
