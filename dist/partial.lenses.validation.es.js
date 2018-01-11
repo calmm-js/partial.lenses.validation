@@ -42,7 +42,7 @@ var objectWith = /*#__PURE__*/curry(function (onOthers, propsToKeep, template) {
       for (var _k3 in o) {
         if (undefined === toKeep[_k3]) return o;
       }
-    }, xi2yC(assign({}, min, x, i)));
+    }, xi2yC(assign({}, min, x), i));
   }, values, function (x, i, C, xi2yC) {
     return (op[i] || onOthers)(x, i, C, xi2yC);
   }]);

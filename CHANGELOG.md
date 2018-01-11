@@ -1,3 +1,7 @@
+## 0.2.1 and 0.2.2
+
+Bug fixes to `V.objectWith`. :(
+
 ## 0.2.0
 
 Removed deprecated non-paired functionality from `V.cases` and `V.unless`.
