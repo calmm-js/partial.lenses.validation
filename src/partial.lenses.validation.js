@@ -37,7 +37,7 @@ export const objectWith = I.curry((onOthers, propsToKeep, template) => {
     (x, i, C, xi2yC) =>
       C.map(o => {
         for (const k in o) if (undefined === toKeep[k]) return o
-      }, xi2yC(I.assign({}, min, x, i))),
+      }, xi2yC(I.assign({}, min, x), i)),
     L.values,
     (x, i, C, xi2yC) => (op[i] || onOthers)(x, i, C, xi2yC)
   ])
