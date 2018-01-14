@@ -26,7 +26,7 @@ function testEq(expect, thunk) {
   })
 }
 
-describe('validation', () => {
+describe('ad hoc', () => {
   testEq(
     [
       {
@@ -66,7 +66,9 @@ describe('validation', () => {
         ]
       )
   )
+})
 
+describe('V.optional', () => {
   testEq([null, null, { x: 'not one' }], () =>
     V.validate(
       V.arrayIx(
@@ -77,7 +79,9 @@ describe('validation', () => {
       [{ y: 1 }, { x: 1 }, { x: 2 }]
     )
   )
+})
 
+describe('V.object', () => {
   R.forEach(
     v =>
       testEq({ required: 'error' }, () =>
@@ -87,6 +91,32 @@ describe('validation', () => {
         )
       ),
     [{}, null, 42, 'anything', []]
+  )
+})
+
+describe('V.cases', () => {
+  testEq(undefined, () => V.validate(V.cases(), 'anything'))
+})
+
+describe('V.unless', () => {
+  testEq(undefined, () => V.validate(V.unless(), 'anything'))
+})
+
+describe('V.arrayIx', () => {
+  testEq([], () => V.validate(V.arrayIx(V.reject('never')), 42))
+})
+
+describe('V.arrayId', () => {
+  testEq([], () => V.validate(V.arrayId(V.reject('never')), {}))
+  testEq([], () => V.validate(V.arrayId(V.reject('never')), 42))
+})
+
+describe('V.objectWith', () => {
+  testEq(undefined, () =>
+    V.validate(
+      V.object([], { foo: V.objectWith(V.reject('unexpected'), [], {}) }),
+      { foo: {} }
+    )
   )
 
   testEq(
@@ -109,36 +139,26 @@ describe('validation', () => {
         ]
       )
   )
-
-  testEq(undefined, () => V.validate(V.cases(), 'anything'))
-  testEq(undefined, () => V.validate(V.unless(), 'anything'))
-
-  testEq([], () => V.validate(V.arrayIx(V.reject('never')), 42))
-  testEq([], () => V.validate(V.arrayId(V.reject('never')), {}))
-  testEq([], () => V.validate(V.arrayId(V.reject('never')), 42))
-
-  testEq(undefined, () =>
-    V.validate(
-      V.object([], { foo: V.objectWith(V.reject('unexpected'), [], {}) }),
-      { foo: {} }
-    )
-  )
 })
 
 if (process.env.NODE_ENV !== 'production') {
   describe('diagnostics', () => {
-    it('V.cases throws if not given pairs as arguments', () => {
-      R.forEach(
-        args => {
-          try {
-            V.cases(...args)
-          } catch (_) {
-            return
-          }
-          throw Error('unexpected')
-        },
-        [[R.T, R.accept], [[R.T]]]
-      )
-    })
+    R.forEach(
+      ([op, name]) =>
+        it(`${name} throws if not given pairs as arguments`, () => {
+          R.forEach(
+            args => {
+              try {
+                op(...args)
+              } catch (_) {
+                return
+              }
+              throw Error('unexpected')
+            },
+            [[R.T, R.accept], [[R.T]]]
+          )
+        }),
+      [[V.cases, 'V.cases'], [V.unless, 'V.unless']]
+    )
   })
 }
