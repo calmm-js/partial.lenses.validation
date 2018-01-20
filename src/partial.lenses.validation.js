@@ -81,7 +81,7 @@ const pargs = (name, fn) =>
 export const cases = pargs('cases', L.ifElse)
 export const unless = pargs('unless', (c, a, r) => L.ifElse(c, r, reject(a)))
 
-export { choose } from 'partial.lenses'
+export {choose} from 'partial.lenses'
 
 export const optional = rules => L.toFunction([L.optional, rules])
 

@@ -60,23 +60,23 @@ describe('ad hoc', () => {
           {
             id: 1,
             rules: [3, 2, 1],
-            cases: [{}, { a: 0 }, { b: 0 }]
+            cases: [{}, {a: 0}, {b: 0}]
           },
-          { array: [] }
+          {array: []}
         ]
       )
   )
 })
 
 describe('V.optional', () => {
-  testEq([null, null, { x: 'not one' }], () =>
+  testEq([null, null, {x: 'not one'}], () =>
     V.validate(
       V.arrayIx(
         V.object([], {
           x: V.optional(V.unless([R.equals(1), 'not one']))
         })
       ),
-      [{ y: 1 }, { x: 1 }, { x: 2 }]
+      [{y: 1}, {x: 1}, {x: 2}]
     )
   )
 })
@@ -84,11 +84,8 @@ describe('V.optional', () => {
 describe('V.object', () => {
   R.forEach(
     v =>
-      testEq({ required: 'error' }, () =>
-        V.validate(
-          V.object([], { required: V.unless([R.identity, 'error']) }),
-          v
-        )
+      testEq({required: 'error'}, () =>
+        V.validate(V.object([], {required: V.unless([R.identity, 'error'])}), v)
       ),
     [{}, null, 42, 'anything', []]
   )
@@ -114,15 +111,15 @@ describe('V.arrayId', () => {
 describe('V.objectWith', () => {
   testEq(undefined, () =>
     V.validate(
-      V.object([], { foo: V.objectWith(V.reject('unexpected'), [], {}) }),
-      { foo: {} }
+      V.object([], {foo: V.objectWith(V.reject('unexpected'), [], {})}),
+      {foo: {}}
     )
   )
 
   testEq(
     [
-      { optional: 'not one', required: 'not one', id: 2, extra: 'unexpected' },
-      { id: 3, extra: 'unexpected' }
+      {optional: 'not one', required: 'not one', id: 2, extra: 'unexpected'},
+      {id: 3, extra: 'unexpected'}
     ],
     () =>
       V.validate(
@@ -133,9 +130,9 @@ describe('V.objectWith', () => {
           })
         ),
         [
-          { id: 1, optional: 1, required: 1 },
-          { id: 2, optional: 2, required: 2, extra: 2 },
-          { id: 3, required: 1, extra: 2 }
+          {id: 1, optional: 1, required: 1},
+          {id: 2, optional: 2, required: 2, extra: 2},
+          {id: 3, required: 1, extra: 2}
         ]
       )
   )
