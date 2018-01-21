@@ -64,6 +64,15 @@ const pargs = (name, fn) =>
             const c = arguments[i]
             if (!I.isArray(c) || I.length(c) !== 2)
               error('`' + name + '` must be given pairs as arguments.')
+            const p = c[0]
+            if (!I.isFunction(p) || 2 < I.length(p))
+              error(
+                'The first elements of pairs given to `' +
+                  name +
+                  '` must be predicates of max arity 2, given `' +
+                  c[0] +
+                  '`.'
+              )
           }
           return fn.apply(null, arguments)
         })(function() {

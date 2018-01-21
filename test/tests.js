@@ -152,7 +152,12 @@ if (process.env.NODE_ENV !== 'production') {
               }
               throw Error('unexpected')
             },
-            [[R.T, R.accept], [[R.T]]]
+            [
+              [R.T, R.accept],
+              [[R.T]],
+              [['not function', '']],
+              [[(_too, _many, _args) => {}, '']]
+            ]
           )
         }),
       [[V.cases, 'V.cases'], [V.unless, 'V.unless']]
