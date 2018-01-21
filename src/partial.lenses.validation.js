@@ -1,29 +1,27 @@
 import * as L from 'partial.lenses'
-import * as I from 'infestines'
+import * as I from './ext/infestines'
 
 const header = 'partial.lenses.validation: '
 function error(msg) {
   throw Error(header + msg)
 }
 
-const isNull = x => x === null
-
-const defaultsArray = L.defaults([])
+const defaultsArray = L.defaults(I.array0)
 const requiredNull = L.required(null)
 
 const removeIfAllNull = L.rewrite(
-  xs => (L.all(isNull, L.elems, xs) ? undefined : xs)
+  xs => (L.all(I.isNull, L.elems, xs) ? undefined : xs)
 )
 
 export const accept = L.removeOp
 export const reject = L.setOp
 
-const rejectArray = reject([])
+const rejectArray = reject(I.array0)
 
 export const objectWith = I.curry((onOthers, propsToKeep, template) => {
   onOthers = L.toFunction(onOthers)
   const op = {}
-  const n = propsToKeep && propsToKeep.length
+  const n = propsToKeep && I.length(propsToKeep)
   const toKeep = n ? {} : I.object0
   for (let i = 0; i < n; ++i) {
     const k = propsToKeep[i]
@@ -36,7 +34,7 @@ export const objectWith = I.curry((onOthers, propsToKeep, template) => {
   return L.toFunction([
     (x, i, C, xi2yC) =>
       C.map(o => {
-        for (const k in o) if (undefined === toKeep[k]) return o
+        for (const k in o) if (I.isUndefined(toKeep[k])) return o
       }, xi2yC(I.assign({}, min, x), i)),
     L.values,
     (x, i, C, xi2yC) => (op[i] || onOthers)(x, i, C, xi2yC)
@@ -64,8 +62,8 @@ const pargs = (name, fn) =>
         function() {
           for (let i = 0, n = arguments.length; i < n; ++i) {
             const c = arguments[i]
-            if (!I.isArray(c) || c.length !== 2)
-              error(name + ' must be given pairs arguments.')
+            if (!I.isArray(c) || I.length(c) !== 2)
+              error('`' + name + '` must be given pairs as arguments.')
           }
           return fn.apply(null, arguments)
         })(function() {
