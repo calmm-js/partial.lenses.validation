@@ -14,11 +14,11 @@
     "lint": "eslint src test",
     "prepare": "npm run lint && npm run docs && npm run dist && npm run test",
     "report-coverage": "nyc report --reporter=lcov > coverage.lcov && codecov",
-    "test": "nyc mocha",
+    "test": "nyc mocha && nyc report -r html mocha",
     "watch": "npm run watch:dist & npm run watch:docs & npm run watch:test & wait",
-    "watch:dist": "watch-run -d 500 -i -p 'src/*.js' npm run dist",
-    "watch:docs": "watch-run -d 500 -i -p '*.md' npm run docs & livereload docs & wait",
-    "watch:test": "watch-run -d 500    -p 'dist/partial.lenses.validation.cjs.js,test/*.js' npm run test"
+    "watch:dist": "watch-run -d 50 -i -p 'src/**/*.js' npm run dist",
+    "watch:docs": "watch-run -d 50 -i -p '*.md' npm run docs & livereload docs & wait",
+    "watch:test": "watch-run -d 50    -p 'dist/partial.lenses.validation.cjs.js,test/*.js' npm run test"
   },
   "repository": {
     "type": "git",
@@ -37,7 +37,7 @@
   "homepage": "https://github.com/calmm-js/partial.lenses.validation#readme",
   "dependencies": {
     "infestines": "^0.4.5",
-    "partial.lenses": "^13.1.0"
+    "partial.lenses": "^13.2.0"
   },
   "devDependencies": {
     "babel-cli": "^6.26.0",
@@ -77,7 +77,7 @@
     "rollup-plugin-replace": "^2.0.0",
     "rollup-plugin-uglify": "^3.0.0",
     "sprintf-js": "^1.1.1",
-    "uglify-js": "^3.3.8",
+    "uglify-js": "^3.3.9",
     "watch-run": "^1.2.5"
   }
 }

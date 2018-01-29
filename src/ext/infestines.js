@@ -1,5 +1,16 @@
+import * as I from 'infestines'
+
 export * from 'infestines'
 
 export const length = x => x.length
-export const isUndefined = x => x === undefined
-export const isNull = x => x === null
+
+export const sameLength = x => ((x = length(x)), y => x === length(y))
+
+export const isInstanceOf = I.curry((Class, x) => x instanceof Class)
+export const isInstanceOfObject = isInstanceOf(Object)
+
+export const o = I.curry((f, g) => x => f(g(x)))
+
+export const both = I.curry((p1, p2) => x => p1(x) && p2(x))
+
+export const ignore = _ => {}
