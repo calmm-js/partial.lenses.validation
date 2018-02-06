@@ -266,7 +266,7 @@ example, because the first stage of validating a function is always synchronous.
 <h4><a id="general"></a> <a href="#contents">≡</a> <a href="https://github.com/calmm-js/partial.lenses.validation/blob/master/README.md#general">■</a> <a href="#general">General</a></h4>
 <p>It is also possible to run validation rules with an arbitrary computational
 monad such as a monad based on observables.</p>
-<h5><a id="V-run"></a> <a href="#contents">≡</a> <a href="https://github.com/calmm-js/partial.lenses.validation/blob/master/README.md#V-run">■</a> <a href="#V-run"><code>V.run({Monad, onAccept,: value =&gt; any, onReject: error =&gt; any}, rule, value) ~&gt; any</code></a> <small><sup>v0.3.0</sup></small></h5>
+<h5><a id="V-run"></a> <a href="#contents">≡</a> <a href="https://github.com/calmm-js/partial.lenses.validation/blob/master/README.md#V-run">■</a> <a href="#V-run"><code>V.run({Monad, onAccept: value =&gt; any, onReject: error =&gt; any}, rule, value) ~&gt; any</code></a> <small><sup>v0.3.0</sup></small></h5>
 <p><code>V.run({Monad, onAccept, onReject}, rule, data)</code> runs the given validation rule
 on the given data using the specified computational monad and either calls the
 on accept callback with the validated data or the on reject callback with the
