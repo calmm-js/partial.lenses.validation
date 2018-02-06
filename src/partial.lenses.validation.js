@@ -1,95 +1,363 @@
 import * as L from 'partial.lenses'
 import * as I from './ext/infestines'
 
-const header = 'partial.lenses.validation: '
-function error(msg) {
-  throw Error(header + msg)
+//
+
+const Sync = L.transform((_x, _i, M, _xi2yM) => M, 0)
+
+//
+
+const throwAsync = x => Promise.reject(x)
+const returnAsync = x => Promise.resolve(x)
+
+const isThenable = x => null != x && typeof x.then === 'function'
+
+const Async = {
+  map: (xyP, xP) => (isThenable(xP) ? xP.then(xyP) : xyP(xP)),
+  ap: (xyP, xP) =>
+    isThenable(xP) || isThenable(xyP)
+      ? Promise.all([xyP, xP]).then(xy_x => xy_x[0](xy_x[1]))
+      : xyP(xP),
+  of: x => x,
+  chain: (xyP, xP) => (isThenable(xP) ? xP.then(xyP) : xyP(xP))
 }
 
-const defaultsArray = L.defaults(I.array0)
-const requiredNull = L.required(null)
+//
 
-const removeIfAllNull = L.rewrite(
-  xs => (L.all(I.isNull, L.elems, xs) ? undefined : xs)
-)
+const unique = {}
 
-export const accept = L.removeOp
-export const reject = L.setOp
+const uniqueToUndefined = x => (x === unique ? undefined : x)
+const undefinedToUnique = y => (undefined === y ? unique : y)
 
-const rejectArray = reject(I.array0)
-
-export const objectWith = I.curry((onOthers, propsToKeep, template) => {
-  onOthers = L.toFunction(onOthers)
-  const op = {}
-  const n = propsToKeep && I.length(propsToKeep)
-  const toKeep = n ? {} : I.object0
-  for (let i = 0; i < n; ++i) {
-    const k = propsToKeep[i]
-    op[k] = L.zero
-    toKeep[k] = 1
-  }
-  for (const k in template) op[k] = L.toFunction(template[k])
-  const min = {}
-  for (const k in template) min[k] = undefined
-  return L.toFunction([
-    (x, i, C, xi2yC) =>
-      C.map(o => {
-        for (const k in o) if (I.isUndefined(toKeep[k])) return o
-      }, xi2yC(I.assign({}, min, x), i)),
-    L.values,
-    (x, i, C, xi2yC) => (op[i] || onOthers)(x, i, C, xi2yC)
-  ])
+const fromUniques = L.rewrite(xs => {
+  const r = isRejected(xs)
+  if (r) xs = value(xs)
+  xs = xs.map(uniqueToUndefined)
+  return r ? rejected(xs) : xs
 })
 
-export const object = objectWith(accept)
+const toUnique = (x, i, M, xi2yM) => M.map(undefinedToUnique, xi2yM(x, i))
 
-export const arrayIxOr = I.curry((onOther, rules) =>
-  L.ifElse(I.isArray, [removeIfAllNull, L.elems, requiredNull, rules], onOther)
+//
+
+function Rejected(value) {
+  this.value = undefined !== value ? value : null
+}
+
+const isRejected = I.isInstanceOf(Rejected)
+
+const rejected = (process.env.NODE_ENV === 'production' ? I.id : I.o(I.freeze))(
+  value => new Rejected(value)
 )
 
-export const arrayIx = arrayIxOr(rejectArray)
+const value = x => x.value
 
-export const arrayIdOr = I.curry((onOther, rules) =>
-  L.ifElse(I.isArray, [defaultsArray, L.elems, rules], onOther)
+const fromRejected = x => (isRejected(x) ? value(x) : undefined)
+const fromRejectedOrNull = x => (isRejected(x) ? value(x) : null)
+
+//
+
+const trickle = (optic, from) => r =>
+  L.any(isRejected, optic, r) ? rejected(L.modify(optic, from, r)) : r
+
+const arrayIxTrickle = L.rewrite(trickle(L.elems, fromRejectedOrNull))
+const arrayIdTrickle = L.rewrite(trickle(L.elems, fromRejected))
+const propsTrickle = L.rewrite(trickle(L.values, fromRejected))
+
+//
+
+function toError(errors) {
+  const error = Error(JSON.stringify(errors, null, 2))
+  error.errors = errors
+  return error
+}
+
+function raise(errors) {
+  throw toError(errors)
+}
+
+//
+
+const getEither = (k, r, x) => (
+  (r = L.get(k, r)), void 0 === r ? L.get(k, x) : r
 )
 
-export const arrayId = arrayIdOr(rejectArray)
-
-const pargs = (name, fn) =>
-  (process.env.NODE_ENV === 'production'
-    ? I.id
-    : fn =>
-        function() {
-          for (let i = 0, n = arguments.length; i < n; ++i) {
-            const c = arguments[i]
-            if (!I.isArray(c) || I.length(c) !== 2)
-              error('`' + name + '` must be given pairs as arguments.')
-            const p = c[0]
-            if (!I.isFunction(p) || 2 < I.length(p))
-              error(
-                'The first elements of pairs given to `' +
-                  name +
-                  '` must be predicates of max arity 2, given `' +
-                  c[0] +
-                  '`.'
-              )
-          }
-          return fn.apply(null, arguments)
-        })(function() {
-    let r = accept
+const sumRight = (zero, one, plus) =>
+  function() {
     let n = arguments.length
-    while (n) {
-      const c = arguments[--n]
-      r = fn(c[0], c[1], r)
+    let r = zero
+    if (n) {
+      r = one(arguments[--n], r)
+      while (n) r = plus(arguments[--n], r)
     }
     return r
-  })
+  }
 
-export const cases = pargs('cases', L.ifElse)
-export const unless = pargs('unless', (c, a, r) => L.ifElse(c, r, reject(a)))
+const andCompose = (p, o) => L.ifElse(p, compose(o), reject)
 
-export {choose} from 'partial.lenses'
+// Internals
 
-export const optional = rules => L.toFunction([L.optional, rules])
+const toRule = (process.env.NODE_ENV === 'production'
+  ? I.id
+  : fn => rule => {
+      if (
+        (I.isFunction(rule) && (I.length(rule) < 3 || I.length(rule) === 4)) ||
+        (I.isArray(rule) && I.length(rule) === 2)
+      ) {
+        return fn(rule)
+      } else {
+        throw Error(`Invalid rule: ${rule}`)
+      }
+    })(rule => {
+  if (I.isFunction(rule)) {
+    return I.length(rule) < 3 ? where(rule) : rule
+  } else {
+    const error = rule[1]
+    return I.isFunction(error)
+      ? modifyError(error, rule[0])
+      : setError(error, rule[0])
+  }
+})
 
-export const validate = L.transform
+const toRules = L.modify(L.elems, toRule)
+
+const compose = I.o(L.toFunction, toRules)
+
+const raiseRejected = r => (isRejected(r) ? raise(toError(value(r))) : r)
+
+// Elimination
+
+export const run = I.curryN(3, ({Monad, onAccept, onReject}) => {
+  Monad = Monad || Sync
+  onAccept = onAccept || I.id
+  onReject = onReject || raise
+  const handler = r => (isRejected(r) ? onReject(value(r)) : onAccept(r))
+  return rule => (
+    (rule = toRule(rule)),
+    data => Monad.chain(handler, L.traverse(Monad, I.id, rule, data))
+  )
+})
+
+export const accepts = run({
+  onAccept: I.always(true),
+  onReject: I.always(false)
+})
+
+export const acceptsAsync = run({
+  Monad: Async,
+  onAccept: I.always(returnAsync(true)),
+  onReject: I.always(returnAsync(false))
+})
+
+export const errors = run({onAccept: I.ignore, onReject: I.id})
+
+export const errorsAsync = run({
+  Monad: Async,
+  onAccept: I.always(returnAsync()),
+  onReject: returnAsync
+})
+
+export const validate = run(I.object0)
+
+export const validateAsync = run({
+  Monad: Async,
+  onAccept: returnAsync,
+  onReject: I.o(throwAsync, toError)
+})
+
+export const tryValidateAsyncNow = run({
+  Monad: Async,
+  onReject: I.o(raise, toError)
+})
+
+// Primitive
+
+export const accept = L.zero
+
+export const acceptAs = value => (x, i, M, xi2yM) => xi2yM(value, i)
+
+export const acceptWith = fn => (x, i, M, xi2yM) =>
+  M.chain(x => xi2yM(x, i), fn(x, i))
+
+export const rejectWith = fn => (x, i, M, _xi2yM) => M.map(rejected, fn(x, i))
+
+export const rejectAs = I.o(L.setOp, rejected)
+
+export const reject = L.modifyOp(rejected)
+
+export const remove = acceptAs(undefined)
+
+// Predicates
+
+export const where = predicate => (x, i, M, _xi2yM) =>
+  M.chain(b => (b ? x : rejected(x)), predicate(x, i))
+
+// Elaboration
+
+export const modifyError = I.curry(
+  (fn, rule) => (
+    (rule = toRule(rule)),
+    (x, i, M, xi2yM) =>
+      M.chain(
+        r => (isRejected(r) ? M.map(rejected, fn(x, value(r), i)) : r),
+        rule(x, i, M, xi2yM)
+      )
+  )
+)
+
+export const setError = I.curry((error, rule) =>
+  compose([L.rewrite(r => (isRejected(r) ? rejected(error) : r)), rule])
+)
+
+// Logical
+
+export const not = rule =>
+  compose([L.setter((r, x) => (isRejected(r) ? x : rejected(x))), rule])
+
+export const or = sumRight(
+  reject,
+  toRule,
+  (rule, rest) => (
+    (rule = toRule(rule)),
+    (x, i, M, xi2yM) =>
+      M.chain(
+        r => (isRejected(r) ? rest(x, i, M, xi2yM) : M.of(r)),
+        rule(x, i, M, xi2yM)
+      )
+  )
+)
+
+export const and = sumRight(
+  accept,
+  toRule,
+  (rule, rest) => (
+    (rule = toRule(rule)),
+    (x, i, M, xi2yM) =>
+      M.chain(
+        r => (isRejected(r) ? M.of(r) : rest(r, i, M, xi2yM)),
+        rule(x, i, M, xi2yM)
+      )
+  )
+)
+
+// Arrays
+
+export const arrayIx = rule =>
+  andCompose(I.isArray, [arrayIxTrickle, L.elems, rule])
+
+export const arrayId = rule =>
+  andCompose(I.isArray, [arrayIdTrickle, L.elems, rule])
+
+export function tuple() {
+  const rules = []
+  const n = arguments.length
+  for (let i = 0; i < n; ++i) rules.push(toRule(arguments[i]))
+  return andCompose(I.both(I.isArray, I.sameLength(rules)), [
+    fromUniques,
+    arrayIxTrickle,
+    L.elems,
+    toUnique,
+    L.choose((_, i) => rules[i])
+  ])
+}
+
+// Functions
+
+export const dependentFn = I.curry(
+  (argsRule, toResRule) => (
+    (argsRule = toRule(argsRule)),
+    (fn, i, M, _xi2yM) =>
+      M.of(
+        I.isFunction(fn)
+          ? (...args) =>
+              M.chain(
+                args =>
+                  isRejected(args)
+                    ? raise(toError(value(args)))
+                    : M.chain(
+                        res =>
+                          M.map(
+                            raiseRejected,
+                            L.traverse(
+                              M,
+                              I.id,
+                              toRule(toResRule.apply(null, args)),
+                              res
+                            )
+                          ),
+                        fn.apply(null, args)
+                      ),
+                L.traverse(M, I.id, argsRule, args)
+              )
+          : rejected(fn)
+      )
+  )
+)
+
+export const freeFn = I.curry((argsRule, resRule) =>
+  dependentFn(argsRule, I.always(resRule))
+)
+
+// Objects
+
+export const keep = I.curry((key, rule) =>
+  andCompose(I.isInstanceOfObject, [
+    L.setter(
+      (r, x) =>
+        isRejected(r)
+          ? rejected(L.set(key, getEither(key, value(r), x), value(r)))
+          : r
+    ),
+    rule
+  ])
+)
+
+export const propsOr = I.curry((onOthers, template) =>
+  andCompose(I.isInstanceOfObject, [
+    propsTrickle,
+    L.branchOr(toRule(onOthers), L.modify(L.values, toRule, template))
+  ])
+)
+
+export const props = propsOr(reject)
+
+export const optional = rule => compose([L.optional, rule])
+
+// Conditional
+
+export const cases = sumRight(
+  reject,
+  (process.env.NODE_ENV === 'production'
+    ? I.id
+    : validate(
+        freeFn(
+          tuple(or(tuple(accept), tuple(I.isFunction, accept)), accept),
+          accept
+        )
+      ))(
+    (alt, rest) => (I.length(alt) === 1 ? alt[0] : ifElse(alt[0], alt[1], rest))
+  ),
+  (process.env.NODE_ENV === 'production'
+    ? I.id
+    : validate(
+        freeFn(tuple(tuple(I.isFunction, accept), accept), accept)
+      ))((alt, rest) => ifElse(alt[0], alt[1], rest))
+)
+
+export const ifElse = I.curry(
+  (p, c, a) => (
+    (c = toRule(c)),
+    (a = toRule(a)),
+    (x, i, M, xi2yM) =>
+      M.chain(b => (b ? c(x, i, M, xi2yM) : a(x, i, M, xi2yM)), p(x, i))
+  )
+)
+
+// Dependent
+
+export const choose = xi2r => (x, i, M, xi2yM) =>
+  M.chain(r => toRule(r)(x, i, M, xi2yM), xi2r(x, i))
+
+// Recursive
+
+export const lazy = I.o(L.lazy, I.o(toRule))
