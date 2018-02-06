@@ -1,6 +1,6 @@
 {
   "name": "partial.lenses.validation",
-  "version": "0.2.2",
+  "version": "0.3.0",
   "description": "Validation transform combinators for Partial Lenses",
   "module": "dist/partial.lenses.validation.es.js",
   "main": "dist/partial.lenses.validation.cjs.js",
@@ -28,7 +28,8 @@
     "structural",
     "json",
     "validation",
-    "transform"
+    "transform",
+    "contracts"
   ],
   "license": "MIT",
   "bugs": {
@@ -37,7 +38,7 @@
   "homepage": "https://github.com/calmm-js/partial.lenses.validation#readme",
   "dependencies": {
     "infestines": "^0.4.5",
-    "partial.lenses": "^13.2.0"
+    "partial.lenses": "^13.2.1"
   },
   "devDependencies": {
     "babel-cli": "^6.26.0",
@@ -65,13 +66,13 @@
     "babel-polyfill": "^6.26.0",
     "babel-register": "^6.26.0",
     "codecov": "^3.0.0",
-    "eslint": "^4.16.0",
+    "eslint": "^4.17.0",
     "klipse-github-docs-generator": "^0.3.1",
     "livereload": "^0.6.3",
     "mocha": "^5.0.0",
     "nyc": "^11.4.1",
     "ramda": "^0.25.0",
-    "rollup": "^0.54.1",
+    "rollup": "^0.55.3",
     "rollup-plugin-babel": "^3.0.3",
     "rollup-plugin-node-resolve": "^3.0.2",
     "rollup-plugin-replace": "^2.0.0",

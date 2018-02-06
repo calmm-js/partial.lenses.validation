@@ -7,12 +7,13 @@
     "structural",
     "json",
     "validation",
-    "transform"
+    "transform",
+    "contracts"
   ],
   "homepage": "https://github.com/calmm-js/partial.lenses.validation",
   "dependencies": {
     "infestines": "^0.4.5",
-    "partial.lenses": "^13.2.0"
+    "partial.lenses": "^13.2.1"
   },
   "ignore": ["*", "!*.md", "!dist/*"]
 }
