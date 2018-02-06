@@ -29,7 +29,8 @@
     "json",
     "validation",
     "transform",
-    "contracts"
+    "contracts",
+    "asynchronous"
   ],
   "license": "MIT",
   "bugs": {
