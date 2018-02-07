@@ -126,6 +126,71 @@ var propsTrickle = /*#__PURE__*/L.rewrite( /*#__PURE__*/trickle(L.values, fromRe
 
 //
 
+function toError(errors) {
+  var error = Error(JSON.stringify(errors, null, 2));
+  error.errors = errors;
+  return error;
+}
+
+function raise(errors) {
+  throw toError(errors);
+}
+
+var raiseRejected = function raiseRejected(r) {
+  return isRejected(r) ? raise(toError(value(r))) : r;
+};
+
+//
+
+var getEither = function getEither(k, r, x) {
+  return r = L.get(k, r), void 0 === r ? L.get(k, x) : r;
+};
+
+var sumRight = function sumRight(zero, one, plus) {
+  return function () {
+    var n = arguments.length;
+    var r = zero;
+    if (n) {
+      r = one(arguments[--n], r);
+      while (n) {
+        r = plus(arguments[--n], r);
+      }
+    }
+    return r;
+  };
+};
+
+//
+
+var toRule = /*#__PURE__*/(process.env.NODE_ENV === 'production' ? I.id : function (fn) {
+  return function (rule) {
+    if (I.isFunction(rule) && (length(rule) < 3 || length(rule) === 4) || I.isArray(rule) && length(rule) === 2) {
+      return fn(rule);
+    } else {
+      throw Error('Invalid rule: ' + rule);
+    }
+  };
+})(function (rule) {
+  if (I.isFunction(rule)) {
+    return length(rule) < 3 ? where(rule) : rule;
+  } else {
+    var error = rule[1];
+    return I.isFunction(error) ? modifyError(error, rule[0]) : setError(error, rule[0]);
+  }
+});
+
+var toRules = /*#__PURE__*/L.modify(L.elems, toRule);
+
+//
+
+var andCompose = function andCompose(p, o$$1) {
+  return L.ifElse(p, compose(o$$1), reject);
+};
+
+var compose = /*#__PURE__*/o(L.toFunction, toRules);
+
+//
+
 var tupleOr = function tupleOr(_ref) {
   var less = _ref.less,
       rest = _ref.rest;
@@ -151,70 +216,7 @@ var tupleOr = function tupleOr(_ref) {
   };
 };
 
-//
-
-function toError(errors) {
-  var error = Error(JSON.stringify(errors, null, 2));
-  error.errors = errors;
-  return error;
-}
-
-function raise(errors) {
-  throw toError(errors);
-}
-
-//
-
-var getEither = function getEither(k, r, x) {
-  return r = L.get(k, r), void 0 === r ? L.get(k, x) : r;
-};
-
-var sumRight = function sumRight(zero, one, plus) {
-  return function () {
-    var n = arguments.length;
-    var r = zero;
-    if (n) {
-      r = one(arguments[--n], r);
-      while (n) {
-        r = plus(arguments[--n], r);
-      }
-    }
-    return r;
-  };
-};
-
-var andCompose = function andCompose(p, o$$1) {
-  return L.ifElse(p, compose(o$$1), reject);
-};
-
-// Internals
-
-var toRule = /*#__PURE__*/(process.env.NODE_ENV === 'production' ? I.id : function (fn) {
-  return function (rule) {
-    if (I.isFunction(rule) && (length(rule) < 3 || length(rule) === 4) || I.isArray(rule) && length(rule) === 2) {
-      return fn(rule);
-    } else {
-      throw Error('Invalid rule: ' + rule);
-    }
-  };
-})(function (rule) {
-  if (I.isFunction(rule)) {
-    return length(rule) < 3 ? where(rule) : rule;
-  } else {
-    var error = rule[1];
-    return I.isFunction(error) ? modifyError(error, rule[0]) : setError(error, rule[0]);
-  }
-});
-
-var toRules = /*#__PURE__*/L.modify(L.elems, toRule);
-
-var compose = /*#__PURE__*/o(L.toFunction, toRules);
-
-var raiseRejected = function raiseRejected(r) {
-  return isRejected(r) ? raise(toError(value(r))) : r;
-};
-
-// Elimination
+// General
 
 var run = /*#__PURE__*/I.curryN(3, function (_ref2) {
   var Monad = _ref2.Monad,
@@ -234,10 +236,18 @@ var run = /*#__PURE__*/I.curryN(3, function (_ref2) {
   };
 });
 
+// Synchronous
+
 var accepts = /*#__PURE__*/run({
   onAccept: /*#__PURE__*/I.always(true),
   onReject: /*#__PURE__*/I.always(false)
 });
+
+var errors = /*#__PURE__*/run({ onAccept: ignore, onReject: I.id });
+
+var validate = /*#__PURE__*/run(I.object0);
+
+// Asynchronous
 
 var acceptsAsync = /*#__PURE__*/run({
   Monad: Async,
@@ -245,25 +255,21 @@ var acceptsAsync = /*#__PURE__*/run({
   onReject: /*#__PURE__*/I.always( /*#__PURE__*/returnAsync(false))
 });
 
-var errors = /*#__PURE__*/run({ onAccept: ignore, onReject: I.id });
-
 var errorsAsync = /*#__PURE__*/run({
   Monad: Async,
   onAccept: /*#__PURE__*/I.always( /*#__PURE__*/returnAsync()),
   onReject: returnAsync
 });
 
-var validate = /*#__PURE__*/run(I.object0);
+var tryValidateAsyncNow = /*#__PURE__*/run({
+  Monad: Async,
+  onReject: /*#__PURE__*/o(raise, toError)
+});
 
 var validateAsync = /*#__PURE__*/run({
   Monad: Async,
   onAccept: returnAsync,
   onReject: /*#__PURE__*/o(throwAsync, toError)
-});
-
-var tryValidateAsyncNow = /*#__PURE__*/run({
-  Monad: Async,
-  onReject: /*#__PURE__*/o(raise, toError)
 });
 
 // Primitive
@@ -324,6 +330,14 @@ var setError = /*#__PURE__*/I.curry(function (error, rule) {
 
 // Logical
 
+var and = /*#__PURE__*/sumRight(accept, toRule, function (rule, rest) {
+  return rule = toRule(rule), function (x, i, M, xi2yM) {
+    return M.chain(function (r) {
+      return isRejected(r) ? M.of(r) : rest(r, i, M, xi2yM);
+    }, rule(x, i, M, xi2yM));
+  };
+});
+
 var not = function not(rule) {
   return compose([L.setter(function (r, x) {
     return isRejected(r) ? x : rejected(x);
@@ -338,27 +352,21 @@ var or = /*#__PURE__*/sumRight(reject, toRule, function (rule, rest) {
   };
 });
 
-var and = /*#__PURE__*/sumRight(accept, toRule, function (rule, rest) {
-  return rule = toRule(rule), function (x, i, M, xi2yM) {
-    return M.chain(function (r) {
-      return isRejected(r) ? M.of(r) : rest(r, i, M, xi2yM);
-    }, rule(x, i, M, xi2yM));
-  };
-});
-
-// Arrays
-
-var arrayIx = function arrayIx(rule) {
-  return andCompose(I.isArray, [arrayIxTrickle, L.elems, rule]);
-};
+// Uniform
 
 var arrayId = function arrayId(rule) {
   return andCompose(I.isArray, [arrayIdTrickle, L.elems, rule]);
 };
 
-var tuple = /*#__PURE__*/tupleOr({ less: false, rest: reject });
+var arrayIx = function arrayIx(rule) {
+  return andCompose(I.isArray, [arrayIxTrickle, L.elems, rule]);
+};
+
+// Varying
 
 var args = /*#__PURE__*/tupleOr({ less: true, rest: accept });
+
+var tuple = /*#__PURE__*/tupleOr({ less: false, rest: reject });
 
 // Functions
 
@@ -390,15 +398,15 @@ var keep = /*#__PURE__*/I.curry(function (key, rule) {
   }), rule]);
 });
 
+var optional = function optional(rule) {
+  return compose([L.optional, rule]);
+};
+
 var propsOr = /*#__PURE__*/I.curry(function (onOthers, template) {
   return andCompose(isInstanceOfObject, [propsTrickle, L.branchOr(toRule(onOthers), L.modify(L.values, toRule, template))]);
 });
 
 var props = /*#__PURE__*/propsOr(reject);
-
-var optional = function optional(rule) {
-  return compose([L.optional, rule]);
-};
 
 // Conditional
 
@@ -432,12 +440,12 @@ var lazy = /*#__PURE__*/o(L.lazy, /*#__PURE__*/o(toRule));
 
 exports.run = run;
 exports.accepts = accepts;
-exports.acceptsAsync = acceptsAsync;
 exports.errors = errors;
-exports.errorsAsync = errorsAsync;
 exports.validate = validate;
-exports.validateAsync = validateAsync;
+exports.acceptsAsync = acceptsAsync;
+exports.errorsAsync = errorsAsync;
 exports.tryValidateAsyncNow = tryValidateAsyncNow;
+exports.validateAsync = validateAsync;
 exports.accept = accept;
 exports.acceptAs = acceptAs;
 exports.acceptWith = acceptWith;
@@ -448,19 +456,19 @@ exports.remove = remove;
 exports.where = where;
 exports.modifyError = modifyError;
 exports.setError = setError;
+exports.and = and;
 exports.not = not;
 exports.or = or;
-exports.and = and;
-exports.arrayIx = arrayIx;
 exports.arrayId = arrayId;
-exports.tuple = tuple;
+exports.arrayIx = arrayIx;
 exports.args = args;
+exports.tuple = tuple;
 exports.dependentFn = dependentFn;
 exports.freeFn = freeFn;
 exports.keep = keep;
+exports.optional = optional;
 exports.propsOr = propsOr;
 exports.props = props;
-exports.optional = optional;
 exports.cases = cases;
 exports.ifElse = ifElse;
 exports.choose = choose;

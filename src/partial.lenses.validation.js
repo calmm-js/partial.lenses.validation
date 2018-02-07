@@ -66,6 +66,69 @@ const propsTrickle = L.rewrite(trickle(L.values, fromRejected))
 
 //
 
+function toError(errors) {
+  const error = Error(JSON.stringify(errors, null, 2))
+  error.errors = errors
+  return error
+}
+
+function raise(errors) {
+  throw toError(errors)
+}
+
+const raiseRejected = r => (isRejected(r) ? raise(toError(value(r))) : r)
+
+//
+
+const getEither = (k, r, x) => (
+  (r = L.get(k, r)), void 0 === r ? L.get(k, x) : r
+)
+
+const sumRight = (zero, one, plus) =>
+  function() {
+    let n = arguments.length
+    let r = zero
+    if (n) {
+      r = one(arguments[--n], r)
+      while (n) r = plus(arguments[--n], r)
+    }
+    return r
+  }
+
+//
+
+const toRule = (process.env.NODE_ENV === 'production'
+  ? I.id
+  : fn => rule => {
+      if (
+        (I.isFunction(rule) && (I.length(rule) < 3 || I.length(rule) === 4)) ||
+        (I.isArray(rule) && I.length(rule) === 2)
+      ) {
+        return fn(rule)
+      } else {
+        throw Error(`Invalid rule: ${rule}`)
+      }
+    })(rule => {
+  if (I.isFunction(rule)) {
+    return I.length(rule) < 3 ? where(rule) : rule
+  } else {
+    const error = rule[1]
+    return I.isFunction(error)
+      ? modifyError(error, rule[0])
+      : setError(error, rule[0])
+  }
+})
+
+const toRules = L.modify(L.elems, toRule)
+
+//
+
+const andCompose = (p, o) => L.ifElse(p, compose(o), reject)
+
+const compose = I.o(L.toFunction, toRules)
+
+//
+
 const tupleOr = ({less, rest}) => (
   (rest = toRule(rest)),
   function() {
@@ -99,68 +162,7 @@ const tupleOr = ({less, rest}) => (
   }
 )
 
-//
-
-function toError(errors) {
-  const error = Error(JSON.stringify(errors, null, 2))
-  error.errors = errors
-  return error
-}
-
-function raise(errors) {
-  throw toError(errors)
-}
-
-//
-
-const getEither = (k, r, x) => (
-  (r = L.get(k, r)), void 0 === r ? L.get(k, x) : r
-)
-
-const sumRight = (zero, one, plus) =>
-  function() {
-    let n = arguments.length
-    let r = zero
-    if (n) {
-      r = one(arguments[--n], r)
-      while (n) r = plus(arguments[--n], r)
-    }
-    return r
-  }
-
-const andCompose = (p, o) => L.ifElse(p, compose(o), reject)
-
-// Internals
-
-const toRule = (process.env.NODE_ENV === 'production'
-  ? I.id
-  : fn => rule => {
-      if (
-        (I.isFunction(rule) && (I.length(rule) < 3 || I.length(rule) === 4)) ||
-        (I.isArray(rule) && I.length(rule) === 2)
-      ) {
-        return fn(rule)
-      } else {
-        throw Error(`Invalid rule: ${rule}`)
-      }
-    })(rule => {
-  if (I.isFunction(rule)) {
-    return I.length(rule) < 3 ? where(rule) : rule
-  } else {
-    const error = rule[1]
-    return I.isFunction(error)
-      ? modifyError(error, rule[0])
-      : setError(error, rule[0])
-  }
-})
-
-const toRules = L.modify(L.elems, toRule)
-
-const compose = I.o(L.toFunction, toRules)
-
-const raiseRejected = r => (isRejected(r) ? raise(toError(value(r))) : r)
-
-// Elimination
+// General
 
 export const run = I.curryN(3, ({Monad, onAccept, onReject}) => {
   Monad = Monad || Sync
@@ -173,10 +175,18 @@ export const run = I.curryN(3, ({Monad, onAccept, onReject}) => {
   )
 })
 
+// Synchronous
+
 export const accepts = run({
   onAccept: I.always(true),
   onReject: I.always(false)
 })
+
+export const errors = run({onAccept: I.ignore, onReject: I.id})
+
+export const validate = run(I.object0)
+
+// Asynchronous
 
 export const acceptsAsync = run({
   Monad: Async,
@@ -184,25 +194,21 @@ export const acceptsAsync = run({
   onReject: I.always(returnAsync(false))
 })
 
-export const errors = run({onAccept: I.ignore, onReject: I.id})
-
 export const errorsAsync = run({
   Monad: Async,
   onAccept: I.always(returnAsync()),
   onReject: returnAsync
 })
 
-export const validate = run(I.object0)
+export const tryValidateAsyncNow = run({
+  Monad: Async,
+  onReject: I.o(raise, toError)
+})
 
 export const validateAsync = run({
   Monad: Async,
   onAccept: returnAsync,
   onReject: I.o(throwAsync, toError)
-})
-
-export const tryValidateAsyncNow = run({
-  Monad: Async,
-  onReject: I.o(raise, toError)
 })
 
 // Primitive
@@ -246,6 +252,19 @@ export const setError = I.curry((error, rule) =>
 
 // Logical
 
+export const and = sumRight(
+  accept,
+  toRule,
+  (rule, rest) => (
+    (rule = toRule(rule)),
+    (x, i, M, xi2yM) =>
+      M.chain(
+        r => (isRejected(r) ? M.of(r) : rest(r, i, M, xi2yM)),
+        rule(x, i, M, xi2yM)
+      )
+  )
+)
+
 export const not = rule =>
   compose([L.setter((r, x) => (isRejected(r) ? x : rejected(x))), rule])
 
@@ -262,30 +281,19 @@ export const or = sumRight(
   )
 )
 
-export const and = sumRight(
-  accept,
-  toRule,
-  (rule, rest) => (
-    (rule = toRule(rule)),
-    (x, i, M, xi2yM) =>
-      M.chain(
-        r => (isRejected(r) ? M.of(r) : rest(r, i, M, xi2yM)),
-        rule(x, i, M, xi2yM)
-      )
-  )
-)
-
-// Arrays
-
-export const arrayIx = rule =>
-  andCompose(I.isArray, [arrayIxTrickle, L.elems, rule])
+// Uniform
 
 export const arrayId = rule =>
   andCompose(I.isArray, [arrayIdTrickle, L.elems, rule])
 
-export const tuple = tupleOr({less: false, rest: reject})
+export const arrayIx = rule =>
+  andCompose(I.isArray, [arrayIxTrickle, L.elems, rule])
+
+// Varying
 
 export const args = tupleOr({less: true, rest: accept})
+
+export const tuple = tupleOr({less: false, rest: reject})
 
 // Functions
 
@@ -338,6 +346,8 @@ export const keep = I.curry((key, rule) =>
   ])
 )
 
+export const optional = rule => compose([L.optional, rule])
+
 export const propsOr = I.curry((onOthers, template) =>
   andCompose(I.isInstanceOfObject, [
     propsTrickle,
@@ -346,8 +356,6 @@ export const propsOr = I.curry((onOthers, template) =>
 )
 
 export const props = propsOr(reject)
-
-export const optional = rule => compose([L.optional, rule])
 
 // Conditional
 

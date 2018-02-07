@@ -47,7 +47,10 @@ structure.</p>
 <a href="https://david-dm.org/calmm-js/partial.lenses.validation?type=dev"><img src="https://david-dm.org/calmm-js/partial.lenses.validation/dev-status.svg" alt=""></a></p>
 <h2><a id="contents"></a> <a href="#contents">≡</a> <a href="https://github.com/calmm-js/partial.lenses.validation/blob/master/README.md#contents">■</a> <a href="#contents">Contents</a></h2>
 <ul>
-<li><a href="#an-example">An example</a></li>
+<li><a href="#examples">Examples</a><ul>
+<li><a href="#event-table-ui">Event table UI</a></li>
+</ul>
+</li>
 <li><a href="#reference">Reference</a><ul>
 <li><a href="#elimination">Elimination</a><ul>
 <li><a href="#synchronous">Synchronous</a><ul>
@@ -59,8 +62,8 @@ structure.</p>
 <li><a href="#asynchronous">Asynchronous</a><ul>
 <li><a href="#V-acceptsAsync"><code>V.acceptsAsync(rule, data) ~&gt; promise(boolean)</code></a> <small><sup>v0.3.0</sup></small></li>
 <li><a href="#V-errorsAsync"><code>V.errorsAsync(rule, data) ~&gt; promise(errors | undefined)</code></a> <small><sup>v0.3.0</sup></small></li>
-<li><a href="#V-validateAsync"><code>V.validateAsync(rule, data) ~&gt; promise(data)</code></a> <small><sup>v0.3.0</sup></small></li>
 <li><a href="#V-tryValidateAsyncNow"><code>V.tryValidateAsyncNow(rule, data) ~{throws}~&gt; data | promise(data)</code></a> <small><sup>v0.3.0</sup></small></li>
+<li><a href="#V-validateAsync"><code>V.validateAsync(rule, data) ~&gt; promise(data)</code></a> <small><sup>v0.3.0</sup></small></li>
 </ul>
 </li>
 <li><a href="#general">General</a><ul>
@@ -95,10 +98,16 @@ structure.</p>
 </ul>
 </li>
 <li><a href="#arrays">Arrays</a><ul>
-<li><a href="#V-args"><code>V.args(...rules) ~&gt; rule</code></a> <small><sup>v0.3.1</sup></small></li>
+<li><a href="#uniform">Uniform</a><ul>
 <li><a href="#V-arrayId"><code>V.arrayId(rule) ~&gt; rule</code></a> <small><sup>v0.3.0</sup></small></li>
 <li><a href="#V-arrayIx"><code>V.arrayIx(rule) ~&gt; rule</code></a> <small><sup>v0.3.0</sup></small></li>
+</ul>
+</li>
+<li><a href="#varying">Varying</a><ul>
+<li><a href="#V-args"><code>V.args(...rules) ~&gt; rule</code></a> <small><sup>v0.3.1</sup></small></li>
 <li><a href="#V-tuple"><code>V.tuple(...rules) ~&gt; rule</code></a> <small><sup>v0.3.0</sup></small></li>
+</ul>
+</li>
 </ul>
 </li>
 <li><a href="#functions">Functions</a><ul>
@@ -131,11 +140,14 @@ structure.</p>
 <li><a href="#known-caveats">Known caveats</a></li>
 <li><a href="#related-work">Related work</a></li>
 </ul>
-<h2><a id="an-example"></a> <a href="#contents">≡</a> <a href="https://github.com/calmm-js/partial.lenses.validation/blob/master/README.md#an-example">■</a> <a href="#an-example">An example</a></h2>
-<p>Imagine a UI, or take a look at this <a href="https://codesandbox.io/s/x20w218owo">live
-example</a>, for editing a data structure that
-is an array (table) of objects (records) that have a <code>date</code> field and an <code>event</code>
-field:</p>
+<h2><a id="examples"></a> <a href="#contents">≡</a> <a href="https://github.com/calmm-js/partial.lenses.validation/blob/master/README.md#examples">■</a> <a href="#examples">Examples</a></h2>
+<p>The following sections briefly describe some examples based on actual use cases
+of this library.</p>
+<h3><a id="event-table-ui"></a> <a href="#contents">≡</a> <a href="https://github.com/calmm-js/partial.lenses.validation/blob/master/README.md#event-table-ui">■</a> <a href="#event-table-ui">Event table UI</a></h3>
+<p>Imagine a UI &mdash; or take a look at this <a href="https://codesandbox.io/s/x20w218owo">live
+example</a> &mdash; for editing a data
+structure that is an array (table) of objects (records) that have a <code>date</code> field
+and an <code>event</code> field:</p>
 <pre><code class="hljs lang-json">[
   {&quot;date&quot;: &quot;2017-09-11&quot;, &quot;event&quot;: &quot;EFSA-H&quot;},
   {&quot;date&quot;: &quot;2017-09-20&quot;, &quot;event&quot;: &quot;EFSA-T&quot;},
@@ -238,10 +250,11 @@ extra <code>errors</code> property that has the (non-stringified) validation err
 </code></pre>
 <h4><a id="asynchronous"></a> <a href="#contents">≡</a> <a href="https://github.com/calmm-js/partial.lenses.validation/blob/master/README.md#asynchronous">■</a> <a href="#asynchronous">Asynchronous</a></h4>
 <p>In case a validation rule contains asynchronous parts, it is necessary to use
-one of the asynchronous elimination functions.  The below <code>ghInfoOfAsync</code>
-function is a simple asynchronous function that tries to use the <a href="https://developer.github.com/v3/search/#search-repositories">public GitHub
-search API</a> to
-search for information on a GitHub project of specified name:</p>
+one of the asynchronous elimination functions.</p>
+<p>The below <code>ghInfoOfAsync</code> function is a simple asynchronous function that tries
+to use the <a href="https://developer.github.com/v3/search/#search-repositories">public GitHub search
+API</a> to search for
+information on a GitHub project of specified name:</p>
 <pre><code class="hljs lang-js">async function ghInfoOfAsync(name) {
   const q = encodeURIComponent(name)
   const res = await fetch(`https://api.github.com/search/repositories?q=${q}`)
@@ -272,6 +285,30 @@ always be returned as a
   ]
 ).catch(R.identity).then(console.log)
 </code></pre>
+<h5><a id="V-tryValidateAsyncNow"></a> <a href="#contents">≡</a> <a href="https://github.com/calmm-js/partial.lenses.validation/blob/master/README.md#V-tryValidateAsyncNow">■</a> <a href="#V-tryValidateAsyncNow"><code>V.tryValidateAsyncNow(rule, data) ~{throws}~&gt; data | promise(data)</code></a> <small><sup>v0.3.0</sup></small></h5>
+<p><code>V.tryValidateAsyncNow(rule, data)</code> runs the given validation rule on the given
+data like <a href="#V-validateAsync"><code>V.validateAsync</code></a> except that in case the
+validation result is synchronously available it is returned or thrown
+immediately as is without wrapping it inside a
+<a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Promise">promise</a>.
+In case the result is not available synchronously, a promise is returned.</p>
+<p><code>V.tryValidateAsyncNow</code> can be used for wrapping asynchronous functions, for
+example, because the first stage of validating a function is always synchronous.</p>
+<p>For example:</p>
+<pre><code class="hljs lang-js">var ghInfoOfAsyncChecked = V.tryValidateAsyncNow(
+  V.dependentFn(
+    V.args(R.and(R.is(String), V.not(R.isEmpty))),
+    name =&gt; V.optional(
+      V.propsOr(V.accept, {
+        name: R.equals(name),
+        stargazers_count: R.is(Number)
+        // ...
+      })
+    )
+  ),
+  ghInfoOfAsync
+)
+</code></pre>
 <h5><a id="V-validateAsync"></a> <a href="#contents">≡</a> <a href="https://github.com/calmm-js/partial.lenses.validation/blob/master/README.md#V-validateAsync">■</a> <a href="#V-validateAsync"><code>V.validateAsync(rule, data) ~&gt; promise(data)</code></a> <small><sup>v0.3.0</sup></small></h5>
 <p><code>V.validateAsync(rule, data)</code> runs the given validation rule on the given data
 like <a href="#V-validate"><code>V.validate</code></a> except that the validation rule is allowed to
@@ -283,7 +320,7 @@ whether accepted or rejected, is returned as a
   V.arrayId(
     V.and(
       R.is(String),
-      V.acceptWith(ghInfoOfAsync),
+      V.acceptWith(ghInfoOfAsyncChecked),
       V.keep(
         &#39;name&#39;,
         V.propsOr(V.remove, {
@@ -302,33 +339,6 @@ whether accepted or rejected, is returned as a
   ]
 ).catch(R.identity).then(console.log)
 </code></pre>
-<h5><a id="V-tryValidateAsyncNow"></a> <a href="#contents">≡</a> <a href="https://github.com/calmm-js/partial.lenses.validation/blob/master/README.md#V-tryValidateAsyncNow">■</a> <a href="#V-tryValidateAsyncNow"><code>V.tryValidateAsyncNow(rule, data) ~{throws}~&gt; data | promise(data)</code></a> <small><sup>v0.3.0</sup></small></h5>
-<p><code>V.tryValidateAsyncNow(rule, data)</code> runs the given validation rule on the give
-data like <a href="#V-validateAsync"><code>V.validateAsync</code></a> except that in case the
-validation result is synchronously available it is returned or thrown
-immediately as is without wrapping it inside a
-<a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Promise">promise</a>.
-In case the result is not available synchronously, a promise is returned.</p>
-<p><code>V.tryValidateAsyncNow</code> can be used for wrapping asynchronous functions, for
-example, because the first stage of validating a function is always synchronous.</p>
-<p>For example:</p>
-<pre><code class="hljs lang-js">var ghInfoOfAsyncChecked = V.tryValidateAsyncNow(
-  V.dependentFn(
-    V.args(R.and(R.is(String), V.not(R.isEmpty))),
-    name =&gt; V.or(
-      R.equals(undefined),
-      V.propsOr(V.accept, {
-        name: R.equals(name),
-        stargazers_count: R.is(Number)
-        // ...
-      })
-    )
-  ),
-  ghInfoOfAsync
-)
-</code></pre>
-<p>You can now replace calls to <code>ghInfoOfAsync</code> in the previous examples to call
-the above dynamically checked version <code>ghInfoOfAsyncChecked</code>.</p>
 <h4><a id="general"></a> <a href="#contents">≡</a> <a href="https://github.com/calmm-js/partial.lenses.validation/blob/master/README.md#general">■</a> <a href="#general">General</a></h4>
 <p>It is also possible to run validation rules with an arbitrary computational
 monad such as a monad based on observables.</p>
@@ -350,15 +360,16 @@ If you specify the <code>Monad</code>, you will likely want to specify both <cod
 it performs no validation whatsoever.</p>
 <h4><a id="V-acceptAs"></a> <a href="#contents">≡</a> <a href="https://github.com/calmm-js/partial.lenses.validation/blob/master/README.md#V-acceptAs">■</a> <a href="#V-acceptAs"><code>V.acceptAs(value) ~&gt; rule</code></a> <small><sup>v0.3.0</sup></small></h4>
 <p><code>V.acceptAs(value)</code> accepts the current focus and replaces it with the given
-value.  <code>V.acceptAs</code> is rarely used alone and is usually combined <code>V.acceptAs</code>
-with e.g. <a href="#V-and"><code>V.and</code></a>.</p>
+value.  <code>V.acceptAs</code> is rarely used alone, because it performs no validation as
+such, and is usually combined with e.g. <a href="#V-and"><code>V.and</code></a>.</p>
 <p>For example:</p>
 <pre><code class="hljs lang-js">V.validate(V.and(R.equals(1), V.acceptAs(&#39;one&#39;)), 1)
 </code></pre>
 <h4><a id="V-acceptWith"></a> <a href="#contents">≡</a> <a href="https://github.com/calmm-js/partial.lenses.validation/blob/master/README.md#V-acceptWith">■</a> <a href="#V-acceptWith"><code>V.acceptWith((value, index) =&gt; value) ~&gt; rule</code></a> <small><sup>v0.3.0</sup></small></h4>
 <p><code>V.acceptWith(fn)</code> accepts the current focus and replaces it with the value
-returned by the given function.  <code>V.acceptWith</code> is rarely used alone and is
-usually combined <code>V.acceptWith</code> with e.g. <a href="#V-and"><code>V.and</code></a>.</p>
+returned by the given function.  <code>V.acceptWith</code> is rarely used alone, because it
+performs no validation as such, and is usually combined with
+e.g. <a href="#V-and"><code>V.and</code></a>.</p>
 <p>In a logical <a href="#V-or"><code>V.or</code></a> each rule gets the same value as input and the
 result of the first accepting rule becomes the result.  In a logical
 <a href="#V-and"><code>V.and</code></a> the output of a previous rule becomes the input of the next
@@ -539,14 +550,16 @@ last of the given rules becomes the result of <code>V.or</code>.</p>
 <h3><a id="arrays"></a> <a href="#contents">≡</a> <a href="https://github.com/calmm-js/partial.lenses.validation/blob/master/README.md#arrays">■</a> <a href="#arrays">Arrays</a></h3>
 <p>Rules for validating elements can be lifted to rules for validating arrays of
 elements.</p>
-<h4><a id="V-arrayId"></a> <a href="#contents">≡</a> <a href="https://github.com/calmm-js/partial.lenses.validation/blob/master/README.md#V-arrayId">■</a> <a href="#V-arrayId"><code>V.arrayId(rule) ~&gt; rule</code></a> <small><sup>v0.3.0</sup></small></h4>
+<h4><a id="uniform"></a> <a href="#contents">≡</a> <a href="https://github.com/calmm-js/partial.lenses.validation/blob/master/README.md#uniform">■</a> <a href="#uniform">Uniform</a></h4>
+<p>All elements in a uniform array have the same form.</p>
+<h5><a id="V-arrayId"></a> <a href="#contents">≡</a> <a href="https://github.com/calmm-js/partial.lenses.validation/blob/master/README.md#V-arrayId">■</a> <a href="#V-arrayId"><code>V.arrayId(rule) ~&gt; rule</code></a> <small><sup>v0.3.0</sup></small></h5>
 <p><code>V.arrayId(rule)</code> validates the elements of an array with the given rule.  In
 case one or more elements are rejected, the error is an array containing only
 the rejected elements.</p>
 <p>The idea is that the elements of the validated array are addressed by some
 unique identities intrinsic to the elements.  Filtering out the accepted
 elements keeps the error result readable.</p>
-<h4><a id="V-arrayIx"></a> <a href="#contents">≡</a> <a href="https://github.com/calmm-js/partial.lenses.validation/blob/master/README.md#V-arrayIx">■</a> <a href="#V-arrayIx"><code>V.arrayIx(rule) ~&gt; rule</code></a> <small><sup>v0.3.0</sup></small></h4>
+<h5><a id="V-arrayIx"></a> <a href="#contents">≡</a> <a href="https://github.com/calmm-js/partial.lenses.validation/blob/master/README.md#V-arrayIx">■</a> <a href="#V-arrayIx"><code>V.arrayIx(rule) ~&gt; rule</code></a> <small><sup>v0.3.0</sup></small></h5>
 <p><code>V.arrayIx(rule)</code> validates the elements of an array with the given rule.  In
 case one or more elements are rejected, the error is an array containing the
 rejected elements and <code>null</code> values for the accepted elements.</p>
@@ -554,7 +567,9 @@ rejected elements and <code>null</code> values for the accepted elements.</p>
 index and it is necessary to keep the rejected elements at their original
 indices.  The accepted elements are replaced with <code>null</code> to make the output less
 noisy.</p>
-<h4><a id="V-args"></a> <a href="#contents">≡</a> <a href="https://github.com/calmm-js/partial.lenses.validation/blob/master/README.md#V-args">■</a> <a href="#V-args"><code>V.args(...rules) ~&gt; rule</code></a> <small><sup>v0.3.1</sup></small></h4>
+<h4><a id="varying"></a> <a href="#contents">≡</a> <a href="https://github.com/calmm-js/partial.lenses.validation/blob/master/README.md#varying">■</a> <a href="#varying">Varying</a></h4>
+<p>Elements at different positions in a varying array may have different forms.</p>
+<h5><a id="V-args"></a> <a href="#contents">≡</a> <a href="https://github.com/calmm-js/partial.lenses.validation/blob/master/README.md#V-args">■</a> <a href="#V-args"><code>V.args(...rules) ~&gt; rule</code></a> <small><sup>v0.3.1</sup></small></h5>
 <p><code>V.args(rule1, ..., ruleN)</code> validates an array by validating each element of the
 array with a specific rule.  If the array is shorter than the number of rules,
 the missing elements are treated as being <code>undefined</code> and validated with the
@@ -562,7 +577,7 @@ corresponding rules.  This means that rules for optional elements need to be
 explicitly specified as such.  If the array is longer than the number of rules,
 the extra elements are simply accepted.  This is roughly how JavaScript treats
 function arguments.  See also <a href="#V-tuple"><code>V.tuple</code></a>.</p>
-<h4><a id="V-tuple"></a> <a href="#contents">≡</a> <a href="https://github.com/calmm-js/partial.lenses.validation/blob/master/README.md#V-tuple">■</a> <a href="#V-tuple"><code>V.tuple(...rules) ~&gt; rule</code></a> <small><sup>v0.3.0</sup></small></h4>
+<h5><a id="V-tuple"></a> <a href="#contents">≡</a> <a href="https://github.com/calmm-js/partial.lenses.validation/blob/master/README.md#V-tuple">■</a> <a href="#V-tuple"><code>V.tuple(...rules) ~&gt; rule</code></a> <small><sup>v0.3.0</sup></small></h5>
 <p><code>V.tuple(rule1, ..., ruleN)</code> validates a fixed length array by validating each
 element of the array with a specific rule.  See also <a href="#V-args"><code>V.args</code></a>.</p>
 <p>For example:</p>
@@ -628,8 +643,8 @@ e.g. <code>R.curryN</code> or <code>R.nAry</code> to change the arity of the fun
 individual properties of objects.</p>
 <h4><a id="V-keep"></a> <a href="#contents">≡</a> <a href="https://github.com/calmm-js/partial.lenses.validation/blob/master/README.md#V-keep">■</a> <a href="#V-keep"><code>V.keep(&#39;prop&#39;, rule) ~&gt; rule</code></a> <small><sup>v0.3.0</sup></small></h4>
 <p><code>V.keep(&#39;prop&#39;, rule)</code> acts like the given rule except that in case the rule
-rejects the focus, the specified property is copied from the original value to
-the error value.  This is useful when e.g. validating arrays of objects with an
+rejects the focus, the specified property is copied from the original object to
+the error object.  This is useful when e.g. validating arrays of objects with an
 identifying property.  Keeping the identifying property allows the rejected
 object to be identified.</p>
 <h4><a id="V-optional"></a> <a href="#contents">≡</a> <a href="https://github.com/calmm-js/partial.lenses.validation/blob/master/README.md#V-optional">■</a> <a href="#V-optional"><code>V.optional(rule) ~&gt; rule</code></a> <small><sup>v0.3.0</sup></small></h4>
