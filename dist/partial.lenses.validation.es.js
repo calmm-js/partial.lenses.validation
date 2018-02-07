@@ -1,15 +1,13 @@
-import { id, freeze, isFunction, isArray, curryN, always, object0, curry } from 'infestines';
-import { transform, rewrite, any, modify, elems, values, get, ifElse, toFunction, traverse, zero, setOp, modifyOp, setter, choose, set, branchOr, optional, lazy } from 'partial.lenses';
+import { id, freeze, isArray, isFunction, curryN, always, object0, curry } from 'infestines';
+import { transform, rewrite, any, modify, elems, values, choose, get, ifElse, toFunction, traverse, zero, setOp, modifyOp, setter, set, branchOr, optional, lazy } from 'partial.lenses';
 
 var length = function length(x) {
   return x.length;
 };
 
-var sameLength = function sameLength(x) {
-  return x = length(x), function (y) {
-    return x === length(y);
-  };
-};
+var lte = /*#__PURE__*/curry(function (l, r) {
+  return l <= r;
+});
 
 var isInstanceOf = /*#__PURE__*/curry(function (Class, x) {
   return x instanceof Class;
@@ -124,6 +122,33 @@ var propsTrickle = /*#__PURE__*/rewrite( /*#__PURE__*/trickle(values, fromReject
 
 //
 
+var tupleOr = function tupleOr(_ref) {
+  var less = _ref.less,
+      rest = _ref.rest;
+  return rest = toRule(rest), function () {
+    var rules = [];
+    var n = arguments.length;
+    for (var i = 0; i < n; ++i) {
+      rules.push(toRule(arguments[i]));
+    }return andCompose(less ? isArray : both(isArray, o(lte(n), length)), [fromUniques, arrayIxTrickle, less ? function (xs, i, M, xi2yM) {
+      var m = length(xs);
+      if (m < n) {
+        xs = xs.slice();
+        xs.length = n;
+        return M.map(function (ys) {
+          return any(isRejected, elems, ys) ? ys : ys.slice(0, m);
+        }, elems(xs, i, M, xi2yM));
+      } else {
+        return elems(xs, i, M, xi2yM);
+      }
+    } : elems, toUnique, choose(function (_, i) {
+      return rules[i] || rest;
+    })]);
+  };
+};
+
+//
+
 function toError(errors) {
   var error = Error(JSON.stringify(errors, null, 2));
   error.errors = errors;
@@ -187,10 +212,10 @@ var raiseRejected = function raiseRejected(r) {
 
 // Elimination
 
-var run = /*#__PURE__*/curryN(3, function (_ref) {
-  var Monad = _ref.Monad,
-      onAccept = _ref.onAccept,
-      onReject = _ref.onReject;
+var run = /*#__PURE__*/curryN(3, function (_ref2) {
+  var Monad = _ref2.Monad,
+      onAccept = _ref2.onAccept,
+      onReject = _ref2.onReject;
 
   Monad = Monad || Sync;
   onAccept = onAccept || id;
@@ -327,15 +352,9 @@ var arrayId = function arrayId(rule) {
   return andCompose(isArray, [arrayIdTrickle, elems, rule]);
 };
 
-function tuple() {
-  var rules = [];
-  var n = arguments.length;
-  for (var i = 0; i < n; ++i) {
-    rules.push(toRule(arguments[i]));
-  }return andCompose(both(isArray, sameLength(rules)), [fromUniques, arrayIxTrickle, elems, toUnique, choose(function (_, i) {
-    return rules[i];
-  })]);
-}
+var tuple = /*#__PURE__*/tupleOr({ less: false, rest: reject });
+
+var args = /*#__PURE__*/tupleOr({ less: true, rest: accept });
 
 // Functions
 
@@ -407,4 +426,4 @@ var choose$1 = function choose$$1(xi2r) {
 
 var lazy$1 = /*#__PURE__*/o(lazy, /*#__PURE__*/o(toRule));
 
-export { run, accepts, acceptsAsync, errors, errorsAsync, validate, validateAsync, tryValidateAsyncNow, accept, acceptAs, acceptWith, rejectWith, rejectAs, reject, remove, where, modifyError, setError, not, or, and, arrayIx, arrayId, tuple, dependentFn, freeFn, keep, propsOr, props, optional$1 as optional, cases, ifElse$1 as ifElse, choose$1 as choose, lazy$1 as lazy };
+export { run, accepts, acceptsAsync, errors, errorsAsync, validate, validateAsync, tryValidateAsyncNow, accept, acceptAs, acceptWith, rejectWith, rejectAs, reject, remove, where, modifyError, setError, not, or, and, arrayIx, arrayId, tuple, args, dependentFn, freeFn, keep, propsOr, props, optional$1 as optional, cases, ifElse$1 as ifElse, choose$1 as choose, lazy$1 as lazy };

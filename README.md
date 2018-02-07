@@ -229,7 +229,19 @@ V.validate(
 #### <a id="asynchronous"></a> [≡](#contents) [▶](https://calmm-js.github.io/partial.lenses.validation/index.html#asynchronous) [Asynchronous](#asynchronous)
 
 In case a validation rule contains asynchronous parts, it is necessary to use
-one of the asynchronous elimination functions.
+one of the asynchronous elimination functions.  The below `ghInfoOfAsync`
+function is a simple asynchronous function that tries to use the [public GitHub
+search API](https://developer.github.com/v3/search/#search-repositories) to
+search for information on a GitHub project of specified name:
+
+```js
+async function ghInfoOfAsync(name) {
+  const q = encodeURIComponent(name)
+  const res = await fetch(`https://api.github.com/search/repositories?q=${q}`)
+  const body = await res.json()
+  return L.get(['items', L.find(R.whereEq({name}))], body)
+}
+```
 
 ##### <a id="V-acceptsAsync"></a> [≡](#contents) [▶](https://calmm-js.github.io/partial.lenses.validation/index.html#V-acceptsAsync) [`V.acceptsAsync(rule, data) ~> promise(boolean)`](#V-acceptsAsync) <small><sup>v0.3.0</sup></small>
 
@@ -250,16 +262,9 @@ always be returned as a
 For example:
 
 ```js
-function starsOf(name) {
-  return fetch(`https://api.github.com/search/repositories?q=${encodeURIComponent(name)}`)
-    .then(res => res.json())
-    .then(L.get(['items', L.find(R.whereEq({name})), 'stargazers_count']))
-    .catch(console.log)
-}
-
 V.errorsAsync(
   V.arrayId(
-    R.pipeP(starsOf, R.lte(100))
+    R.pipeP(ghInfoOfAsync, L.get('stargazers_count'), R.lte(100))
   ),
   [
     'partial.lenses',
@@ -284,11 +289,17 @@ V.validateAsync(
   V.arrayId(
     V.and(
       R.is(String),
-      V.acceptWith(name => starsOf(name).then(stars => ({name, stars}))),
-      V.keep('name', V.props({
-        name: R.is(String),
-        stars: [R.lte(1000), n => `Only ${n} stars. You know how to fix it!`]
-      }))
+      V.acceptWith(ghInfoOfAsync),
+      V.keep(
+        'name',
+        V.propsOr(V.remove, {
+          name: R.is(String),
+          stargazers_count: V.and(
+            R.is(Number),
+            [R.lte(1000), n => `Only ${n} stars. You know how to fix it!`]
+          )
+        })
+      )
     )
   ),
   [
@@ -298,12 +309,12 @@ V.validateAsync(
 ).catch(R.identity).then(console.log)
 // Error: [
 //   {
-//     "stars": "Only 448 stars. You know how to fix it!",
+//     "stargazers_count": "Only 448 stars. You know how to fix it!",
 //     "name": "partial.lenses"
 //   },
 //   {
+//     "stargazers_count": "Only 5 stars. You know how to fix it!"
 //     "name": "partial.lenses.validation",
-//     "stars": "Only 5 stars. You know how to fix it!"
 //   }
 // ]
 ```
@@ -320,6 +331,28 @@ In case the result is not available synchronously, a promise is returned.
 `V.tryValidateAsyncNow` can be used for wrapping asynchronous functions, for
 example, because the first stage of validating a function is always synchronous.
 
+For example:
+
+```js
+const ghInfoOfAsyncChecked = V.tryValidateAsyncNow(
+  V.dependentFn(
+    V.args(R.and(R.is(String), V.not(R.isEmpty))),
+    name => V.or(
+      R.equals(undefined),
+      V.propsOr(V.accept, {
+        name: R.equals(name),
+        stargazers_count: R.is(Number)
+        // ...
+      })
+    )
+  ),
+  ghInfoOfAsync
+)
+```
+
+You can now replace calls to `ghInfoOfAsync` in the previous examples to call
+the above dynamically checked version `ghInfoOfAsyncChecked`.
+
 #### <a id="general"></a> [≡](#contents) [▶](https://calmm-js.github.io/partial.lenses.validation/index.html#general) [General](#general)
 
 It is also possible to run validation rules with an arbitrary computational
@@ -335,8 +368,8 @@ validation errors.
 The parameters `Monad`, `onAccept`, and `onReject` are optional and default to
 what [`V.validate`](#V-validate) uses.  The `Monad` parameter needs to be a
 [Static Land](https://github.com/rpominov/static-land) compatible
-[Monad](https://github.com/rpominov/static-land) with all the four methods.  If
-you specify the `Monad`, you will likely want to specify both `onAccept` and
+[Monad](https://github.com/rpominov/static-land) with all the four functions.
+If you specify the `Monad`, you will likely want to specify both `onAccept` and
 `onReject` as well.
 
 ### <a id="primitive"></a> [≡](#contents) [▶](https://calmm-js.github.io/partial.lenses.validation/index.html#primitive) [Primitive](#primitive)

@@ -125,6 +125,33 @@ var propsTrickle = /*#__PURE__*/L.rewrite( /*#__PURE__*/trickle(L.values, fromRe
 
 //
 
+var tupleOr = function tupleOr(_ref) {
+  var less = _ref.less,
+      rest = _ref.rest;
+  return rest = toRule(rest), function () {
+    var rules = [];
+    var n = arguments.length;
+    for (var i = 0; i < n; ++i) {
+      rules.push(toRule(arguments[i]));
+    }return andCompose(less ? I.isArray : both(I.isArray, o(lte(n), length)), [fromUniques, arrayIxTrickle, less ? function (xs, i, M, xi2yM) {
+      var m = length(xs);
+      if (m < n) {
+        xs = xs.slice();
+        xs.length = n;
+        return M.map(function (ys) {
+          return L.any(isRejected, L.elems, ys) ? ys : ys.slice(0, m);
+        }, L.elems(xs, i, M, xi2yM));
+      } else {
+        return L.elems(xs, i, M, xi2yM);
+      }
+    } : L.elems, toUnique, L.choose(function (_, i) {
+      return rules[i] || rest;
+    })]);
+  };
+};
+
+//
+
 function toError(errors) {
   var error = Error(JSON.stringify(errors, null, 2));
   error.errors = errors;
@@ -188,10 +215,10 @@ var raiseRejected = function raiseRejected(r) {
 
 // Elimination
 
-var run = /*#__PURE__*/I.curryN(3, function (_ref) {
-  var Monad = _ref.Monad,
-      onAccept = _ref.onAccept,
-      onReject = _ref.onReject;
+var run = /*#__PURE__*/I.curryN(3, function (_ref2) {
+  var Monad = _ref2.Monad,
+      onAccept = _ref2.onAccept,
+      onReject = _ref2.onReject;
 
   Monad = Monad || Sync;
   onAccept = onAccept || I.id;
@@ -328,31 +355,6 @@ var arrayId = function arrayId(rule) {
   return andCompose(I.isArray, [arrayIdTrickle, L.elems, rule]);
 };
 
-var tupleOr = function tupleOr(_ref2) {
-  var less = _ref2.less,
-      rest = _ref2.rest;
-  return rest = toRule(rest), function () {
-    var rules = [];
-    var n = arguments.length;
-    for (var i = 0; i < n; ++i) {
-      rules.push(toRule(arguments[i]));
-    }return andCompose(less ? I.isArray : both(I.isArray, o(lte(n), length)), [fromUniques, arrayIxTrickle, less ? function (xs, i, M, xi2yM) {
-      var m = length(xs);
-      if (m < n) {
-        xs = xs.slice();
-        xs.length = n;
-        return M.map(function (ys) {
-          return L.any(isRejected, L.elems, ys) ? ys : ys.slice(0, m);
-        }, L.elems(xs, i, M, xi2yM));
-      } else {
-        return L.elems(xs, i, M, xi2yM);
-      }
-    } : L.elems, toUnique, L.choose(function (_, i) {
-      return rules[i] || rest;
-    })]);
-  };
-};
-
 var tuple = /*#__PURE__*/tupleOr({ less: false, rest: reject });
 
 var args = /*#__PURE__*/tupleOr({ less: true, rest: accept });
@@ -450,7 +452,6 @@ exports.or = or;
 exports.and = and;
 exports.arrayIx = arrayIx;
 exports.arrayId = arrayId;
-exports.tupleOr = tupleOr;
 exports.tuple = tuple;
 exports.args = args;
 exports.dependentFn = dependentFn;

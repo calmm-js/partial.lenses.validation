@@ -95,9 +95,10 @@ structure.</p>
 </ul>
 </li>
 <li><a href="#arrays">Arrays</a><ul>
+<li><a href="#V-args"><code>V.args(...rules) ~&gt; rule</code></a> <small><sup>v0.3.1</sup></small></li>
 <li><a href="#V-arrayId"><code>V.arrayId(rule) ~&gt; rule</code></a> <small><sup>v0.3.0</sup></small></li>
 <li><a href="#V-arrayIx"><code>V.arrayIx(rule) ~&gt; rule</code></a> <small><sup>v0.3.0</sup></small></li>
-<li><a href="#V-tuple"><code>V.tuple(...rules) ~&gt; rules</code></a> <small><sup>v0.3.0</sup></small></li>
+<li><a href="#V-tuple"><code>V.tuple(...rules) ~&gt; rule</code></a> <small><sup>v0.3.0</sup></small></li>
 </ul>
 </li>
 <li><a href="#functions">Functions</a><ul>
@@ -237,7 +238,17 @@ extra <code>errors</code> property that has the (non-stringified) validation err
 </code></pre>
 <h4><a id="asynchronous"></a> <a href="#contents">≡</a> <a href="https://github.com/calmm-js/partial.lenses.validation/blob/master/README.md#asynchronous">■</a> <a href="#asynchronous">Asynchronous</a></h4>
 <p>In case a validation rule contains asynchronous parts, it is necessary to use
-one of the asynchronous elimination functions.</p>
+one of the asynchronous elimination functions.  The below <code>ghInfoOfAsync</code>
+function is a simple asynchronous function that tries to use the <a href="https://developer.github.com/v3/search/#search-repositories">public GitHub
+search API</a> to
+search for information on a GitHub project of specified name:</p>
+<pre><code class="hljs lang-js">async function ghInfoOfAsync(name) {
+  const q = encodeURIComponent(name)
+  const res = await fetch(`https://api.github.com/search/repositories?q=${q}`)
+  const body = await res.json()
+  return L.get([&#39;items&#39;, L.find(R.whereEq({name}))], body)
+}
+</code></pre>
 <h5><a id="V-acceptsAsync"></a> <a href="#contents">≡</a> <a href="https://github.com/calmm-js/partial.lenses.validation/blob/master/README.md#V-acceptsAsync">■</a> <a href="#V-acceptsAsync"><code>V.acceptsAsync(rule, data) ~&gt; promise(boolean)</code></a> <small><sup>v0.3.0</sup></small></h5>
 <p><code>V.acceptsAsync(rule, data)</code> runs the given validation rule on the given data
 like <a href="#V-accepts"><code>V.accepts</code></a> except that the validation rule is allowed to
@@ -251,16 +262,9 @@ contain asynchronous validation predicates and transformations.  The result will
 always be returned as a
 <a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Promise">promise</a>.</p>
 <p>For example:</p>
-<pre><code class="hljs lang-js">function starsOf(name) {
-  return fetch(`https://api.github.com/search/repositories?q=${encodeURIComponent(name)}`)
-    .then(res =&gt; res.json())
-    .then(L.get([&#39;items&#39;, L.find(R.whereEq({name})), &#39;stargazers_count&#39;]))
-    .catch(console.log)
-}
-
-V.errorsAsync(
+<pre><code class="hljs lang-js">V.errorsAsync(
   V.arrayId(
-    R.pipeP(starsOf, R.lte(100))
+    R.pipeP(ghInfoOfAsync, L.get(&#39;stargazers_count&#39;), R.lte(100))
   ),
   [
     &#39;partial.lenses&#39;,
@@ -279,11 +283,17 @@ whether accepted or rejected, is returned as a
   V.arrayId(
     V.and(
       R.is(String),
-      V.acceptWith(name =&gt; starsOf(name).then(stars =&gt; ({name, stars}))),
-      V.keep(&#39;name&#39;, V.props({
-        name: R.is(String),
-        stars: [R.lte(1000), n =&gt; `Only ${n} stars. You know how to fix it!`]
-      }))
+      V.acceptWith(ghInfoOfAsync),
+      V.keep(
+        &#39;name&#39;,
+        V.propsOr(V.remove, {
+          name: R.is(String),
+          stargazers_count: V.and(
+            R.is(Number),
+            [R.lte(1000), n =&gt; `Only ${n} stars. You know how to fix it!`]
+          )
+        })
+      )
     )
   ),
   [
@@ -301,6 +311,24 @@ immediately as is without wrapping it inside a
 In case the result is not available synchronously, a promise is returned.</p>
 <p><code>V.tryValidateAsyncNow</code> can be used for wrapping asynchronous functions, for
 example, because the first stage of validating a function is always synchronous.</p>
+<p>For example:</p>
+<pre><code class="hljs lang-js">var ghInfoOfAsyncChecked = V.tryValidateAsyncNow(
+  V.dependentFn(
+    V.args(R.and(R.is(String), V.not(R.isEmpty))),
+    name =&gt; V.or(
+      R.equals(undefined),
+      V.propsOr(V.accept, {
+        name: R.equals(name),
+        stargazers_count: R.is(Number)
+        // ...
+      })
+    )
+  ),
+  ghInfoOfAsync
+)
+</code></pre>
+<p>You can now replace calls to <code>ghInfoOfAsync</code> in the previous examples to call
+the above dynamically checked version <code>ghInfoOfAsyncChecked</code>.</p>
 <h4><a id="general"></a> <a href="#contents">≡</a> <a href="https://github.com/calmm-js/partial.lenses.validation/blob/master/README.md#general">■</a> <a href="#general">General</a></h4>
 <p>It is also possible to run validation rules with an arbitrary computational
 monad such as a monad based on observables.</p>
@@ -312,8 +340,8 @@ validation errors.</p>
 <p>The parameters <code>Monad</code>, <code>onAccept</code>, and <code>onReject</code> are optional and default to
 what <a href="#V-validate"><code>V.validate</code></a> uses.  The <code>Monad</code> parameter needs to be a
 <a href="https://github.com/rpominov/static-land">Static Land</a> compatible
-<a href="https://github.com/rpominov/static-land">Monad</a> with all the four methods.  If
-you specify the <code>Monad</code>, you will likely want to specify both <code>onAccept</code> and
+<a href="https://github.com/rpominov/static-land">Monad</a> with all the four functions.
+If you specify the <code>Monad</code>, you will likely want to specify both <code>onAccept</code> and
 <code>onReject</code> as well.</p>
 <h3><a id="primitive"></a> <a href="#contents">≡</a> <a href="https://github.com/calmm-js/partial.lenses.validation/blob/master/README.md#primitive">■</a> <a href="#primitive">Primitive</a></h3>
 <p>At the most basic level a rule either accepts or rejects the value in focus.</p>
@@ -526,9 +554,17 @@ rejected elements and <code>null</code> values for the accepted elements.</p>
 index and it is necessary to keep the rejected elements at their original
 indices.  The accepted elements are replaced with <code>null</code> to make the output less
 noisy.</p>
-<h4><a id="V-tuple"></a> <a href="#contents">≡</a> <a href="https://github.com/calmm-js/partial.lenses.validation/blob/master/README.md#V-tuple">■</a> <a href="#V-tuple"><code>V.tuple(...rules) ~&gt; rules</code></a> <small><sup>v0.3.0</sup></small></h4>
+<h4><a id="V-args"></a> <a href="#contents">≡</a> <a href="https://github.com/calmm-js/partial.lenses.validation/blob/master/README.md#V-args">■</a> <a href="#V-args"><code>V.args(...rules) ~&gt; rule</code></a> <small><sup>v0.3.1</sup></small></h4>
+<p><code>V.args(rule1, ..., ruleN)</code> validates an array by validating each element of the
+array with a specific rule.  If the array is shorter than the number of rules,
+the missing elements are treated as being <code>undefined</code> and validated with the
+corresponding rules.  This means that rules for optional elements need to be
+explicitly specified as such.  If the array is longer than the number of rules,
+the extra elements are simply accepted.  This is roughly how JavaScript treats
+function arguments.  See also <a href="#V-tuple"><code>V.tuple</code></a>.</p>
+<h4><a id="V-tuple"></a> <a href="#contents">≡</a> <a href="https://github.com/calmm-js/partial.lenses.validation/blob/master/README.md#V-tuple">■</a> <a href="#V-tuple"><code>V.tuple(...rules) ~&gt; rule</code></a> <small><sup>v0.3.0</sup></small></h4>
 <p><code>V.tuple(rule1, ..., ruleN)</code> validates a fixed length array by validating each
-element of the array with a specific rule.</p>
+element of the array with a specific rule.  See also <a href="#V-args"><code>V.args</code></a>.</p>
 <p>For example:</p>
 <pre><code class="hljs lang-js">V.accepts(
   V.tuple(R.is(String), R.is(Number)),
@@ -555,7 +591,7 @@ instead.</p>
 <p>For example:</p>
 <pre><code class="hljs lang-js">var sqrt = V.validate(
   V.dependentFn(
-    V.tuple(R.both(R.is(Number), R.lte(0))),
+    V.args(R.both(R.is(Number), R.lte(0))),
     x =&gt; y =&gt; Math.abs(y*y - x) &lt; 0.001
   ),
   Math.sqrt
