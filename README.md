@@ -49,9 +49,10 @@ structure.
     * [`V.not(rule) ~> rule`](#V-not) <small><sup>v0.3.0</sup></small>
     * [`V.or(...rules) ~> rule`](#V-or) <small><sup>v0.3.0</sup></small>
   * [Arrays](#arrays)
+    * [`V.args(...rules) ~> rule`](#V-args) <small><sup>v0.3.1</sup></small>
     * [`V.arrayId(rule) ~> rule`](#V-arrayId) <small><sup>v0.3.0</sup></small>
     * [`V.arrayIx(rule) ~> rule`](#V-arrayIx) <small><sup>v0.3.0</sup></small>
-    * [`V.tuple(...rules) ~> rules`](#V-tuple) <small><sup>v0.3.0</sup></small>
+    * [`V.tuple(...rules) ~> rule`](#V-tuple) <small><sup>v0.3.0</sup></small>
   * [Functions](#functions)
     * [`V.dependentFn(rule, (...args) => rule) ~> rule`](#V-dependentFn) <small><sup>v0.3.0</sup></small>
     * [`V.freeFn(rule, rule) ~> rule`](#V-freeFn) <small><sup>v0.3.0</sup></small>
@@ -634,10 +635,20 @@ index and it is necessary to keep the rejected elements at their original
 indices.  The accepted elements are replaced with `null` to make the output less
 noisy.
 
-#### <a id="V-tuple"></a> [≡](#contents) [▶](https://calmm-js.github.io/partial.lenses.validation/index.html#V-tuple) [`V.tuple(...rules) ~> rules`](#V-tuple) <small><sup>v0.3.0</sup></small>
+#### <a id="V-args"></a> [≡](#contents) [▶](https://calmm-js.github.io/partial.lenses.validation/index.html#V-args) [`V.args(...rules) ~> rule`](#V-args) <small><sup>v0.3.1</sup></small>
+
+`V.args(rule1, ..., ruleN)` validates an array by validating each element of the
+array with a specific rule.  If the array is shorter than the number of rules,
+the missing elements are treated as being `undefined` and validated with the
+corresponding rules.  This means that rules for optional elements need to be
+explicitly specified as such.  If the array is longer than the number of rules,
+the extra elements are simply accepted.  This is roughly how JavaScript treats
+function arguments.  See also [`V.tuple`](#V-tuple).
+
+#### <a id="V-tuple"></a> [≡](#contents) [▶](https://calmm-js.github.io/partial.lenses.validation/index.html#V-tuple) [`V.tuple(...rules) ~> rule`](#V-tuple) <small><sup>v0.3.0</sup></small>
 
 `V.tuple(rule1, ..., ruleN)` validates a fixed length array by validating each
-element of the array with a specific rule.
+element of the array with a specific rule.  See also [`V.args`](#V-args).
 
 For example:
 
@@ -676,7 +687,7 @@ For example:
 ```js
 const sqrt = V.validate(
   V.dependentFn(
-    V.tuple(R.both(R.is(Number), R.lte(0))),
+    V.args(R.both(R.is(Number), R.lte(0))),
     x => y => Math.abs(y*y - x) < 0.001
   ),
   Math.sqrt

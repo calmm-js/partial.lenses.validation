@@ -66,6 +66,41 @@ const propsTrickle = L.rewrite(trickle(L.values, fromRejected))
 
 //
 
+const tupleOr = ({less, rest}) => (
+  (rest = toRule(rest)),
+  function() {
+    const rules = []
+    const n = arguments.length
+    for (let i = 0; i < n; ++i) rules.push(toRule(arguments[i]))
+    return andCompose(
+      less ? I.isArray : I.both(I.isArray, I.o(I.lte(n), I.length)),
+      [
+        fromUniques,
+        arrayIxTrickle,
+        less
+          ? (xs, i, M, xi2yM) => {
+              const m = I.length(xs)
+              if (m < n) {
+                xs = xs.slice()
+                xs.length = n
+                return M.map(
+                  ys => (L.any(isRejected, L.elems, ys) ? ys : ys.slice(0, m)),
+                  L.elems(xs, i, M, xi2yM)
+                )
+              } else {
+                return L.elems(xs, i, M, xi2yM)
+              }
+            }
+          : L.elems,
+        toUnique,
+        L.choose((_, i) => rules[i] || rest)
+      ]
+    )
+  }
+)
+
+//
+
 function toError(errors) {
   const error = Error(JSON.stringify(errors, null, 2))
   error.errors = errors
@@ -248,18 +283,9 @@ export const arrayIx = rule =>
 export const arrayId = rule =>
   andCompose(I.isArray, [arrayIdTrickle, L.elems, rule])
 
-export function tuple() {
-  const rules = []
-  const n = arguments.length
-  for (let i = 0; i < n; ++i) rules.push(toRule(arguments[i]))
-  return andCompose(I.both(I.isArray, I.sameLength(rules)), [
-    fromUniques,
-    arrayIxTrickle,
-    L.elems,
-    toUnique,
-    L.choose((_, i) => rules[i])
-  ])
-}
+export const tuple = tupleOr({less: false, rest: reject})
+
+export const args = tupleOr({less: true, rest: accept})
 
 // Functions
 
@@ -339,9 +365,9 @@ export const cases = sumRight(
   ),
   (process.env.NODE_ENV === 'production'
     ? I.id
-    : validate(
-        freeFn(tuple(tuple(I.isFunction, accept), accept), accept)
-      ))((alt, rest) => ifElse(alt[0], alt[1], rest))
+    : validate(freeFn(tuple(tuple(I.isFunction, accept), accept), accept)))(
+    (alt, rest) => ifElse(alt[0], alt[1], rest)
+  )
 )
 
 export const ifElse = I.curry(

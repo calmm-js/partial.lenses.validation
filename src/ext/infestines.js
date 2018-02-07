@@ -4,7 +4,7 @@ export * from 'infestines'
 
 export const length = x => x.length
 
-export const sameLength = x => ((x = length(x)), y => x === length(y))
+export const lte = I.curry((l, r) => l <= r)
 
 export const isInstanceOf = I.curry((Class, x) => x instanceof Class)
 export const isInstanceOfObject = isInstanceOf(Object)

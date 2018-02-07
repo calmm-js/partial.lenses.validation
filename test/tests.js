@@ -447,33 +447,33 @@ describe('transformation', () => {
 
 describe('V.freeFn', () => {
   testEq(10, () =>
-    V.validate(V.freeFn(V.tuple(R.is(Number)), R.lte(0)), Math.abs)(-10)
+    V.validate(V.freeFn(V.args(R.is(Number)), R.lte(0)), Math.abs)(-10)
   )
   testThrows(() =>
     V.validate(
-      V.freeFn(V.tuple((_, i) => i === 0, R.is(Number)), V.accept),
+      V.freeFn(V.args((_, i) => i === 0, R.is(Number)), V.accept),
       Math.max
     )('not a number', 'another')
   )
   testThrows(() =>
-    V.validate(V.freeFn(V.tuple(R.is(Number)), R.lte(0)), x => x + 1)(-10.5)
+    V.validate(V.freeFn(V.args(R.is(Number)), R.lte(0)), x => x + 1)(-10.5)
   )
 
   testThrows(() =>
-    V.validate(V.freeFn(V.tuple(V.accept), V.accept), 'not a function')
+    V.validate(V.freeFn(V.args(V.accept), V.accept), 'not a function')
   )
 })
 
 describe('V.dependentFn', () => {
   testEq(1, () =>
     V.validate(
-      V.dependentFn(V.tuple(R.is(Number)), x => R.equals(x * x)),
+      V.dependentFn(V.args(R.is(Number)), x => R.equals(x * x)),
       Math.sqrt
     )(1)
   )
   testThrows(() =>
     V.validate(
-      V.dependentFn(V.tuple(R.is(Number)), x => R.equals(x * x)),
+      V.dependentFn(V.args(R.is(Number)), x => R.equals(x * x)),
       Math.sqrt
     )(2)
   )
@@ -486,6 +486,15 @@ describe('V.tuple', () => {
   testRejectedAs([null, null, '2'], [1, undefined, '2'], () =>
     V.tuple(V.accept, V.accept, V.reject)
   )
+  testRejectedAs([null, 2], [1, 2], () => V.tuple(V.accept))
+  testRejected([1], () => V.tuple(V.accept, V.accept))
+})
+
+describe('V.args', () => {
+  testAccepted([], () => V.args(V.optional(R.is(Number))))
+  testAccepted([101, 'and more'], () => V.args(V.optional(R.is(Number))))
+  testRejected(['nope'], () => V.args(V.optional(R.is(Number))))
+  testRejectedAs([null], [], () => V.args(R.is(Number)))
 })
 
 describe('V.errors', () => {
