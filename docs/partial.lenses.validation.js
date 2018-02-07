@@ -8,11 +8,9 @@ var length = function length(x) {
   return x.length;
 };
 
-var sameLength = function sameLength(x) {
-  return x = length(x), function (y) {
-    return x === length(y);
-  };
-};
+var lte = /*#__PURE__*/I.curry(function (l, r) {
+  return l <= r;
+});
 
 var isInstanceOf = /*#__PURE__*/I.curry(function (Class, x) {
   return x instanceof Class;
@@ -330,15 +328,34 @@ var arrayId = function arrayId(rule) {
   return andCompose(I.isArray, [arrayIdTrickle, L.elems, rule]);
 };
 
-function tuple() {
-  var rules = [];
-  var n = arguments.length;
-  for (var i = 0; i < n; ++i) {
-    rules.push(toRule(arguments[i]));
-  }return andCompose(both(I.isArray, sameLength(rules)), [fromUniques, arrayIxTrickle, L.elems, toUnique, L.choose(function (_, i) {
-    return rules[i];
-  })]);
-}
+var tupleOr = function tupleOr(_ref2) {
+  var less = _ref2.less,
+      rest = _ref2.rest;
+  return rest = toRule(rest), function () {
+    var rules = [];
+    var n = arguments.length;
+    for (var i = 0; i < n; ++i) {
+      rules.push(toRule(arguments[i]));
+    }return andCompose(less ? I.isArray : both(I.isArray, o(lte(n), length)), [fromUniques, arrayIxTrickle, less ? function (xs, i, M, xi2yM) {
+      var m = length(xs);
+      if (m < n) {
+        xs = xs.slice();
+        xs.length = n;
+        return M.map(function (ys) {
+          return L.any(isRejected, L.elems, ys) ? ys : ys.slice(0, m);
+        }, L.elems(xs, i, M, xi2yM));
+      } else {
+        return L.elems(xs, i, M, xi2yM);
+      }
+    } : L.elems, toUnique, L.choose(function (_, i) {
+      return rules[i] || rest;
+    })]);
+  };
+};
+
+var tuple = /*#__PURE__*/tupleOr({ less: false, rest: reject });
+
+var args = /*#__PURE__*/tupleOr({ less: true, rest: accept });
 
 // Functions
 
@@ -433,7 +450,9 @@ exports.or = or;
 exports.and = and;
 exports.arrayIx = arrayIx;
 exports.arrayId = arrayId;
+exports.tupleOr = tupleOr;
 exports.tuple = tuple;
+exports.args = args;
 exports.dependentFn = dependentFn;
 exports.freeFn = freeFn;
 exports.keep = keep;
