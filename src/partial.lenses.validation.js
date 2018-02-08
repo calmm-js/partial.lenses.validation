@@ -7,19 +7,19 @@ const Sync = L.transform((_x, _i, M, _xi2yM) => M, 0)
 
 //
 
-const throwAsync = x => Promise.reject(x)
-const returnAsync = x => Promise.resolve(x)
+const P = Promise
 
-const isThenable = x => null != x && typeof x.then === 'function'
+const throwAsync = P.reject.bind(P)
+const returnAsync = P.resolve.bind(P)
+
+const chain = (xyP, xP) =>
+  null != xP && I.isFunction(xP.then) ? xP.then(xyP) : xyP(xP)
 
 const Async = {
-  map: (xyP, xP) => (isThenable(xP) ? xP.then(xyP) : xyP(xP)),
-  ap: (xyP, xP) =>
-    isThenable(xP) || isThenable(xyP)
-      ? Promise.all([xyP, xP]).then(xy_x => xy_x[0](xy_x[1]))
-      : xyP(xP),
-  of: x => x,
-  chain: (xyP, xP) => (isThenable(xP) ? xP.then(xyP) : xyP(xP))
+  map: chain,
+  ap: (xyP, xP) => chain(xP => chain(xyP => xyP(xP), xyP), xP),
+  of: I.id,
+  chain
 }
 
 //
@@ -162,12 +162,14 @@ const tupleOr = ({less, rest}) => (
   }
 )
 
+const runWith = (Monad, onAccept, onReject) => run({Monad, onAccept, onReject})
+
 // General
 
-export const run = I.curryN(3, ({Monad, onAccept, onReject}) => {
-  Monad = Monad || Sync
-  onAccept = onAccept || I.id
-  onReject = onReject || raise
+export const run = I.curryN(3, c => {
+  const Monad = c.Monad || Sync
+  const onAccept = c.onAccept || I.id
+  const onReject = c.onReject || raise
   const handler = r => (isRejected(r) ? onReject(value(r)) : onAccept(r))
   return rule => (
     (rule = toRule(rule)),
@@ -177,39 +179,29 @@ export const run = I.curryN(3, ({Monad, onAccept, onReject}) => {
 
 // Synchronous
 
-export const accepts = run({
-  onAccept: I.always(true),
-  onReject: I.always(false)
-})
+export const accepts = runWith(0, I.always(true), I.always(false))
 
-export const errors = run({onAccept: I.ignore, onReject: I.id})
+export const errors = runWith(0, I.ignore, I.id)
 
-export const validate = run(I.object0)
+export const validate = runWith()
 
 // Asynchronous
 
-export const acceptsAsync = run({
-  Monad: Async,
-  onAccept: I.always(returnAsync(true)),
-  onReject: I.always(returnAsync(false))
-})
+export const acceptsAsync = runWith(
+  Async,
+  I.always(returnAsync(true)),
+  I.always(returnAsync(false))
+)
 
-export const errorsAsync = run({
-  Monad: Async,
-  onAccept: I.always(returnAsync()),
-  onReject: returnAsync
-})
+export const errorsAsync = runWith(Async, I.always(returnAsync()), returnAsync)
 
-export const tryValidateAsyncNow = run({
-  Monad: Async,
-  onReject: I.o(raise, toError)
-})
+export const tryValidateAsyncNow = runWith(Async, 0, I.o(raise, toError))
 
-export const validateAsync = run({
-  Monad: Async,
-  onAccept: returnAsync,
-  onReject: I.o(throwAsync, toError)
-})
+export const validateAsync = runWith(
+  Async,
+  returnAsync,
+  I.o(throwAsync, toError)
+)
 
 // Primitive
 
