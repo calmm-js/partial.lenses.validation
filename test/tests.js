@@ -50,7 +50,9 @@ const testThrows = thunk =>
       try {
         const a = thunk()
         Promise.resolve(a)
-          .then(a => reject(`Expected to throw, but returned ${show(a)}`))
+          .then(a =>
+            reject(Error(`Expected to throw, but returned ${show(a)}`))
+          )
           .catch(fulfill)
       } catch (e) {
         fulfill()
