@@ -40,32 +40,26 @@ var Sync = /*#__PURE__*/L.transform(function (_x, _i, M, _xi2yM) {
 
 //
 
-var throwAsync = function throwAsync(x) {
-  return Promise.reject(x);
-};
-var returnAsync = function returnAsync(x) {
-  return Promise.resolve(x);
-};
+var P = Promise;
 
-var isThenable = function isThenable(x) {
-  return null != x && typeof x.then === 'function';
+var throwAsync = /*#__PURE__*/P.reject.bind(P);
+var returnAsync = /*#__PURE__*/P.resolve.bind(P);
+
+var chain = function chain(xyP, xP) {
+  return null != xP && I.isFunction(xP.then) ? xP.then(xyP) : xyP(xP);
 };
 
 var Async = {
-  map: function map(xyP, xP) {
-    return isThenable(xP) ? xP.then(xyP) : xyP(xP);
-  },
+  map: chain,
   ap: function ap(xyP, xP) {
-    return isThenable(xP) || isThenable(xyP) ? Promise.all([xyP, xP]).then(function (xy_x) {
-      return xy_x[0](xy_x[1]);
-    }) : xyP(xP);
+    return chain(function (xP) {
+      return chain(function (xyP) {
+        return xyP(xP);
+      }, xyP);
+    }, xP);
   },
-  of: function of(x) {
-    return x;
-  },
-  chain: function chain(xyP, xP) {
-    return isThenable(xP) ? xP.then(xyP) : xyP(xP);
-  }
+  of: I.id,
+  chain: chain
 
   //
 
@@ -216,16 +210,29 @@ var tupleOr = function tupleOr(_ref) {
   };
 };
 
+var runWith = function runWith(Monad, onAccept, onReject) {
+  return run({ Monad: Monad, onAccept: onAccept, onReject: onReject });
+};
+
+//
+
+var raised = false;
+
+function callPredicate(predicate, x, i) {
+  try {
+    return raised = predicate(x, i);
+  } catch (e) {
+    raised = e;
+    return false;
+  }
+}
+
 // General
 
-var run = /*#__PURE__*/I.curryN(3, function (_ref2) {
-  var Monad = _ref2.Monad,
-      onAccept = _ref2.onAccept,
-      onReject = _ref2.onReject;
-
-  Monad = Monad || Sync;
-  onAccept = onAccept || I.id;
-  onReject = onReject || raise;
+var run = /*#__PURE__*/I.curryN(3, function (c) {
+  var Monad = c.Monad || Sync;
+  var onAccept = c.onAccept || I.id;
+  var onReject = c.onReject || raise;
   var handler = function handler(r) {
     return isRejected(r) ? onReject(value(r)) : onAccept(r);
   };
@@ -238,39 +245,21 @@ var run = /*#__PURE__*/I.curryN(3, function (_ref2) {
 
 // Synchronous
 
-var accepts = /*#__PURE__*/run({
-  onAccept: /*#__PURE__*/I.always(true),
-  onReject: /*#__PURE__*/I.always(false)
-});
+var accepts = /*#__PURE__*/runWith(0, /*#__PURE__*/I.always(true), /*#__PURE__*/I.always(false));
 
-var errors = /*#__PURE__*/run({ onAccept: ignore, onReject: I.id });
+var errors = /*#__PURE__*/runWith(0, ignore, I.id);
 
-var validate = /*#__PURE__*/run(I.object0);
+var validate = /*#__PURE__*/runWith();
 
 // Asynchronous
 
-var acceptsAsync = /*#__PURE__*/run({
-  Monad: Async,
-  onAccept: /*#__PURE__*/I.always( /*#__PURE__*/returnAsync(true)),
-  onReject: /*#__PURE__*/I.always( /*#__PURE__*/returnAsync(false))
-});
+var acceptsAsync = /*#__PURE__*/runWith(Async, /*#__PURE__*/I.always( /*#__PURE__*/returnAsync(true)), /*#__PURE__*/I.always( /*#__PURE__*/returnAsync(false)));
 
-var errorsAsync = /*#__PURE__*/run({
-  Monad: Async,
-  onAccept: /*#__PURE__*/I.always( /*#__PURE__*/returnAsync()),
-  onReject: returnAsync
-});
+var errorsAsync = /*#__PURE__*/runWith(Async, /*#__PURE__*/I.always( /*#__PURE__*/returnAsync()), returnAsync);
 
-var tryValidateAsyncNow = /*#__PURE__*/run({
-  Monad: Async,
-  onReject: /*#__PURE__*/o(raise, toError)
-});
+var tryValidateAsyncNow = /*#__PURE__*/runWith(Async, 0, /*#__PURE__*/o(raise, toError));
 
-var validateAsync = /*#__PURE__*/run({
-  Monad: Async,
-  onAccept: returnAsync,
-  onReject: /*#__PURE__*/o(throwAsync, toError)
-});
+var validateAsync = /*#__PURE__*/runWith(Async, returnAsync, /*#__PURE__*/o(throwAsync, toError));
 
 // Primitive
 
@@ -307,8 +296,8 @@ var remove = /*#__PURE__*/acceptAs(undefined);
 var where = function where(predicate) {
   return function (x, i, M, _xi2yM) {
     return M.chain(function (b) {
-      return b ? x : rejected(x);
-    }, predicate(x, i));
+      return b ? x : rejected(raised || x);
+    }, callPredicate(predicate, x, i));
   };
 };
 
