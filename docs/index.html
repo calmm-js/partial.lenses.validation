@@ -618,7 +618,8 @@ sqrt(4)
 </code></pre>
 <p>Note that the wrapped function produced by <code>V.dependentFn</code> is not curried and
 has zero arity.  If necessary, you can wrap the produced function with
-e.g. <code>R.curryN</code> or <code>R.nAry</code> to change the arity of the function.</p>
+e.g. <a href="http://ramdajs.com/docs/#curryN"><code>R.curryN</code></a> or
+<a href="http://ramdajs.com/docs/#nAry"><code>R.nAry</code></a> to change the arity of the function.</p>
 <h4><a id="V-freeFn"></a> <a href="#contents">≡</a> <a href="https://github.com/calmm-js/partial.lenses.validation/blob/master/README.md#V-freeFn">■</a> <a href="#V-freeFn"><code>V.freeFn(rule, rule) ~&gt; rule</code></a> <small><sup>v0.3.0</sup></small></h4>
 <p><code>V.freeFn(argumentsRule, resultRule)</code> <a href="#V-acceptWith">wraps</a> the function at
 focus with a validating wrapper that validates the arguments to and return value
@@ -639,7 +640,8 @@ random(&#39;Does not take arguments!&#39;)
 </code></pre>
 <p>Note that the wrapped function produced by <code>V.freeFn</code> is not curried and has
 zero arity.  If necessary, you can wrap the produced function with
-e.g. <code>R.curryN</code> or <code>R.nAry</code> to change the arity of the function.</p>
+e.g. <a href="http://ramdajs.com/docs/#curryN"><code>R.curryN</code></a> or
+<a href="http://ramdajs.com/docs/#nAry"><code>R.nAry</code></a> to change the arity of the function.</p>
 <h3><a id="objects"></a> <a href="#contents">≡</a> <a href="https://github.com/calmm-js/partial.lenses.validation/blob/master/README.md#objects">■</a> <a href="#objects">Objects</a></h3>
 <p>Rules for validating objects can be formed by composing rules for validating
 individual properties of objects.</p>

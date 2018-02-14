@@ -750,7 +750,8 @@ sqrt(4)
 
 Note that the wrapped function produced by `V.dependentFn` is not curried and
 has zero arity.  If necessary, you can wrap the produced function with
-e.g. `R.curryN` or `R.nAry` to change the arity of the function.
+e.g. [`R.curryN`](http://ramdajs.com/docs/#curryN) or
+[`R.nAry`](http://ramdajs.com/docs/#nAry) to change the arity of the function.
 
 #### <a id="V-freeFn"></a> [≡](#contents) [▶](https://calmm-js.github.io/partial.lenses.validation/index.html#V-freeFn) [`V.freeFn(rule, rule) ~> rule`](#V-freeFn) <small><sup>v0.3.0</sup></small>
 
@@ -780,7 +781,8 @@ random('Does not take arguments!')
 
 Note that the wrapped function produced by `V.freeFn` is not curried and has
 zero arity.  If necessary, you can wrap the produced function with
-e.g. `R.curryN` or `R.nAry` to change the arity of the function.
+e.g. [`R.curryN`](http://ramdajs.com/docs/#curryN) or
+[`R.nAry`](http://ramdajs.com/docs/#nAry) to change the arity of the function.
 
 ### <a id="objects"></a> [≡](#contents) [▶](https://calmm-js.github.io/partial.lenses.validation/index.html#objects) [Objects](#objects)
 
