@@ -623,6 +623,9 @@ V.validate(
 // { isNumber: 101, alsoNumber: 42 }
 ```
 
+In case the predicate throws an exception, the focus is rejected with the
+exception as the error value.
+
 ### <a id="logical"></a> [≡](#contents) [▶](https://calmm-js.github.io/partial.lenses.validation/index.html#logical) [Logical](#logical)
 
 Logical connectives provide a simple means to combine rules to form more complex
