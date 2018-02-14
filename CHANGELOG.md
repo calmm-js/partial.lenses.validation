@@ -1,3 +1,8 @@
+## 0.3.2
+
+`V.where` now catches exceptions from predicates.  In case a predicate throws an
+exception, the focus is rejected with the exception.
+
 ## 0.3.0
 
 **Major** redesign of the library &mdash; hopefully getting close to `1.0.0`.  I

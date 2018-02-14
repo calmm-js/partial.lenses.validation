@@ -518,6 +518,18 @@ describe(`V.validate`, () => {
   })
 })
 
+describe('where raised', () => {
+  testRejectedAs(['error'], [1, 2], () =>
+    V.arrayId(x => {
+      if (x === 2) {
+        throw 'error'
+      } else {
+        return true
+      }
+    })
+  )
+})
+
 describe('async', () => {
   const delay = ms => new Promise(fulfill => setTimeout(fulfill, ms))
   const after = (ms, value) => delay(ms).then(() => value)

@@ -164,6 +164,19 @@ const tupleOr = ({less, rest}) => (
 
 const runWith = (Monad, onAccept, onReject) => run({Monad, onAccept, onReject})
 
+//
+
+let raised = false
+
+function callPredicate(predicate, x, i) {
+  try {
+    return (raised = predicate(x, i))
+  } catch (e) {
+    raised = e
+    return false
+  }
+}
+
 // General
 
 export const run = I.curryN(3, c => {
@@ -223,7 +236,7 @@ export const remove = acceptAs(undefined)
 // Predicates
 
 export const where = predicate => (x, i, M, _xi2yM) =>
-  M.chain(b => (b ? x : rejected(x)), predicate(x, i))
+  M.chain(b => (b ? x : rejected(raised || x)), callPredicate(predicate, x, i))
 
 // Elaboration
 
