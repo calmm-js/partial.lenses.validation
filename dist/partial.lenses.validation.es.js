@@ -212,16 +212,26 @@ var runWith = function runWith(Monad, onAccept, onReject) {
 
 //
 
-var raised = false;
+var raised = unique;
 
 function callPredicate(predicate, x, i) {
   try {
-    return raised = predicate(x, i);
+    return predicate(x, i);
   } catch (e) {
     raised = e;
     return false;
   }
 }
+
+//
+
+var ruleBinOp = function ruleBinOp(op) {
+  return curryN(2, function (l) {
+    return l = toRule(l), function (r) {
+      return r = toRule(r), op(l, r);
+    };
+  });
+};
 
 // General
 
@@ -292,7 +302,7 @@ var remove = /*#__PURE__*/acceptAs(undefined);
 var where = function where(predicate) {
   return function (x, i, M, _xi2yM) {
     return M.chain(function (b) {
-      return b ? x : rejected(raised || x);
+      return b ? x : rejected((raised === unique || (x = raised, raised = unique), x));
     }, callPredicate(predicate, x, i));
   };
 };
@@ -313,15 +323,29 @@ var setError = /*#__PURE__*/curry(function (error, rule) {
   }), rule]);
 });
 
+// Transformation
+
+var modifyAfter = /*#__PURE__*/curryN(2, function (rule) {
+  return o(both$1(rule), acceptWith);
+});
+var setAfter = /*#__PURE__*/curryN(2, function (rule) {
+  return o(both$1(rule), acceptAs);
+});
+var removeAfter = function removeAfter(rule) {
+  return both$1(rule, remove);
+};
+
 // Logical
 
-var and = /*#__PURE__*/sumRight(accept, toRule, function (rule, rest) {
-  return rule = toRule(rule), function (x, i, M, xi2yM) {
+var both$1 = /*#__PURE__*/ruleBinOp(function (rule, rest) {
+  return function (x, i, M, xi2yM) {
     return M.chain(function (r) {
       return isRejected(r) ? M.of(r) : rest(r, i, M, xi2yM);
     }, rule(x, i, M, xi2yM));
   };
 });
+
+var and = /*#__PURE__*/sumRight(accept, toRule, both$1);
 
 var not = function not(rule) {
   return compose([setter(function (r, x) {
@@ -329,13 +353,15 @@ var not = function not(rule) {
   }), rule]);
 };
 
-var or = /*#__PURE__*/sumRight(reject, toRule, function (rule, rest) {
-  return rule = toRule(rule), function (x, i, M, xi2yM) {
+var either = /*#__PURE__*/ruleBinOp(function (rule, rest) {
+  return function (x, i, M, xi2yM) {
     return M.chain(function (r) {
       return isRejected(r) ? rest(x, i, M, xi2yM) : M.of(r);
     }, rule(x, i, M, xi2yM));
   };
 });
+
+var or = /*#__PURE__*/sumRight(reject, toRule, either);
 
 // Uniform
 
@@ -423,4 +449,4 @@ var choose$1 = function choose$$1(xi2r) {
 
 var lazy$1 = /*#__PURE__*/o(lazy, /*#__PURE__*/o(toRule));
 
-export { run, accepts, errors, validate, acceptsAsync, errorsAsync, tryValidateAsyncNow, validateAsync, accept, acceptAs, acceptWith, rejectWith, rejectAs, reject, remove, where, modifyError, setError, and, not, or, arrayId, arrayIx, args, tuple, dependentFn, freeFn, keep, optional$1 as optional, propsOr, props, cases, ifElse$1 as ifElse, choose$1 as choose, lazy$1 as lazy };
+export { run, accepts, errors, validate, acceptsAsync, errorsAsync, tryValidateAsyncNow, validateAsync, accept, acceptAs, acceptWith, rejectWith, rejectAs, reject, remove, where, modifyError, setError, modifyAfter, setAfter, removeAfter, both$1 as both, and, not, either, or, arrayId, arrayIx, args, tuple, dependentFn, freeFn, keep, optional$1 as optional, propsOr, props, cases, ifElse$1 as ifElse, choose$1 as choose, lazy$1 as lazy };
