@@ -536,6 +536,35 @@ describe('where raised', () => {
   )
 })
 
+describe('V.casesOf', () => {
+  testRejected('anything', () => V.casesOf([]))
+  testAccepted([{type: 'a', a: 1}, {type: 'b', b: 'x'}], () => {
+    const base = {type: R.is(String)}
+    return V.arrayIx(
+      V.casesOf(
+        'type',
+        [R.identical('a'), V.props({...base, a: R.is(Number)})],
+        [R.identical('b'), V.props({...base, b: R.is(String)})]
+      )
+    )
+  })
+  testRejectedAs(
+    ['unknown', null, {b: 1}],
+    [null, {type: 'a', a: 1}, {type: 'b', b: 1}],
+    () => {
+      const base = {type: R.is(String)}
+      return V.arrayIx(
+        V.casesOf(
+          'type',
+          [R.identical('a'), V.props({...base, a: R.is(Number)})],
+          [R.identical('b'), V.props({...base, b: R.is(String)})],
+          [V.rejectAs('unknown')]
+        )
+      )
+    }
+  )
+})
+
 describe('async', () => {
   const delay = ms => new Promise(fulfill => setTimeout(fulfill, ms))
   const after = (ms, value) => delay(ms).then(() => value)

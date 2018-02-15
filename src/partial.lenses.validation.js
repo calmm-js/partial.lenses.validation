@@ -3,10 +3,6 @@ import * as I from './ext/infestines'
 
 //
 
-const Sync = L.transform((_x, _i, M, _xi2yM) => M, 0)
-
-//
-
 const P = Promise
 
 const throwAsync = P.reject.bind(P)
@@ -15,12 +11,12 @@ const returnAsync = P.resolve.bind(P)
 const chain = (xyP, xP) =>
   null != xP && I.isFunction(xP.then) ? xP.then(xyP) : xyP(xP)
 
-const Async = {
+const Async = (process.env.NODE_ENV === 'production' ? I.id : I.freeze)({
   map: chain,
   ap: (xyP, xP) => chain(xP => chain(xyP => xyP(xP), xyP), xP),
   of: I.id,
   chain
-}
+})
 
 //
 
@@ -177,6 +173,28 @@ function callPredicate(predicate, x, i) {
   }
 }
 
+// Primitive
+
+export const accept = L.zero
+
+export const acceptAs = value => (x, i, M, xi2yM) => xi2yM(value, i)
+
+export const acceptWith = fn => (x, i, M, xi2yM) =>
+  M.chain(x => xi2yM(x, i), fn(x, i))
+
+export const rejectWith = fn => (x, i, M, _xi2yM) => M.map(rejected, fn(x, i))
+
+export const rejectAs = I.o(L.setOp, rejected)
+
+export const reject = L.modifyOp(rejected)
+
+export const remove = acceptAs(undefined)
+
+//
+
+const casesOfDefault = I.always(reject)
+const casesOfCase = (p, o, r) => (y, j) => (p(y, j) ? o : r(y, j))
+
 //
 
 const ruleBinOp = op =>
@@ -185,7 +203,7 @@ const ruleBinOp = op =>
 // General
 
 export const run = I.curryN(3, c => {
-  const Monad = c.Monad || Sync
+  const Monad = c.Monad || L.Identity
   const onAccept = c.onAccept || I.id
   const onReject = c.onReject || raise
   const handler = r => (isRejected(r) ? onReject(value(r)) : onAccept(r))
@@ -220,23 +238,6 @@ export const validateAsync = runWith(
   returnAsync,
   I.o(throwAsync, toError)
 )
-
-// Primitive
-
-export const accept = L.zero
-
-export const acceptAs = value => (x, i, M, xi2yM) => xi2yM(value, i)
-
-export const acceptWith = fn => (x, i, M, xi2yM) =>
-  M.chain(x => xi2yM(x, i), fn(x, i))
-
-export const rejectWith = fn => (x, i, M, _xi2yM) => M.map(rejected, fn(x, i))
-
-export const rejectAs = I.o(L.setOp, rejected)
-
-export const reject = L.modifyOp(rejected)
-
-export const remove = acceptAs(undefined)
 
 // Predicates
 
@@ -371,6 +372,11 @@ export const propsOr = I.curry((onOthers, template) =>
 
 export const props = propsOr(reject)
 
+// Dependent
+
+export const choose = xi2r => (x, i, M, xi2yM) =>
+  M.chain(r => toRule(r)(x, i, M, xi2yM), xi2r(x, i))
+
 // Conditional
 
 export const cases = sumRight(
@@ -401,10 +407,39 @@ export const ifElse = I.curry(
   )
 )
 
-// Dependent
-
-export const choose = xi2r => (x, i, M, xi2yM) =>
-  M.chain(r => toRule(r)(x, i, M, xi2yM), xi2r(x, i))
+export const casesOf = (process.env.NODE_ENV === 'production'
+  ? I.id
+  : validate(
+      modifyAfter(
+        freeFn(
+          choose(args => {
+            const last = I.length(args) - 1
+            return tupleOr({
+              less: false,
+              rest: ifElse(
+                (_, i) => i === last,
+                or(tuple(accept), tuple(I.isFunction, accept)),
+                tuple(I.isFunction, accept)
+              )
+            })(accept)
+          }),
+          accept
+        ),
+        fn => (of, ...cases) => fn(of, ...cases)
+      )
+    ))(function(of) {
+  of = L.toFunction(of)
+  let n = arguments.length
+  let op = casesOfDefault
+  while (--n) {
+    const c = arguments[n]
+    op =
+      I.length(c) === 1
+        ? I.always(toRule(c[0]))
+        : casesOfCase(c[0], toRule(c[1]), op)
+  }
+  return (x, i, M, xi2yM) => of(x, i, L.Constant, op)(x, i, M, xi2yM)
+})
 
 // Recursive
 
