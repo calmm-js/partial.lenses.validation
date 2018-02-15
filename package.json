@@ -1,6 +1,6 @@
 {
   "name": "partial.lenses.validation",
-  "version": "0.3.3",
+  "version": "0.3.4",
   "description": "Validation transform combinators for Partial Lenses",
   "module": "dist/partial.lenses.validation.es.js",
   "main": "dist/partial.lenses.validation.cjs.js",
@@ -80,7 +80,7 @@
     "rollup-plugin-replace": "^2.0.0",
     "rollup-plugin-uglify": "^3.0.0",
     "sprintf-js": "^1.1.1",
-    "uglify-js": "^3.3.10",
+    "uglify-js": "^3.3.11",
     "watch-run": "^1.2.5"
   }
 }

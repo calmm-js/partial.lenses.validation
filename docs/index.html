@@ -132,6 +132,7 @@ structure.</p>
 </li>
 <li><a href="#conditional">Conditional</a><ul>
 <li><a href="#V-cases"><code>V.cases(...[(value, index) =&gt; testable, rule][, [rule]]) ~&gt; rule</code></a> <small><sup>v0.3.0</sup></small></li>
+<li><a href="#V-casesOf"><code>V.casesOf(lens, ...[(value, index) =&gt; testable, rule][, [rule]]) ~&gt; rule</code></a> <small><sup>v0.3.4</sup></small></li>
 <li><a href="#V-ifElse"><code>V.ifElse((value, index) =&gt; testable, rule, rule) ~&gt; rule</code></a> <small><sup>v0.3.0</sup></small></li>
 </ul>
 </li>
@@ -743,6 +744,23 @@ predicates fail and there is no default rule, the focus is rejected.</p>
 <p>Note that, like with <a href="#V-ifElse"><code>V.ifElse</code></a>, <code>V.cases([p1, r1], ..., [rN])</code> can
 be expressed in terms of the logical operators, but <code>V.cases</code> has a simpler
 internal implementation and is likely to be faster.</p>
+<h4><a id="V-casesOf"></a> <a href="#contents">≡</a> <a href="https://github.com/calmm-js/partial.lenses.validation/blob/master/README.md#V-casesOf">■</a> <a href="#V-casesOf"><code>V.casesOf(lens, ...[(value, index) =&gt; testable, rule][, [rule]]) ~&gt; rule</code></a> <small><sup>v0.3.4</sup></small></h4>
+<p><code>V.casesOf(lens, [p1, r1], ..., [pN, rN], [r])</code> is like <a href="#V-cases"><code>V.cases</code></a>
+except that the subfocus for the predicates is produced by the given lens from
+the current focus.</p>
+<p>For example:</p>
+<pre><code class="hljs lang-js">V.validate(
+  V.casesOf(
+    &#39;type&#39;,
+    [R.equals(&#39;number&#39;), V.props({type: R.is(String), value: R.is(Number)})],
+    [R.equals(&#39;string&#39;), V.props({type: R.is(String), value: R.is(String)})]
+  ),
+  {
+    type: &#39;string&#39;,
+    value: &#39;foo&#39;
+  }
+)
+</code></pre>
 <h4><a id="V-ifElse"></a> <a href="#contents">≡</a> <a href="https://github.com/calmm-js/partial.lenses.validation/blob/master/README.md#V-ifElse">■</a> <a href="#V-ifElse"><code>V.ifElse((value, index) =&gt; testable, rule, rule) ~&gt; rule</code></a> <small><sup>v0.3.0</sup></small></h4>
 <p><code>V.ifElse(predicate, consequent, alternative)</code> acts like the given consequent
 rule in case the predicate is satisfied by the focus and otherwise like the

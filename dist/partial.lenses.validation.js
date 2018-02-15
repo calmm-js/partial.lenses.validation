@@ -33,12 +33,6 @@ var ignore = function ignore(_) {};
 
 //
 
-var Sync = /*#__PURE__*/L.transform(function (_x, _i, M, _xi2yM) {
-  return M;
-}, 0);
-
-//
-
 var P = Promise;
 
 var throwAsync = /*#__PURE__*/P.reject.bind(P);
@@ -48,7 +42,7 @@ var chain = function chain(xyP, xP) {
   return null != xP && I.isFunction(xP.then) ? xP.then(xyP) : xyP(xP);
 };
 
-var Async = {
+var Async = /*#__PURE__*/(I.freeze)({
   map: chain,
   ap: function ap(xyP, xP) {
     return chain(function (xP) {
@@ -59,10 +53,11 @@ var Async = {
   },
   of: I.id,
   chain: chain
+});
 
-  //
+//
 
-};var unique = {};
+var unique = {};
 
 var uniqueToUndefined = function uniqueToUndefined(x) {
   return x === unique ? undefined : x;
@@ -226,50 +221,6 @@ function callPredicate(predicate, x, i) {
   }
 }
 
-//
-
-var ruleBinOp = function ruleBinOp(op) {
-  return I.curryN(2, function (l) {
-    return l = toRule(l), function (r) {
-      return r = toRule(r), op(l, r);
-    };
-  });
-};
-
-// General
-
-var run = /*#__PURE__*/I.curryN(3, function (c) {
-  var Monad = c.Monad || Sync;
-  var onAccept = c.onAccept || I.id;
-  var onReject = c.onReject || raise;
-  var handler = function handler(r) {
-    return isRejected(r) ? onReject(value(r)) : onAccept(r);
-  };
-  return function (rule) {
-    return rule = toRule(rule), function (data) {
-      return Monad.chain(handler, L.traverse(Monad, I.id, rule, data));
-    };
-  };
-});
-
-// Synchronous
-
-var accepts = /*#__PURE__*/runWith(0, /*#__PURE__*/I.always(true), /*#__PURE__*/I.always(false));
-
-var errors = /*#__PURE__*/runWith(0, ignore, I.id);
-
-var validate = /*#__PURE__*/runWith();
-
-// Asynchronous
-
-var acceptsAsync = /*#__PURE__*/runWith(Async, /*#__PURE__*/I.always( /*#__PURE__*/returnAsync(true)), /*#__PURE__*/I.always( /*#__PURE__*/returnAsync(false)));
-
-var errorsAsync = /*#__PURE__*/runWith(Async, /*#__PURE__*/I.always( /*#__PURE__*/returnAsync()), returnAsync);
-
-var tryValidateAsyncNow = /*#__PURE__*/runWith(Async, 0, /*#__PURE__*/o(raise, toError));
-
-var validateAsync = /*#__PURE__*/runWith(Async, returnAsync, /*#__PURE__*/o(throwAsync, toError));
-
 // Primitive
 
 var accept = L.zero;
@@ -299,6 +250,59 @@ var rejectAs = /*#__PURE__*/o(L.setOp, rejected);
 var reject = /*#__PURE__*/L.modifyOp(rejected);
 
 var remove = /*#__PURE__*/acceptAs(undefined);
+
+//
+
+var casesOfDefault = /*#__PURE__*/I.always(reject);
+var casesOfCase = function casesOfCase(p, o$$1, r) {
+  return function (y, j) {
+    return p(y, j) ? o$$1 : r(y, j);
+  };
+};
+
+//
+
+var ruleBinOp = function ruleBinOp(op) {
+  return I.curryN(2, function (l) {
+    return l = toRule(l), function (r) {
+      return r = toRule(r), op(l, r);
+    };
+  });
+};
+
+// General
+
+var run = /*#__PURE__*/I.curryN(3, function (c) {
+  var Monad = c.Monad || L.Identity;
+  var onAccept = c.onAccept || I.id;
+  var onReject = c.onReject || raise;
+  var handler = function handler(r) {
+    return isRejected(r) ? onReject(value(r)) : onAccept(r);
+  };
+  return function (rule) {
+    return rule = toRule(rule), function (data) {
+      return Monad.chain(handler, L.traverse(Monad, I.id, rule, data));
+    };
+  };
+});
+
+// Synchronous
+
+var accepts = /*#__PURE__*/runWith(0, /*#__PURE__*/I.always(true), /*#__PURE__*/I.always(false));
+
+var errors = /*#__PURE__*/runWith(0, ignore, I.id);
+
+var validate = /*#__PURE__*/runWith();
+
+// Asynchronous
+
+var acceptsAsync = /*#__PURE__*/runWith(Async, /*#__PURE__*/I.always( /*#__PURE__*/returnAsync(true)), /*#__PURE__*/I.always( /*#__PURE__*/returnAsync(false)));
+
+var errorsAsync = /*#__PURE__*/runWith(Async, /*#__PURE__*/I.always( /*#__PURE__*/returnAsync()), returnAsync);
+
+var tryValidateAsyncNow = /*#__PURE__*/runWith(Async, 0, /*#__PURE__*/o(raise, toError));
+
+var validateAsync = /*#__PURE__*/runWith(Async, returnAsync, /*#__PURE__*/o(throwAsync, toError));
 
 // Predicates
 
@@ -422,6 +426,16 @@ var propsOr = /*#__PURE__*/I.curry(function (onOthers, template) {
 
 var props = /*#__PURE__*/propsOr(reject);
 
+// Dependent
+
+var choose = function choose(xi2r) {
+  return function (x, i, M, xi2yM) {
+    return M.chain(function (r) {
+      return toRule(r)(x, i, M, xi2yM);
+    }, xi2r(x, i));
+  };
+};
+
 // Conditional
 
 var cases = /*#__PURE__*/sumRight(reject, /*#__PURE__*/(validate(freeFn(tuple(or(tuple(accept), tuple(I.isFunction, accept)), accept), accept)))(function (alt, rest) {
@@ -438,20 +452,46 @@ var ifElse = /*#__PURE__*/I.curry(function (p, c, a) {
   };
 });
 
-// Dependent
+var casesOf = /*#__PURE__*/(validate(modifyAfter(freeFn(choose(function (args) {
+  var last = length(args) - 1;
+  return tupleOr({
+    less: false,
+    rest: ifElse(function (_, i) {
+      return i === last;
+    }, or(tuple(accept), tuple(I.isFunction, accept)), tuple(I.isFunction, accept))
+  })(accept);
+}), accept), function (fn) {
+  return function (of) {
+    for (var _len2 = arguments.length, cases = Array(_len2 > 1 ? _len2 - 1 : 0), _key2 = 1; _key2 < _len2; _key2++) {
+      cases[_key2 - 1] = arguments[_key2];
+    }
 
-var choose = function choose(xi2r) {
-  return function (x, i, M, xi2yM) {
-    return M.chain(function (r) {
-      return toRule(r)(x, i, M, xi2yM);
-    }, xi2r(x, i));
+    return fn.apply(undefined, [of].concat(cases));
   };
-};
+})))(function (of) {
+  of = L.toFunction(of);
+  var n = arguments.length;
+  var op = casesOfDefault;
+  while (--n) {
+    var c = arguments[n];
+    op = length(c) === 1 ? I.always(toRule(c[0])) : casesOfCase(c[0], toRule(c[1]), op);
+  }
+  return function (x, i, M, xi2yM) {
+    return of(x, i, L.Constant, op)(x, i, M, xi2yM);
+  };
+});
 
 // Recursive
 
 var lazy = /*#__PURE__*/o(L.lazy, /*#__PURE__*/o(toRule));
 
+exports.accept = accept;
+exports.acceptAs = acceptAs;
+exports.acceptWith = acceptWith;
+exports.rejectWith = rejectWith;
+exports.rejectAs = rejectAs;
+exports.reject = reject;
+exports.remove = remove;
 exports.run = run;
 exports.accepts = accepts;
 exports.errors = errors;
@@ -460,13 +500,6 @@ exports.acceptsAsync = acceptsAsync;
 exports.errorsAsync = errorsAsync;
 exports.tryValidateAsyncNow = tryValidateAsyncNow;
 exports.validateAsync = validateAsync;
-exports.accept = accept;
-exports.acceptAs = acceptAs;
-exports.acceptWith = acceptWith;
-exports.rejectWith = rejectWith;
-exports.rejectAs = rejectAs;
-exports.reject = reject;
-exports.remove = remove;
 exports.where = where;
 exports.modifyError = modifyError;
 exports.setError = setError;
@@ -488,9 +521,10 @@ exports.keep = keep;
 exports.optional = optional;
 exports.propsOr = propsOr;
 exports.props = props;
+exports.choose = choose;
 exports.cases = cases;
 exports.ifElse = ifElse;
-exports.choose = choose;
+exports.casesOf = casesOf;
 exports.lazy = lazy;
 
 Object.defineProperty(exports, '__esModule', { value: true });

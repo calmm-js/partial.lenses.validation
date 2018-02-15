@@ -1,5 +1,5 @@
-import { isFunction, id, freeze, isArray, curryN, always, curry } from 'infestines';
-import { transform, rewrite, any, modify, elems, values, get, ifElse, toFunction, choose, traverse, zero, setOp, modifyOp, setter, set, optional, branchOr, lazy } from 'partial.lenses';
+import { isFunction, id, freeze, isArray, always, curryN, curry } from 'infestines';
+import { rewrite, any, modify, elems, values, get, ifElse, toFunction, choose, zero, setOp, modifyOp, Identity, traverse, setter, set, optional, branchOr, Constant, lazy } from 'partial.lenses';
 
 var length = function length(x) {
   return x.length;
@@ -30,12 +30,6 @@ var ignore = function ignore(_) {};
 
 //
 
-var Sync = /*#__PURE__*/transform(function (_x, _i, M, _xi2yM) {
-  return M;
-}, 0);
-
-//
-
 var P = Promise;
 
 var throwAsync = /*#__PURE__*/P.reject.bind(P);
@@ -45,7 +39,7 @@ var chain = function chain(xyP, xP) {
   return null != xP && isFunction(xP.then) ? xP.then(xyP) : xyP(xP);
 };
 
-var Async = {
+var Async = /*#__PURE__*/(process.env.NODE_ENV === 'production' ? id : freeze)({
   map: chain,
   ap: function ap(xyP, xP) {
     return chain(function (xP) {
@@ -56,10 +50,11 @@ var Async = {
   },
   of: id,
   chain: chain
+});
 
-  //
+//
 
-};var unique = {};
+var unique = {};
 
 var uniqueToUndefined = function uniqueToUndefined(x) {
   return x === unique ? undefined : x;
@@ -223,50 +218,6 @@ function callPredicate(predicate, x, i) {
   }
 }
 
-//
-
-var ruleBinOp = function ruleBinOp(op) {
-  return curryN(2, function (l) {
-    return l = toRule(l), function (r) {
-      return r = toRule(r), op(l, r);
-    };
-  });
-};
-
-// General
-
-var run = /*#__PURE__*/curryN(3, function (c) {
-  var Monad = c.Monad || Sync;
-  var onAccept = c.onAccept || id;
-  var onReject = c.onReject || raise;
-  var handler = function handler(r) {
-    return isRejected(r) ? onReject(value(r)) : onAccept(r);
-  };
-  return function (rule) {
-    return rule = toRule(rule), function (data) {
-      return Monad.chain(handler, traverse(Monad, id, rule, data));
-    };
-  };
-});
-
-// Synchronous
-
-var accepts = /*#__PURE__*/runWith(0, /*#__PURE__*/always(true), /*#__PURE__*/always(false));
-
-var errors = /*#__PURE__*/runWith(0, ignore, id);
-
-var validate = /*#__PURE__*/runWith();
-
-// Asynchronous
-
-var acceptsAsync = /*#__PURE__*/runWith(Async, /*#__PURE__*/always( /*#__PURE__*/returnAsync(true)), /*#__PURE__*/always( /*#__PURE__*/returnAsync(false)));
-
-var errorsAsync = /*#__PURE__*/runWith(Async, /*#__PURE__*/always( /*#__PURE__*/returnAsync()), returnAsync);
-
-var tryValidateAsyncNow = /*#__PURE__*/runWith(Async, 0, /*#__PURE__*/o(raise, toError));
-
-var validateAsync = /*#__PURE__*/runWith(Async, returnAsync, /*#__PURE__*/o(throwAsync, toError));
-
 // Primitive
 
 var accept = zero;
@@ -296,6 +247,59 @@ var rejectAs = /*#__PURE__*/o(setOp, rejected);
 var reject = /*#__PURE__*/modifyOp(rejected);
 
 var remove = /*#__PURE__*/acceptAs(undefined);
+
+//
+
+var casesOfDefault = /*#__PURE__*/always(reject);
+var casesOfCase = function casesOfCase(p, o$$1, r) {
+  return function (y, j) {
+    return p(y, j) ? o$$1 : r(y, j);
+  };
+};
+
+//
+
+var ruleBinOp = function ruleBinOp(op) {
+  return curryN(2, function (l) {
+    return l = toRule(l), function (r) {
+      return r = toRule(r), op(l, r);
+    };
+  });
+};
+
+// General
+
+var run = /*#__PURE__*/curryN(3, function (c) {
+  var Monad = c.Monad || Identity;
+  var onAccept = c.onAccept || id;
+  var onReject = c.onReject || raise;
+  var handler = function handler(r) {
+    return isRejected(r) ? onReject(value(r)) : onAccept(r);
+  };
+  return function (rule) {
+    return rule = toRule(rule), function (data) {
+      return Monad.chain(handler, traverse(Monad, id, rule, data));
+    };
+  };
+});
+
+// Synchronous
+
+var accepts = /*#__PURE__*/runWith(0, /*#__PURE__*/always(true), /*#__PURE__*/always(false));
+
+var errors = /*#__PURE__*/runWith(0, ignore, id);
+
+var validate = /*#__PURE__*/runWith();
+
+// Asynchronous
+
+var acceptsAsync = /*#__PURE__*/runWith(Async, /*#__PURE__*/always( /*#__PURE__*/returnAsync(true)), /*#__PURE__*/always( /*#__PURE__*/returnAsync(false)));
+
+var errorsAsync = /*#__PURE__*/runWith(Async, /*#__PURE__*/always( /*#__PURE__*/returnAsync()), returnAsync);
+
+var tryValidateAsyncNow = /*#__PURE__*/runWith(Async, 0, /*#__PURE__*/o(raise, toError));
+
+var validateAsync = /*#__PURE__*/runWith(Async, returnAsync, /*#__PURE__*/o(throwAsync, toError));
 
 // Predicates
 
@@ -419,6 +423,16 @@ var propsOr = /*#__PURE__*/curry(function (onOthers, template) {
 
 var props = /*#__PURE__*/propsOr(reject);
 
+// Dependent
+
+var choose$1 = function choose$$1(xi2r) {
+  return function (x, i, M, xi2yM) {
+    return M.chain(function (r) {
+      return toRule(r)(x, i, M, xi2yM);
+    }, xi2r(x, i));
+  };
+};
+
 // Conditional
 
 var cases = /*#__PURE__*/sumRight(reject, /*#__PURE__*/(process.env.NODE_ENV === 'production' ? id : validate(freeFn(tuple(or(tuple(accept), tuple(isFunction, accept)), accept), accept)))(function (alt, rest) {
@@ -435,18 +449,37 @@ var ifElse$1 = /*#__PURE__*/curry(function (p, c, a) {
   };
 });
 
-// Dependent
+var casesOf = /*#__PURE__*/(process.env.NODE_ENV === 'production' ? id : validate(modifyAfter(freeFn(choose$1(function (args) {
+  var last = length(args) - 1;
+  return tupleOr({
+    less: false,
+    rest: ifElse$1(function (_, i) {
+      return i === last;
+    }, or(tuple(accept), tuple(isFunction, accept)), tuple(isFunction, accept))
+  })(accept);
+}), accept), function (fn) {
+  return function (of) {
+    for (var _len2 = arguments.length, cases = Array(_len2 > 1 ? _len2 - 1 : 0), _key2 = 1; _key2 < _len2; _key2++) {
+      cases[_key2 - 1] = arguments[_key2];
+    }
 
-var choose$1 = function choose$$1(xi2r) {
-  return function (x, i, M, xi2yM) {
-    return M.chain(function (r) {
-      return toRule(r)(x, i, M, xi2yM);
-    }, xi2r(x, i));
+    return fn.apply(undefined, [of].concat(cases));
   };
-};
+})))(function (of) {
+  of = toFunction(of);
+  var n = arguments.length;
+  var op = casesOfDefault;
+  while (--n) {
+    var c = arguments[n];
+    op = length(c) === 1 ? always(toRule(c[0])) : casesOfCase(c[0], toRule(c[1]), op);
+  }
+  return function (x, i, M, xi2yM) {
+    return of(x, i, Constant, op)(x, i, M, xi2yM);
+  };
+});
 
 // Recursive
 
 var lazy$1 = /*#__PURE__*/o(lazy, /*#__PURE__*/o(toRule));
 
-export { run, accepts, errors, validate, acceptsAsync, errorsAsync, tryValidateAsyncNow, validateAsync, accept, acceptAs, acceptWith, rejectWith, rejectAs, reject, remove, where, modifyError, setError, modifyAfter, setAfter, removeAfter, both$1 as both, and, not, either, or, arrayId, arrayIx, args, tuple, dependentFn, freeFn, keep, optional$1 as optional, propsOr, props, cases, ifElse$1 as ifElse, choose$1 as choose, lazy$1 as lazy };
+export { accept, acceptAs, acceptWith, rejectWith, rejectAs, reject, remove, run, accepts, errors, validate, acceptsAsync, errorsAsync, tryValidateAsyncNow, validateAsync, where, modifyError, setError, modifyAfter, setAfter, removeAfter, both$1 as both, and, not, either, or, arrayId, arrayIx, args, tuple, dependentFn, freeFn, keep, optional$1 as optional, propsOr, props, choose$1 as choose, cases, ifElse$1 as ifElse, casesOf, lazy$1 as lazy };
