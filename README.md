@@ -72,6 +72,7 @@ structure.
     * [`V.propsOr(rule, {...prop: rule}) ~> rule`](#V-propsOr) <small><sup>v0.3.0</sup></small>
   * [Conditional](#conditional)
     * [`V.cases(...[(value, index) => testable, rule][, [rule]]) ~> rule`](#V-cases) <small><sup>v0.3.0</sup></small>
+    * [`V.casesOf(lens, ...[(value, index) => testable, rule][, [rule]]) ~> rule`](#V-casesOf) <small><sup>v0.3.4</sup></small>
     * [`V.ifElse((value, index) => testable, rule, rule) ~> rule`](#V-ifElse) <small><sup>v0.3.0</sup></small>
   * [Dependent](#dependent)
     * [`V.choose((value, index) => rule) ~> rule`](#V-choose) <small><sup>v0.3.0</sup></small>
@@ -927,6 +928,29 @@ V.validate(
 Note that, like with [`V.ifElse`](#V-ifElse), `V.cases([p1, r1], ..., [rN])` can
 be expressed in terms of the logical operators, but `V.cases` has a simpler
 internal implementation and is likely to be faster.
+
+#### <a id="V-casesOf"></a> [≡](#contents) [▶](https://calmm-js.github.io/partial.lenses.validation/index.html#V-casesOf) [`V.casesOf(lens, ...[(value, index) => testable, rule][, [rule]]) ~> rule`](#V-casesOf) <small><sup>v0.3.4</sup></small>
+
+`V.casesOf(lens, [p1, r1], ..., [pN, rN], [r])` is like [`V.cases`](#V-cases)
+except that the subfocus for the predicates is produced by the given lens from
+the current focus.
+
+For example:
+
+```js
+V.validate(
+  V.casesOf(
+    'type',
+    [R.equals('number'), V.props({type: R.is(String), value: R.is(Number)})],
+    [R.equals('string'), V.props({type: R.is(String), value: R.is(String)})]
+  ),
+  {
+    type: 'string',
+    value: 'foo'
+  }
+)
+// { type: 'string', value: 'foo' }
+```
 
 #### <a id="V-ifElse"></a> [≡](#contents) [▶](https://calmm-js.github.io/partial.lenses.validation/index.html#V-ifElse) [`V.ifElse((value, index) => testable, rule, rule) ~> rule`](#V-ifElse) <small><sup>v0.3.0</sup></small>
 
