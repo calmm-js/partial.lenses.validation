@@ -43,10 +43,16 @@ structure.
   * [Elaboration](#elaboration)
     * [`V.modifyError((value, error, index) => error, rule) ~> rule`](#V-modifyError) <small><sup>v0.3.0</sup></small>
     * [`V.setError(error, rule) ~> rule`](#V-setError) <small><sup>v0.3.0</sup></small>
+  * [Transformation](#transformation)
+    * [`V.modifyAfter(rule, (value, index) => value) ~> rule`](#V-modifyAfter) <small><sup>v0.3.3</sup></small>
+    * [`V.setAfter(rule, value) ~> rule`](#V-setAfter) <small><sup>v0.3.3</sup></small>
+    * [`V.removeAfter(rule) ~> rule`](#V-removeAfter) <small><sup>v0.3.3</sup></small>
   * [Predicates](#predicates)
     * [`V.where((value, index) => testable) ~> rule`](#V-where) <small><sup>v0.3.0</sup></small>
   * [Logical](#logical)
     * [`V.and(...rules) ~> rule`](#V-and) <small><sup>v0.3.0</sup></small>
+    * [`V.both(rule, rule) ~> rule`](#V-both) <small><sup>v0.3.3</sup></small>
+    * [`V.either(rule, rule) ~> rule`](#V-either) <small><sup>v0.3.3</sup></small>
     * [`V.not(rule) ~> rule`](#V-not) <small><sup>v0.3.0</sup></small>
     * [`V.or(...rules) ~> rule`](#V-or) <small><sup>v0.3.0</sup></small>
   * [Arrays](#arrays)
@@ -519,6 +525,27 @@ V.validate(
 // { required: 'field' }
 ```
 
+### <a id="transformation"></a> [≡](#contents) [▶](https://calmm-js.github.io/partial.lenses.validation/index.html#transformation) [Transformation](#transformation)
+
+Rules can modify the value after a rule has accepted the focus.
+
+#### <a id="V-modifyAfter"></a> [≡](#contents) [▶](https://calmm-js.github.io/partial.lenses.validation/index.html#V-modifyValue) [`V.modifyAfter(rule, (value, index) => value) ~> rule`](#V-modifyAfter) <small><sup>v0.3.3</sup></small>
+
+`V.modifyAfter(rule, fn)` replaces the focus after the given rule has accepted
+it with the value returned by the given function.  `V.modifyAfter(rule, fn)` is
+equivalent to [`V.both(rule, V.acceptWith(fn))`](#V-both).
+
+#### <a id="V-setAfter"></a> [≡](#contents) [▶](https://calmm-js.github.io/partial.lenses.validation/index.html#V-setValue) [`V.setAfter(rule, value) ~> rule`](#V-setAfter) <small><sup>v0.3.3</sup></small>
+
+`V.setAfter(rule, value)` replaces the focus after the given rule has accepted
+it with the given value.  `V.setAfter(rule, value)` is equivalent to
+[`V.both(rule, V.acceptAs(value))`](#V-both).
+
+#### <a id="V-removeAfter"></a> [≡](#contents) [▶](https://calmm-js.github.io/partial.lenses.validation/index.html#V-removeValue) [`V.removeAfter(rule) ~> rule`](#V-removeAfter) <small><sup>v0.3.3</sup></small>
+
+`V.removeAfter(rule)` removes the focus after the given rule has accepted it.
+`V.removeAfter(rule)` is equivalent to [`V.both(rule, V.remove)`](#V-both).
+
 ### <a id="elaboration"></a> [≡](#contents) [▶](https://calmm-js.github.io/partial.lenses.validation/index.html#elaboration) [Elaboration](#elaboration)
 
 It is also possible to modify the error after a rule has rejected the focus.
@@ -637,7 +664,19 @@ rules.
 rules one-by-one starting from the first given rule.  In case some rule rejects
 the focus, that becomes the result of `V.and`.  Otherwise the result of `V.and`
 is the accepted result produced by passing the original focus through all of the
-given rules.
+given rules.  Note that `V.and` is not curried like [`V.both`](#V-both).
+
+#### <a id="V-both"></a> [≡](#contents) [▶](https://calmm-js.github.io/partial.lenses.validation/index.html#V-both) [`V.both(rule, rule) ~> rule`](#V-both) <small><sup>v0.3.3</sup></small>
+
+`V.both(rule1, rule2)` validates the value in focus with both of the given rules
+starting with the first of the given rules.  `V.both(rule1, rule2)` is
+equivalent to [`V.and(rule1, rule2)`](#V-and).
+
+#### <a id="V-either"></a> [≡](#contents) [▶](https://calmm-js.github.io/partial.lenses.validation/index.html#V-either) [`V.either(rule, rule) ~> rule`](#V-either) <small><sup>v0.3.3</sup></small>
+
+`V.either(rule1, rule2)` validates the value in focus with either of the given
+rules starting with the first of the given rules.  `V.either(rule1, rule2)` is
+equivalent to [`V.or(rule1, rule2)`](#V-or).
 
 #### <a id="V-not"></a> [≡](#contents) [▶](https://calmm-js.github.io/partial.lenses.validation/index.html#V-not) [`V.not(rule) ~> rule`](#V-not) <small><sup>v0.3.0</sup></small>
 
@@ -650,7 +689,8 @@ the focus, `V.not` accepts it instead.
 `V.or(rule1, ..., ruleN)` tries to validate the value in focus with one of the
 given rules starting from the first given rule.  In case some rule accepts the
 focus, that becomes the result of `V.or`.  Otherwise the error produced by the
-last of the given rules becomes the result of `V.or`.
+last of the given rules becomes the result of `V.or`.  Note that `V.or` is not
+curried like [`V.either`](#V-either).
 
 ### <a id="arrays"></a> [≡](#contents) [▶](https://calmm-js.github.io/partial.lenses.validation/index.html#arrays) [Arrays](#arrays)
 

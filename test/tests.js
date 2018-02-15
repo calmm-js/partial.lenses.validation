@@ -445,6 +445,12 @@ describe('transformation', () => {
 
   testAcceptedAs('Yeah', 'something', () => V.and(V.accept, V.acceptAs('Yeah')))
   testRejected('something', () => V.and(V.reject, V.acceptAs('Yeah')))
+
+  testAcceptedAs([[1, 0]], [1], () =>
+    V.arrayIx(V.modifyAfter(R.equals(1), (v, i) => [v, i]))
+  )
+  testAcceptedAs(['2'], [1], () => V.arrayId(V.setAfter(R.equals(1), '2')))
+  testAcceptedAs([], [1], () => V.arrayId(V.removeAfter(R.equals(1))))
 })
 
 describe('V.freeFn', () => {

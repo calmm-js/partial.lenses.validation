@@ -177,6 +177,11 @@ function callPredicate(predicate, x, i) {
   }
 }
 
+//
+
+const ruleBinOp = op =>
+  I.curryN(2, l => ((l = toRule(l)), r => ((r = toRule(r)), op(l, r))))
+
 // General
 
 export const run = I.curryN(3, c => {
@@ -261,36 +266,34 @@ export const setError = I.curry((error, rule) =>
   compose([L.rewrite(r => (isRejected(r) ? rejected(error) : r)), rule])
 )
 
+// Transformation
+
+export const modifyAfter = I.curryN(2, rule => I.o(both(rule), acceptWith))
+export const setAfter = I.curryN(2, rule => I.o(both(rule), acceptAs))
+export const removeAfter = rule => both(rule, remove)
+
 // Logical
 
-export const and = sumRight(
-  accept,
-  toRule,
-  (rule, rest) => (
-    (rule = toRule(rule)),
-    (x, i, M, xi2yM) =>
-      M.chain(
-        r => (isRejected(r) ? M.of(r) : rest(r, i, M, xi2yM)),
-        rule(x, i, M, xi2yM)
-      )
+export const both = ruleBinOp((rule, rest) => (x, i, M, xi2yM) =>
+  M.chain(
+    r => (isRejected(r) ? M.of(r) : rest(r, i, M, xi2yM)),
+    rule(x, i, M, xi2yM)
   )
 )
+
+export const and = sumRight(accept, toRule, both)
 
 export const not = rule =>
   compose([L.setter((r, x) => (isRejected(r) ? x : rejected(x))), rule])
 
-export const or = sumRight(
-  reject,
-  toRule,
-  (rule, rest) => (
-    (rule = toRule(rule)),
-    (x, i, M, xi2yM) =>
-      M.chain(
-        r => (isRejected(r) ? rest(x, i, M, xi2yM) : M.of(r)),
-        rule(x, i, M, xi2yM)
-      )
+export const either = ruleBinOp((rule, rest) => (x, i, M, xi2yM) =>
+  M.chain(
+    r => (isRejected(r) ? rest(x, i, M, xi2yM) : M.of(r)),
+    rule(x, i, M, xi2yM)
   )
 )
+
+export const or = sumRight(reject, toRule, either)
 
 // Uniform
 
