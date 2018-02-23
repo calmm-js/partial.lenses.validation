@@ -320,6 +320,17 @@ describe('V.cases', () => {
       )
     )
   )
+
+  testRejectedAs(['error'], ['anything'], () =>
+    V.arrayIx(
+      V.cases([
+        _ => {
+          throw 'error'
+        },
+        V.reject
+      ])
+    )
+  )
 })
 
 describe('V.arrayIx', () => {
@@ -335,11 +346,25 @@ describe('V.choose', () => {
   testAccepted(['1', '2', '3'], () =>
     V.arrayIx(V.choose((_, i) => R.equals(`${i + 1}`)))
   )
+
+  testRejectedAs(['error'], ['anything'], () =>
+    V.arrayIx(
+      V.choose(() => {
+        throw 'error'
+      })
+    )
+  )
 })
 
 describe('V.ifElse', () => {
   testAccepted([1, '2', 3, '4'], () =>
     V.arrayIx(V.ifElse((_, i) => i % 2, R.is(String), R.is(Number)))
+  )
+
+  testRejectedAs(['error'], ['anything'], () =>
+    V.arrayIx(_ => {
+      throw 'error'
+    })
   )
 })
 
@@ -562,6 +587,19 @@ describe('V.casesOf', () => {
         )
       )
     }
+  )
+  testRejectedAs(['error'], ['anything'], () =>
+    V.arrayIx(
+      V.casesOf(
+        [],
+        [
+          _ => {
+            throw 'error'
+          },
+          V.reject
+        ]
+      )
+    )
   )
 })
 

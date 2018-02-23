@@ -22,7 +22,7 @@ const Async = (process.env.NODE_ENV === 'production' ? I.id : I.freeze)({
 
 const unique = {}
 
-const uniqueToUndefined = x => (x !== unique ? x : undefined)
+const uniqueToUndefined = x => (x === unique ? undefined : x)
 const undefinedToUnique = y => (undefined !== y ? y : unique)
 
 const fromUniques = L.rewrite(xs => {
@@ -164,12 +164,19 @@ const runWith = (Monad, onAccept, onReject) => run({Monad, onAccept, onReject})
 
 let raised = unique
 
-function callPredicate(predicate, x, i) {
+function rejectRaisedOr(M, x) {
+  let r = raised
+  if (r === unique) r = x
+  else raised = unique
+  return M.of(rejected(r))
+}
+
+const protect = (predicate, orElse) => (x, i) => {
   try {
     return predicate(x, i)
   } catch (e) {
     raised = e
-    return false
+    return orElse
   }
 }
 
@@ -193,7 +200,16 @@ export const remove = acceptAs(undefined)
 //
 
 const casesOfDefault = I.always(reject)
-const casesOfCase = (p, o, r) => (y, j) => (p(y, j) ? o : r(y, j))
+const casesOfCase = (p, o, r) => (y, j) => (x, i, M, xi2yM) =>
+  M.chain(
+    b =>
+      b
+        ? o(x, i, M, xi2yM)
+        : undefined !== b || raised === unique
+          ? r(y, j)(x, i, M, xi2yM)
+          : rejectRaisedOr(M, x),
+    p(y, j)
+  )
 
 //
 
@@ -241,14 +257,11 @@ export const validateAsync = runWith(
 
 // Predicates
 
-export const where = predicate => (x, i, M, _xi2yM) =>
-  M.chain(
-    b =>
-      b
-        ? x
-        : rejected((raised === unique || ((x = raised), (raised = unique)), x)),
-    callPredicate(predicate, x, i)
-  )
+export const where = predicate => (
+  (predicate = protect(predicate)),
+  (x, i, M, _xi2yM) =>
+    M.chain(b => (b ? M.of(x) : rejectRaisedOr(M, x)), predicate(x, i))
+)
 
 // Elaboration
 
@@ -257,7 +270,7 @@ export const modifyError = I.curry(
     (rule = toRule(rule)),
     (x, i, M, xi2yM) =>
       M.chain(
-        r => (isRejected(r) ? M.map(rejected, fn(x, value(r), i)) : r),
+        r => (isRejected(r) ? M.map(rejected, fn(x, value(r), i)) : M.of(r)),
         rule(x, i, M, xi2yM)
       )
   )
@@ -374,8 +387,14 @@ export const props = propsOr(reject)
 
 // Dependent
 
-export const choose = xi2r => (x, i, M, xi2yM) =>
-  M.chain(r => toRule(r)(x, i, M, xi2yM), xi2r(x, i))
+export const choose = xi2r => (
+  (xi2r = protect(xi2r)),
+  (x, i, M, xi2yM) =>
+    M.chain(
+      r => (r ? toRule(r)(x, i, M, xi2yM) : rejectRaisedOr(M, x)),
+      xi2r(x, i)
+    )
+)
 
 // Conditional
 
@@ -400,10 +419,19 @@ export const cases = sumRight(
 
 export const ifElse = I.curry(
   (p, c, a) => (
+    (p = protect(p)),
     (c = toRule(c)),
     (a = toRule(a)),
     (x, i, M, xi2yM) =>
-      M.chain(b => (b ? c(x, i, M, xi2yM) : a(x, i, M, xi2yM)), p(x, i))
+      M.chain(
+        b =>
+          b
+            ? c(x, i, M, xi2yM)
+            : undefined !== b || raised === unique
+              ? a(x, i, M, xi2yM)
+              : rejectRaisedOr(M, x),
+        p(x, i)
+      )
   )
 )
 
@@ -435,7 +463,7 @@ export const casesOf = (process.env.NODE_ENV === 'production'
     const c = arguments[n]
     op =
       I.length(c) !== 1
-        ? casesOfCase(c[0], toRule(c[1]), op)
+        ? casesOfCase(protect(c[0]), toRule(c[1]), op)
         : I.always(toRule(c[0]))
   }
   return (x, i, M, xi2yM) => lens(x, i, L.Constant, op)(x, i, M, xi2yM)

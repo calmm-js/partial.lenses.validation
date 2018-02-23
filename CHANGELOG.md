@@ -1,3 +1,8 @@
+## 0.3.5
+
+Now immediate exceptions from user defined predicates are caught and the
+corresponding focus is rejected with the exception.
+
 ## 0.3.2
 
 `V.where` now catches exceptions from predicates.  In case a predicate throws an
