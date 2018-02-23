@@ -425,10 +425,10 @@ export const casesOf = (process.env.NODE_ENV === 'production'
           }),
           accept
         ),
-        fn => (of, ...cases) => fn(of, ...cases)
+        fn => (lens, ...cases) => fn(lens, ...cases)
       )
-    ))(function(of) {
-  of = L.toFunction(of)
+    ))(function(lens) {
+  lens = L.toFunction(lens)
   let n = arguments.length
   let op = casesOfDefault
   while (--n) {
@@ -438,7 +438,7 @@ export const casesOf = (process.env.NODE_ENV === 'production'
         ? casesOfCase(c[0], toRule(c[1]), op)
         : I.always(toRule(c[0]))
   }
-  return (x, i, M, xi2yM) => of(x, i, L.Constant, op)(x, i, M, xi2yM)
+  return (x, i, M, xi2yM) => lens(x, i, L.Constant, op)(x, i, M, xi2yM)
 })
 
 // Recursive
