@@ -22,8 +22,8 @@ const Async = (process.env.NODE_ENV === 'production' ? I.id : I.freeze)({
 
 const unique = {}
 
-const uniqueToUndefined = x => (x === unique ? undefined : x)
-const undefinedToUnique = y => (undefined === y ? unique : y)
+const uniqueToUndefined = x => (x !== unique ? x : undefined)
+const undefinedToUnique = y => (undefined !== y ? y : unique)
 
 const fromUniques = L.rewrite(xs => {
   const r = isRejected(xs)
@@ -77,7 +77,7 @@ const raiseRejected = r => (isRejected(r) ? raise(toError(value(r))) : r)
 //
 
 const getEither = (k, r, x) => (
-  (r = L.get(k, r)), void 0 === r ? L.get(k, x) : r
+  (r = L.get(k, r)), undefined !== r ? r : L.get(k, x)
 )
 
 const sumRight = (zero, one, plus) =>
@@ -203,13 +203,13 @@ const ruleBinOp = op =>
 // General
 
 export const run = I.curryN(3, c => {
-  const Monad = c.Monad || L.Identity
+  const M = c.Monad || L.Identity
   const onAccept = c.onAccept || I.id
   const onReject = c.onReject || raise
   const handler = r => (isRejected(r) ? onReject(value(r)) : onAccept(r))
   return rule => (
     (rule = toRule(rule)),
-    data => Monad.chain(handler, L.traverse(Monad, I.id, rule, data))
+    data => M.chain(handler, L.traverse(M, I.id, rule, data))
   )
 })
 
@@ -434,9 +434,9 @@ export const casesOf = (process.env.NODE_ENV === 'production'
   while (--n) {
     const c = arguments[n]
     op =
-      I.length(c) === 1
-        ? I.always(toRule(c[0]))
-        : casesOfCase(c[0], toRule(c[1]), op)
+      I.length(c) !== 1
+        ? casesOfCase(c[0], toRule(c[1]), op)
+        : I.always(toRule(c[0]))
   }
   return (x, i, M, xi2yM) => of(x, i, L.Constant, op)(x, i, M, xi2yM)
 })
