@@ -282,6 +282,14 @@ var ruleBinOp = function ruleBinOp(op) {
   });
 };
 
+//
+
+var upgradesCase = function upgradesCase(revalidate) {
+  return function (c) {
+    return length(c) === 3 ? [c[0], both$1(modifyAfter(c[1], c[2]), revalidate)] : c;
+  };
+};
+
 // General
 
 var run = /*#__PURE__*/I.curryN(3, function (c) {
@@ -497,6 +505,58 @@ var casesOf = /*#__PURE__*/(validate(modifyAfter(freeFn(choose(function (args) {
 
 var lazy = /*#__PURE__*/o(L.lazy, /*#__PURE__*/o(toRule));
 
+// Promotion
+
+var promote = /*#__PURE__*/(validate(freeFn([function (xs) {
+  return length(xs) === 0 || xs.every(function (c) {
+    return I.isArray(c) && 1 <= length(c) && length(c) <= 2;
+  }) && xs.some(function (c) {
+    return length(c) < 2;
+  });
+}, '`promote` given an invalid set of cases'], accept)))(function () {
+  for (var _len3 = arguments.length, cs = Array(_len3), _key3 = 0; _key3 < _len3; _key3++) {
+    cs[_key3] = arguments[_key3];
+  }
+
+  return lazy(function (rec) {
+    return or.apply(null, cs.map(function (c) {
+      return length(c) === 2 ? both$1(modifyAfter(c[0], c[1]), rec) : c[0];
+    }));
+  });
+});
+
+var upgrades = /*#__PURE__*/(validate(freeFn([function (xs) {
+  return length(xs) === 0 || xs.every(function (c) {
+    return I.isArray(c) && 1 <= length(c) && length(c) <= 3;
+  }) && xs.some(function (c) {
+    return length(c) < 3;
+  });
+}, '`upgrades` given an invalid set of cases'], accept)))(function () {
+  for (var _len4 = arguments.length, cs = Array(_len4), _key4 = 0; _key4 < _len4; _key4++) {
+    cs[_key4] = arguments[_key4];
+  }
+
+  return lazy(function (rec) {
+    return cases.apply(null, cs.map(upgradesCase(rec)));
+  });
+});
+
+var upgradesOf = /*#__PURE__*/(validate(freeFn([function (xs) {
+  return length(xs) === 1 || xs.slice(1).every(function (c) {
+    return I.isArray(c) && 1 <= length(c) && length(c) <= 3;
+  }) && xs.slice(1).some(function (c) {
+    return length(c) < 3;
+  });
+}, '`upgradesOf` given an invalid set of cases'], accept)))(function (lens) {
+  for (var _len5 = arguments.length, cs = Array(_len5 > 1 ? _len5 - 1 : 0), _key5 = 1; _key5 < _len5; _key5++) {
+    cs[_key5 - 1] = arguments[_key5];
+  }
+
+  return lazy(function (rec) {
+    return casesOf.apply(null, [lens].concat(cs.map(upgradesCase(rec))));
+  });
+});
+
 exports.accept = accept;
 exports.acceptAs = acceptAs;
 exports.acceptWith = acceptWith;
@@ -538,6 +598,9 @@ exports.cases = cases;
 exports.ifElse = ifElse;
 exports.casesOf = casesOf;
 exports.lazy = lazy;
+exports.promote = promote;
+exports.upgrades = upgrades;
+exports.upgradesOf = upgradesOf;
 
 Object.defineProperty(exports, '__esModule', { value: true });
 

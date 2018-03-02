@@ -279,6 +279,14 @@ var ruleBinOp = function ruleBinOp(op) {
   });
 };
 
+//
+
+var upgradesCase = function upgradesCase(revalidate) {
+  return function (c) {
+    return length(c) === 3 ? [c[0], both$1(modifyAfter(c[1], c[2]), revalidate)] : c;
+  };
+};
+
 // General
 
 var run = /*#__PURE__*/curryN(3, function (c) {
@@ -494,4 +502,56 @@ var casesOf = /*#__PURE__*/(process.env.NODE_ENV === 'production' ? id : validat
 
 var lazy$1 = /*#__PURE__*/o(lazy, /*#__PURE__*/o(toRule));
 
-export { accept, acceptAs, acceptWith, rejectWith, rejectAs, reject, remove, run, accepts, errors, validate, acceptsAsync, errorsAsync, tryValidateAsyncNow, validateAsync, where, modifyError, setError, modifyAfter, setAfter, removeAfter, both$1 as both, and, not, either, or, arrayId, arrayIx, args, tuple, dependentFn, freeFn, keep, optional$1 as optional, propsOr, props, choose$1 as choose, cases, ifElse$1 as ifElse, casesOf, lazy$1 as lazy };
+// Promotion
+
+var promote = /*#__PURE__*/(process.env.NODE_ENV === 'production' ? id : validate(freeFn([function (xs) {
+  return length(xs) === 0 || xs.every(function (c) {
+    return isArray(c) && 1 <= length(c) && length(c) <= 2;
+  }) && xs.some(function (c) {
+    return length(c) < 2;
+  });
+}, '`promote` given an invalid set of cases'], accept)))(function () {
+  for (var _len3 = arguments.length, cs = Array(_len3), _key3 = 0; _key3 < _len3; _key3++) {
+    cs[_key3] = arguments[_key3];
+  }
+
+  return lazy$1(function (rec) {
+    return or.apply(null, cs.map(function (c) {
+      return length(c) === 2 ? both$1(modifyAfter(c[0], c[1]), rec) : c[0];
+    }));
+  });
+});
+
+var upgrades = /*#__PURE__*/(process.env.NODE_ENV === 'production' ? id : validate(freeFn([function (xs) {
+  return length(xs) === 0 || xs.every(function (c) {
+    return isArray(c) && 1 <= length(c) && length(c) <= 3;
+  }) && xs.some(function (c) {
+    return length(c) < 3;
+  });
+}, '`upgrades` given an invalid set of cases'], accept)))(function () {
+  for (var _len4 = arguments.length, cs = Array(_len4), _key4 = 0; _key4 < _len4; _key4++) {
+    cs[_key4] = arguments[_key4];
+  }
+
+  return lazy$1(function (rec) {
+    return cases.apply(null, cs.map(upgradesCase(rec)));
+  });
+});
+
+var upgradesOf = /*#__PURE__*/(process.env.NODE_ENV === 'production' ? id : validate(freeFn([function (xs) {
+  return length(xs) === 1 || xs.slice(1).every(function (c) {
+    return isArray(c) && 1 <= length(c) && length(c) <= 3;
+  }) && xs.slice(1).some(function (c) {
+    return length(c) < 3;
+  });
+}, '`upgradesOf` given an invalid set of cases'], accept)))(function (lens) {
+  for (var _len5 = arguments.length, cs = Array(_len5 > 1 ? _len5 - 1 : 0), _key5 = 1; _key5 < _len5; _key5++) {
+    cs[_key5 - 1] = arguments[_key5];
+  }
+
+  return lazy$1(function (rec) {
+    return casesOf.apply(null, [lens].concat(cs.map(upgradesCase(rec))));
+  });
+});
+
+export { accept, acceptAs, acceptWith, rejectWith, rejectAs, reject, remove, run, accepts, errors, validate, acceptsAsync, errorsAsync, tryValidateAsyncNow, validateAsync, where, modifyError, setError, modifyAfter, setAfter, removeAfter, both$1 as both, and, not, either, or, arrayId, arrayIx, args, tuple, dependentFn, freeFn, keep, optional$1 as optional, propsOr, props, choose$1 as choose, cases, ifElse$1 as ifElse, casesOf, lazy$1 as lazy, promote, upgrades, upgradesOf };
