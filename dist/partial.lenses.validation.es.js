@@ -347,7 +347,7 @@ var setError = /*#__PURE__*/curry(function (error, rule) {
   }), rule]);
 });
 
-// Transformation
+// Ad-hoc
 
 var modifyAfter = /*#__PURE__*/curryN(2, function (rule) {
   return o(both$1(rule), acceptWith);

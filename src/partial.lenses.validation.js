@@ -285,7 +285,7 @@ export const setError = I.curry((error, rule) =>
   compose([L.rewrite(r => (isRejected(r) ? rejected(error) : r)), rule])
 )
 
-// Transformation
+// Ad-hoc
 
 export const modifyAfter = I.curryN(2, rule => I.o(both(rule), acceptWith))
 export const setAfter = I.curryN(2, rule => I.o(both(rule), acceptAs))
