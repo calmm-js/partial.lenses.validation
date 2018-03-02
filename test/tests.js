@@ -603,6 +603,142 @@ describe('V.casesOf', () => {
   )
 })
 
+describe('V.promote', () => {
+  const rules = V.promote(
+    [
+      V.props({
+        type: R.equals('foo3'),
+        values: V.arrayIx(R.is(Number))
+      })
+    ],
+    [
+      V.props({
+        type: R.equals('foo2'),
+        value: R.is(Number)
+      }),
+      ({value}) => ({type: 'foo3', values: [value]})
+    ],
+    [
+      V.props({
+        type: R.equals('foo1')
+      }),
+      () => ({type: 'foo3', values: []})
+    ],
+    [
+      V.props({
+        type: R.equals('foo0'),
+        constant: R.is(Number)
+      }),
+      ({constant}) => ({type: 'foo2', value: constant})
+    ]
+  )
+  testAcceptedAs(
+    {type: 'foo3', values: [101]},
+    {type: 'foo0', constant: 101},
+    () => rules
+  )
+  testAcceptedAs({type: 'foo3', values: []}, {type: 'foo1'}, () => rules)
+  testAcceptedAs(
+    {type: 'foo3', values: [42]},
+    {type: 'foo2', value: 42},
+    () => rules
+  )
+  testAccepted({type: 'foo3', values: [101, 42]}, () => rules)
+})
+
+describe('V.upgrades', () => {
+  const rules = V.upgrades(
+    [
+      L.get(['type', R.equals('foo0')]),
+      V.props({
+        type: R.is(String),
+        constant: R.is(Number)
+      }),
+      ({constant}) => ({type: 'foo2', value: constant})
+    ],
+    [
+      L.get(['type', R.equals('foo1')]),
+      V.props({
+        type: R.is(String)
+      }),
+      () => ({type: 'foo3', values: []})
+    ],
+    [
+      L.get(['type', R.equals('foo2')]),
+      V.props({
+        type: R.is(String),
+        value: R.is(Number)
+      }),
+      ({value}) => ({type: 'foo3', values: [value]})
+    ],
+    [
+      V.props({
+        type: R.is(String),
+        values: V.arrayIx(R.is(Number))
+      })
+    ]
+  )
+  testAcceptedAs(
+    {type: 'foo3', values: [101]},
+    {type: 'foo0', constant: 101},
+    () => rules
+  )
+  testAcceptedAs({type: 'foo3', values: []}, {type: 'foo1'}, () => rules)
+  testAcceptedAs(
+    {type: 'foo3', values: [42]},
+    {type: 'foo2', value: 42},
+    () => rules
+  )
+  testAccepted({type: 'foo3', values: [101, 42]}, () => rules)
+})
+
+describe('V.upgradesOf', () => {
+  const rules = V.upgradesOf(
+    'type',
+    [
+      R.equals('foo0'),
+      V.props({
+        type: R.is(String),
+        constant: R.is(Number)
+      }),
+      ({constant}) => ({type: 'foo2', value: constant})
+    ],
+    [
+      R.equals('foo1'),
+      V.props({
+        type: R.is(String)
+      }),
+      () => ({type: 'foo3', values: []})
+    ],
+    [
+      R.equals('foo2'),
+      V.props({
+        type: R.is(String),
+        value: R.is(Number)
+      }),
+      ({value}) => ({type: 'foo3', values: [value]})
+    ],
+    [
+      V.props({
+        type: R.is(String),
+        values: V.arrayIx(R.is(Number))
+      })
+    ]
+  )
+  testAcceptedAs(
+    {type: 'foo3', values: [101]},
+    {type: 'foo0', constant: 101},
+    () => rules
+  )
+  testAcceptedAs({type: 'foo3', values: []}, {type: 'foo1'}, () => rules)
+  testAcceptedAs(
+    {type: 'foo3', values: [42]},
+    {type: 'foo2', value: 42},
+    () => rules
+  )
+  testAccepted({type: 'foo3', values: [101, 42]}, () => rules)
+})
+
 describe('async', () => {
   const delay = ms => new Promise(fulfill => setTimeout(fulfill, ms))
   const after = (ms, value) => delay(ms).then(() => value)

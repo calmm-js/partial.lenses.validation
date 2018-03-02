@@ -216,6 +216,11 @@ const casesOfCase = (p, o, r) => (y, j) => (x, i, M, xi2yM) =>
 const ruleBinOp = op =>
   I.curryN(2, l => ((l = toRule(l)), r => ((r = toRule(r)), op(l, r))))
 
+//
+
+const upgradesCase = revalidate => c =>
+  I.length(c) === 3 ? [c[0], both(modifyAfter(c[1], c[2]), revalidate)] : c
+
 // General
 
 export const run = I.curryN(3, c => {
@@ -472,3 +477,69 @@ export const casesOf = (process.env.NODE_ENV === 'production'
 // Recursive
 
 export const lazy = I.o(L.lazy, I.o(toRule))
+
+// Promotion
+
+export const promote = (process.env.NODE_ENV === 'production'
+  ? I.id
+  : validate(
+      freeFn(
+        [
+          xs =>
+            I.length(xs) === 0 ||
+            (xs.every(
+              c => I.isArray(c) && 1 <= I.length(c) && I.length(c) <= 2
+            ) &&
+              xs.some(c => I.length(c) < 2)),
+          '`promote` given an invalid set of cases'
+        ],
+        accept
+      )
+    ))((...cs) =>
+  lazy(rec =>
+    or.apply(
+      null,
+      cs.map(
+        c => (I.length(c) === 2 ? both(modifyAfter(c[0], c[1]), rec) : c[0])
+      )
+    )
+  )
+)
+
+export const upgrades = (process.env.NODE_ENV === 'production'
+  ? I.id
+  : validate(
+      freeFn(
+        [
+          xs =>
+            I.length(xs) === 0 ||
+            (xs.every(
+              c => I.isArray(c) && 1 <= I.length(c) && I.length(c) <= 3
+            ) &&
+              xs.some(c => I.length(c) < 3)),
+          '`upgrades` given an invalid set of cases'
+        ],
+        accept
+      )
+    ))((...cs) => lazy(rec => cases.apply(null, cs.map(upgradesCase(rec)))))
+
+export const upgradesOf = (process.env.NODE_ENV === 'production'
+  ? I.id
+  : validate(
+      freeFn(
+        [
+          xs =>
+            I.length(xs) === 1 ||
+            (xs
+              .slice(1)
+              .every(
+                c => I.isArray(c) && 1 <= I.length(c) && I.length(c) <= 3
+              ) &&
+              xs.slice(1).some(c => I.length(c) < 3)),
+          '`upgradesOf` given an invalid set of cases'
+        ],
+        accept
+      )
+    ))((lens, ...cs) =>
+  lazy(rec => casesOf.apply(null, [lens].concat(cs.map(upgradesCase(rec)))))
+)

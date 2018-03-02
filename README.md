@@ -47,6 +47,10 @@ structure.
     * [`V.modifyAfter(rule, (value, index) => value) ~> rule`](#V-modifyAfter) <small><sup>v0.3.3</sup></small>
     * [`V.setAfter(rule, value) ~> rule`](#V-setAfter) <small><sup>v0.3.3</sup></small>
     * [`V.removeAfter(rule) ~> rule`](#V-removeAfter) <small><sup>v0.3.3</sup></small>
+  * [Promotion](#promotion)
+    * [`V.promote(...[rule[, (value, index) => value]]) ~> rule`](#V-promote) <small><sup>v0.3.6</sup></small>
+    * [`V.upgrades(...[(value, index) => testable, rule[, (value, index) => value]]) ~> rule`](#V-upgrades) <small><sup>v0.3.6</sup></small>
+    * [`V.upgradesOf(lens, ...[(value, index) => testable, rule[, (value, index) => value]]) ~> rule`](#V-upgradesOf) <small><sup>v0.3.6</sup></small>
   * [Predicates](#predicates)
     * [`V.where((value, index) => testable) ~> rule`](#V-where) <small><sup>v0.3.0</sup></small>
   * [Logical](#logical)
@@ -546,6 +550,133 @@ it with the given value.  `V.setAfter(rule, value)` is equivalent to
 
 `V.removeAfter(rule)` removes the focus after the given rule has accepted it.
 `V.removeAfter(rule)` is equivalent to [`V.both(rule, V.remove)`](#V-both).
+
+### <a id="promotion"></a> [≡](#contents) [▶](https://calmm-js.github.io/partial.lenses.validation/index.html#promotion) [Promotion](#promotion)
+
+Rules can validate versioned data and transform it to another version in the
+process.  The combinators [`V.promote`](#V-promote),
+[`V.upgrades`](#V-upgrades), [`V.upgradesOf`](#V-upgradesOf) are designed for
+cases where there are multiple versions of data or schema.  Using them one can
+validate any one of the versions and also convert the data to desired version
+&mdash; usually to the latest version &mdash; so that rest of the program does
+not need to deal with different versions.
+
+#### <a id="V-promote"></a> [≡](#contents) [▶](https://calmm-js.github.io/partial.lenses.validation/index.html#V-promote) [`V.promote(...[rule[, (value, index) => value]]) ~> rule`](#V-promote) <small><sup>v0.3.6</sup></small>
+
+`V.promote` is like [`V.or`](#V-or), but the rules given to `V.promote` need to
+be wrapped inside an array `[rule]` and may optionally include a transformation
+function, `[rule, fn]`.  `V.promote` tries, like [`V.or`](#V-or), to find a rule
+that accepts the focus.  If no such rule is found, the focus is rejected.
+Otherwise if the accepting rule has an associated function, then the function is
+used to transform the focus and the same validation process is rerun.  This way
+any sequence of transformations is also validated.
+
+For example:
+
+```js
+V.validate(
+  V.promote(
+    [
+      V.props({
+        type: R.equals('v2'),
+        value: R.is(Number)
+      })
+    ],
+    [
+      V.props({
+        type: R.equals('v1'),
+        constant: R.is(Number)
+      }),
+      ({constant}) => ({type: 'v2', value: constant})
+    ]
+  ),
+  {type: 'v1', constant: 42}
+)
+// { type: 'v2', value: 42 }
+```
+
+Note that [`V.or(r1, ..., rN)`](#V-or) is equivalent to `V.promote([r1], ...,
+[rN])`.
+
+#### <a id="V-upgrades"></a> [≡](#contents) [▶](https://calmm-js.github.io/partial.lenses.validation/index.html#V-upgrades) [`V.upgrades(...[(value, index) => testable, rule[, (value, index) => value]]) ~> rule`](#V-upgrades) <small><sup>v0.3.6</sup></small>
+
+`V.upgrades` is like [`V.cases`](#V-cases), but each case may optionally include
+a transformation function, `[predicate, rule, fn]`.  `V.upgrades` tries, like
+[`V.cases`](#V-cases), to find the first passing predicate.  When no such
+predicate is found, the focus is rejected.  Otherwise the focus is validated
+with the associated rule.  If the case also includes a transformation function,
+the function is used to transform the value in focus and the same validation
+process is rerun.  This way any sequence of transformations is also validated.
+
+For example:
+
+```js
+V.validate(
+  V.upgrades(
+    [
+      L.get(['type', R.equals('v2')]),
+      V.props({
+        type: R.is(String),
+        value: R.is(Number)
+      })
+    ],
+    [
+      L.get(['type', R.equals('v1')]),
+      V.props({
+        type: R.is(String),
+        constant: R.is(Number)
+      }),
+      ({constant}) => ({type: 'v2', value: constant})
+    ]
+  ),
+  {type: 'v1', constant: 42}
+)
+// { type: 'v2', value: 42 }
+```
+
+Note that [`V.cases([p1, r1], ..., [[pN, ]rN])`](#V-cases) is equivalent to
+`V.upgrades([p1, r1], ..., [[pN, ]rN])`.
+
+#### <a id="V-upgradesOf"></a> [≡](#contents) [▶](https://calmm-js.github.io/partial.lenses.validation/index.html#V-upgradesOf) [`V.upgradesOf(lens, ...[(value, index) => testable, rule[, (value, index) => value]]) ~> rule`](#V-upgradesOf) <small><sup>v0.3.6</sup></small>
+
+`V.upgradesOf` is like [`V.casesOf`](#V-casesOf), but each case may optionally
+include a transformation function, `[predicate, rule, fn]`.  `V.upgradesOf`
+tries, like [`V.casesOf`](#V-casesOf), to find the first passing predicate for
+the lensed subfocus.  When no such predicate is found, the focus is rejected.
+Otherwise the focus is validated with the associated rule.  If the case also
+includes a transformation function, the function is used to transform the value
+in focus and the same validation process is rerun.  This way any sequence of
+transformations is also validated.
+
+For example:
+
+```js
+V.validate(
+  V.upgradesOf(
+    'type',
+    [
+      R.equals('v2'),
+      V.props({
+        type: R.is(String),
+        value: R.is(Number)
+      })
+    ],
+    [
+      R.equals('v1'),
+      V.props({
+        type: R.is(String),
+        constant: R.is(Number)
+      }),
+      ({constant}) => ({type: 'v2', value: constant})
+    ]
+  ),
+  {type: 'v1', constant: 42}
+)
+// { type: 'v2', value: 42 }
+```
+
+Note that [`V.casesOf(lens, [p1, r1], ..., [[pN, ]rN])`](#V-cases) is equivalent
+to `V.upgradesOf(lens, [p1, r1], ..., [[pN, ]rN])`.
 
 ### <a id="elaboration"></a> [≡](#contents) [▶](https://calmm-js.github.io/partial.lenses.validation/index.html#elaboration) [Elaboration](#elaboration)
 
