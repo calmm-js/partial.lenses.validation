@@ -155,7 +155,11 @@ structure.</p>
 </li>
 </ul>
 </li>
-<li><a href="#tips">Tips</a></li>
+<li><a href="#tips">Tips</a><ul>
+<li><a href="#prefer-case-analysis-to-logical-or">Prefer case analysis to logical OR</a></li>
+<li><a href="#prefer-rule-templates-to-logical-and">Prefer rule templates to logical AND</a></li>
+</ul>
+</li>
 <li><a href="#known-caveats">Known caveats</a></li>
 <li><a href="#related-work">Related work</a></li>
 </ul>
@@ -948,12 +952,38 @@ a subrule and construct a recursive rule.</p>
 )
 </code></pre>
 <h2><a id="tips"></a> <a href="#contents">≡</a> <a href="https://github.com/calmm-js/partial.lenses.validation/blob/master/README.md#tips">■</a> <a href="#tips">Tips</a></h2>
+<p>The following subsections give some tips on effective use of this library.</p>
+<h3><a id="prefer-case-analysis-to-logical-or"></a> <a href="#contents">≡</a> <a href="https://github.com/calmm-js/partial.lenses.validation/blob/master/README.md#prefer-case-analysis-to-logical-or">■</a> <a href="#prefer-case-analysis-to-logical-or">Prefer case analysis to logical OR</a></h3>
 <p>The logical combinators <a href="#V-or"><code>V.or</code></a>, <a href="#V-either"><code>V.either</code></a>, and also
 <a href="#V-promote"><code>V.promote</code></a>, can be convenient, but it is often preferable to use
 conditional combinators like <a href="#V-cases"><code>V.cases</code></a> and
 <a href="#V-upgrades"><code>V.upgrades</code></a>, because, once a case predicate has been satisfied,
 no other cases are attempted in case the corresponding rule fails and the
 resulting error is likely to be of higher quality.</p>
+<h3><a id="prefer-rule-templates-to-logical-and"></a> <a href="#contents">≡</a> <a href="https://github.com/calmm-js/partial.lenses.validation/blob/master/README.md#prefer-rule-templates-to-logical-and">■</a> <a href="#prefer-rule-templates-to-logical-and">Prefer rule templates to logical AND</a></h3>
+<p>It might be tempting to use <a href="#V-and"><code>V.and</code></a> to combine
+<a href="#V-propsOr"><code>V.propsOr(V.accept)</code></a> rules</p>
+<pre><code class="hljs lang-jsx">V.and(
+  V.propsOr(V.accept, rules1),
+  V.propsOr(V.accept, rules2),
+  // ...
+)
+</code></pre>
+<p>but this has a couple of disadvantages:</p>
+<ul>
+<li>The resulting rule will accept additional properties.</li>
+<li>If one of the <code>V.propsOr</code> rules rejects, then errors from later rules are not
+reported.</li>
+</ul>
+<p>It is usually better to combine rule templates inside <a href="#V-props"><code>V.props</code></a> instead:</p>
+<pre><code class="hljs lang-jsx">V.props({
+  ...rules1,
+  ...rules2,
+  // ...
+})
+</code></pre>
+<p>This way additional properties are not accepted and errors from all rules are
+reported in case of rejection.</p>
 <h2><a id="known-caveats"></a> <a href="#contents">≡</a> <a href="https://github.com/calmm-js/partial.lenses.validation/blob/master/README.md#known-caveats">■</a> <a href="#known-caveats">Known caveats</a></h2>
 <p>Probably the main weakness in the design of this library is that this library
 specifically tries to avoid having to implement everything.  In particular, one

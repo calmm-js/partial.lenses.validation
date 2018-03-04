@@ -84,6 +84,8 @@ structure.
       * [`V.upgrades(...[(value, index) => testable, rule[, (value, index) => value]]) ~> rule`](#V-upgrades) <small><sup>v0.3.6</sup></small>
       * [`V.upgradesOf(lens, ...[(value, index) => testable, rule[, (value, index) => value]]) ~> rule`](#V-upgradesOf) <small><sup>v0.3.6</sup></small>
 * [Tips](#tips)
+  * [Prefer case analysis to logical OR](#prefer-case-analysis-to-logical-or)
+  * [Prefer rule templates to logical AND](#prefer-rule-templates-to-logical-and)
 * [Known caveats](#known-caveats)
 * [Related work](#related-work)
 
@@ -1188,12 +1190,48 @@ V.accepts(
 
 ## <a id="tips"></a> [≡](#contents) [▶](https://calmm-js.github.io/partial.lenses.validation/index.html#tips) [Tips](#tips)
 
+The following subsections give some tips on effective use of this library.
+
+### <a id="prefer-case-analysis-to-logical-or"></a> [≡](#contents) [▶](https://calmm-js.github.io/partial.lenses.validation/index.html#prefer-case-analysis-to-logical-or) [Prefer case analysis to logical OR](#prefer-case-analysis-to-logical-or)
+
 The logical combinators [`V.or`](#V-or), [`V.either`](#V-either), and also
 [`V.promote`](#V-promote), can be convenient, but it is often preferable to use
 conditional combinators like [`V.cases`](#V-cases) and
 [`V.upgrades`](#V-upgrades), because, once a case predicate has been satisfied,
 no other cases are attempted in case the corresponding rule fails and the
 resulting error is likely to be of higher quality.
+
+### <a id="prefer-rule-templates-to-logical-and"></a> [≡](#contents) [▶](https://calmm-js.github.io/partial.lenses.validation/index.html#prefer-rule-templates-to-logical-and) [Prefer rule templates to logical AND](#prefer-rule-templates-to-logical-and)
+
+It might be tempting to use [`V.and`](#V-and) to combine
+[`V.propsOr(V.accept)`](#V-propsOr) rules
+
+```jsx
+V.and(
+  V.propsOr(V.accept, rules1),
+  V.propsOr(V.accept, rules2),
+  // ...
+)
+```
+
+but this has a couple of disadvantages:
+
+* The resulting rule will accept additional properties.
+* If one of the `V.propsOr` rules rejects, then errors from later rules are not
+  reported.
+
+It is usually better to combine rule templates inside [`V.props`](#V-props) instead:
+
+```jsx
+V.props({
+  ...rules1,
+  ...rules2,
+  // ...
+})
+```
+
+This way additional properties are not accepted and errors from all rules are
+reported in case of rejection.
 
 ## <a id="known-caveats"></a> [≡](#contents) [▶](https://calmm-js.github.io/partial.lenses.validation/index.html#known-caveats) [Known caveats](#known-caveats)
 
