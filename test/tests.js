@@ -773,7 +773,7 @@ if (process.env.NODE_ENV !== 'production') {
     testThrows(() => V.cases([]))
     testThrows(() => V.cases([1, 2, 3]))
     testThrows(() => V.cases([], [1]))
-    testThrows(() => V.validate([1, 'too', 'many']))
-    testThrows(() => V.validate(['too few']))
+    testThrows(() => V.validate([1, 'too', 'many'], 'any'))
+    testThrows(() => V.validate(['too few'], 'any'))
   })
 }
