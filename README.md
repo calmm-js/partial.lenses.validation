@@ -19,6 +19,7 @@ structure.
 
 * [Examples](#examples)
   * [Event table UI](#event-table-ui)
+  * [Library contracts](#library-contracts)
 * [Reference](#reference)
   * [Elimination](#elimination)
     * [Synchronous](#synchronous)
@@ -160,6 +161,55 @@ V.errors(rules, [
 The result tells us that the first object is valid (i.e. there are no validation
 errors in it).  The `event` in the second object is a duplicate.  The third
 object is missing a date and the event is a duplicate.
+
+### <a id="library-contracts"></a> [≡](#contents) [▶](https://calmm-js.github.io/partial.lenses.validation/index.html#library-contracts) [Library contracts](#library-contracts)
+
+The interface file of this library,
+[partial.lenses.validation.js](./src/partial.lenses.validation.js), uses the
+library itself to specify the contracts for the exports.
+
+Assuming `process.env.NODE_ENV` is not `"production"` and you pass invalid
+arguments to a function of this library, you will likely get an error message.
+For example,
+
+```js
+V.validate(
+  V.casesOf(
+    'type',
+    [
+      R.equals('number'),
+      V.props({
+        type: R.is(String),
+        value: R.isNumber
+      })
+    ],
+    [
+      R.equals('boolean'),
+      V.props({
+        type: R.is(String),
+        value: R.is(Boolean)
+      })
+    ],
+  ),
+  {
+    type: 'boolean',
+    value: false
+  }
+)
+// Error: {
+//   "errors": [
+//     "partial.lenses.validation: `props` given invalid arguments",
+//     [
+//       {
+//         "value": null
+//       }
+//     ]
+//   ]
+// }
+```
+
+throws an error, because `R.isNumber` is not defined.  The error is thrown as
+soon as the call to [`V.props`](#V-props) is made.
 
 ## <a id="reference"></a> [≡](#contents) [▶](https://calmm-js.github.io/partial.lenses.validation/index.html#reference) [Reference](#reference)
 

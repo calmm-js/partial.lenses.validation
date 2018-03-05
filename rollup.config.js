@@ -22,7 +22,7 @@ export default {
           hoist_funs: true,
           passes: 3,
           pure_getters: true,
-          pure_funcs: ['require']
+          pure_funcs: ['require', 'Object.freeze']
         }
       })
   ].filter(x => x)
