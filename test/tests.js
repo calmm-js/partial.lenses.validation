@@ -739,9 +739,17 @@ describe('V.upgradesOf', () => {
   testAccepted({type: 'foo3', values: [101, 42]}, () => rules)
 })
 
+describe('V.accepts', () => {
+  testEq(true, () => V.accepts(R.equals(1), 1))
+  testEq(false, () => V.accepts(R.equals(2), 1))
+})
+
 describe('async', () => {
   const delay = ms => new Promise(fulfill => setTimeout(fulfill, ms))
   const after = (ms, value) => delay(ms).then(() => value)
+
+  testEq(true, () => V.acceptsAsync(R.equals(1), 1))
+  testEq(false, () => V.acceptsAsync(R.equals(2), 1))
 
   testThrows(() =>
     V.validateAsync(V.arrayIx(n => 10 < n || after(n * 10, n < 10)), [
@@ -773,6 +781,7 @@ if (process.env.NODE_ENV !== 'production') {
     testThrows(() => V.cases([]))
     testThrows(() => V.cases([1, 2, 3]))
     testThrows(() => V.cases([], [1]))
+    testThrows(() => V.casesOf((_max, _two, _or) => 'four'))
     testThrows(() => V.validate([1, 'too', 'many'], 'any'))
     testThrows(() => V.validate(['too few'], 'any'))
   })
