@@ -49,6 +49,7 @@ structure.</p>
 <ul>
 <li><a href="#examples">Examples</a><ul>
 <li><a href="#event-table-ui">Event table UI</a></li>
+<li><a href="#library-contracts">Library contracts</a></li>
 </ul>
 </li>
 <li><a href="#reference">Reference</a><ul>
@@ -214,6 +215,39 @@ feedback at the same location as the offending element:</p>
 <p>The result tells us that the first object is valid (i.e. there are no validation
 errors in it).  The <code>event</code> in the second object is a duplicate.  The third
 object is missing a date and the event is a duplicate.</p>
+<h3><a id="library-contracts"></a> <a href="#contents">≡</a> <a href="https://github.com/calmm-js/partial.lenses.validation/blob/master/README.md#library-contracts">■</a> <a href="#library-contracts">Library contracts</a></h3>
+<p>The interface file of this library,
+<a href="https://github.com/calmm-js/partial.lenses.validation/blob/master/src/partial.lenses.validation.js">partial.lenses.validation.js</a>, uses the
+library itself to specify the contracts for the exports.</p>
+<p>Assuming <code>process.env.NODE_ENV</code> is not <code>&quot;production&quot;</code> and you pass invalid
+arguments to a function of this library, you will likely get an error message.
+For example,</p>
+<pre><code class="hljs lang-js">V.validate(
+  V.casesOf(
+    &#39;type&#39;,
+    [
+      R.equals(&#39;number&#39;),
+      V.props({
+        type: R.is(String),
+        value: R.isNumber
+      })
+    ],
+    [
+      R.equals(&#39;boolean&#39;),
+      V.props({
+        type: R.is(String),
+        value: R.is(Boolean)
+      })
+    ],
+  ),
+  {
+    type: &#39;boolean&#39;,
+    value: false
+  }
+)
+</code></pre>
+<p>throws an error, because <code>R.isNumber</code> is not defined.  The error is thrown as
+soon as the call to <a href="#V-props"><code>V.props</code></a> is made.</p>
 <h2><a id="reference"></a> <a href="#contents">≡</a> <a href="https://github.com/calmm-js/partial.lenses.validation/blob/master/README.md#reference">■</a> <a href="#reference">Reference</a></h2>
 <p>The <a href="https://wiki.haskell.org/Combinator">combinators</a> provided by this library
 are available as named imports.  Typically one just imports the library as:</p>
