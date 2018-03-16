@@ -49,7 +49,7 @@ const tagArgs = (name, rule) =>
 
 const curriedFn = (name, ps, r) =>
   V.choose(fn =>
-    V.modifyAfter(V.freeFn(tagArgs(name, V.tuple(...ps)), r), f =>
+    V.modifyAfter(V.freeFn(tagArgs(name, V.tuple.apply(null, ps)), r), f =>
       I.arityN(I.length(fn), f)
     )
   )
@@ -57,14 +57,16 @@ const curriedFn = (name, ps, r) =>
 const fml = (firsts, middle, lasts) =>
   V.choose(xs =>
     V.arrayIx(
-      V.casesOf(
-        I.sndU,
-        ...firsts.map((rule, i) => [I.identical(i), rule]),
-        ...lasts.map((rule, i) => [
-          I.identical(I.length(xs) - I.length(lasts) + i),
-          rule
-        ]),
-        [middle]
+      V.casesOf.apply(
+        null,
+        [I.sndU].concat(
+          firsts.map((rule, i) => [I.identical(i), rule]),
+          lasts.map((rule, i) => [
+            I.identical(I.length(xs) - I.length(lasts) + i),
+            rule
+          ]),
+          [[middle]]
+        )
       )
     )
   )
