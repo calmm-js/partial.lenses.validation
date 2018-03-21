@@ -28,6 +28,7 @@ const fnN = n =>
     x => `Expected function of arity ${n}, but got arity ${I.length(x)}`
   ])
 
+const runCallback = fnMaxN(1)
 const predicateFn = fnMaxN(2)
 const transformFn = fnMaxN(2)
 const errorTransformFn = fnMaxN(3)
@@ -109,7 +110,22 @@ export const remove = C(V.remove, rule)
 
 // General
 
-export const run = C(V.run, curriedFn('run', [monad, rule, any], any))
+export const run = C(
+  V.run,
+  curriedFn(
+    'run',
+    [
+      V.props({
+        monad: V.optional(monad),
+        onAccept: V.optional(runCallback),
+        onReject: V.optional(runCallback)
+      }),
+      rule,
+      any
+    ],
+    any
+  )
+)
 
 // Synchronous
 

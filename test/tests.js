@@ -776,6 +776,12 @@ describe('async', () => {
   )
 })
 
+describe('V.run', () => {
+  testEq(101, () =>
+    V.run({onAccept: R.inc, onReject: R.negate}, R.is(Number), 100)
+  )
+})
+
 if (process.env.NODE_ENV !== 'production') {
   describe('diagnostics', () => {
     testThrows(() => V.cases([]))

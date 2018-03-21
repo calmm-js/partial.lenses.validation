@@ -1,3 +1,7 @@
+## 0.3.8
+
+Fixed `V.run` contract.
+
 ## 0.3.5
 
 Now immediate exceptions from user defined predicates are caught and the
