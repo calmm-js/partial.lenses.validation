@@ -528,55 +528,6 @@ var upgradesOf = function upgradesOf(lens) {
   });
 };
 
-var V = Object.freeze({
-	accept: accept,
-	acceptAs: acceptAs,
-	acceptWith: acceptWith,
-	rejectWith: rejectWith,
-	rejectAs: rejectAs,
-	reject: reject,
-	remove: remove,
-	run: run,
-	accepts: accepts,
-	errors: errors,
-	validate: validate,
-	acceptsAsync: acceptsAsync,
-	errorsAsync: errorsAsync,
-	tryValidateAsyncNow: tryValidateAsyncNow,
-	validateAsync: validateAsync,
-	where: where,
-	modifyError: modifyError,
-	setError: setError,
-	modifyAfter: modifyAfter,
-	setAfter: setAfter,
-	removeAfter: removeAfter,
-	both: both$1,
-	and: and,
-	not: not,
-	either: either,
-	or: or,
-	arrayId: arrayId,
-	arrayIx: arrayIx,
-	args: args,
-	tuple: tuple,
-	dependentFn: dependentFn,
-	freeFn: freeFn,
-	keep: keep,
-	optional: optional,
-	propsOr: propsOr,
-	props: props,
-	choose: choose,
-	cases: cases,
-	ifElse: ifElse,
-	casesOf: casesOf,
-	lazy: lazy,
-	promote: promote,
-	upgrades: upgrades,
-	upgradesOf: upgradesOf
-});
-
-function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr2 = Array(arr.length); i < arr.length; i++) { arr2[i] = arr[i]; } return arr2; } else { return Array.from(arr); } }
-
 // Contract helpers
 
 var any = accept;
@@ -610,6 +561,7 @@ var fnN = function fnN(n) {
   }]);
 };
 
+var runCallback = /*#__PURE__*/fnMaxN(1);
 var predicateFn = /*#__PURE__*/fnMaxN(2);
 var transformFn = /*#__PURE__*/fnMaxN(2);
 var errorTransformFn = /*#__PURE__*/fnMaxN(3);
@@ -635,7 +587,7 @@ var tagArgs = function tagArgs(name, rule) {
 
 var curriedFn = function curriedFn(name, ps, r) {
   return choose(function (fn) {
-    return modifyAfter(freeFn(tagArgs(name, tuple.apply(V, _toConsumableArray(ps))), r), function (f) {
+    return modifyAfter(freeFn(tagArgs(name, tuple.apply(null, ps)), r), function (f) {
       return I.arityN(length(fn), f);
     });
   });
@@ -643,11 +595,11 @@ var curriedFn = function curriedFn(name, ps, r) {
 
 var fml = function fml(firsts, middle, lasts) {
   return choose(function (xs) {
-    return arrayIx(casesOf.apply(V, [I.sndU].concat(_toConsumableArray(firsts.map(function (rule, i) {
+    return arrayIx(casesOf.apply(null, [I.sndU].concat(firsts.map(function (rule, i) {
       return [identical(i), rule];
-    })), _toConsumableArray(lasts.map(function (rule, i) {
+    }), lasts.map(function (rule, i) {
       return [identical(length(xs) - length(lasts) + i), rule];
-    })), [[middle]])));
+    }), [[middle]])));
   });
 };
 
@@ -694,7 +646,11 @@ var remove$1 = /*#__PURE__*/C(remove, rule);
 
 // General
 
-var run$1 = /*#__PURE__*/C(run, /*#__PURE__*/curriedFn('run', [monad, rule, any], any));
+var run$1 = /*#__PURE__*/C(run, /*#__PURE__*/curriedFn('run', [/*#__PURE__*/props({
+  monad: /*#__PURE__*/optional(monad),
+  onAccept: /*#__PURE__*/optional(runCallback),
+  onReject: /*#__PURE__*/optional(runCallback)
+}), rule, any], any));
 
 // Synchronous
 
