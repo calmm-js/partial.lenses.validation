@@ -68,8 +68,8 @@ structure.
     * [`V.props({...prop: rule}) ~> rule`](#V-props) <small><sup>v0.3.0</sup></small>
     * [`V.propsOr(rule, {...prop: rule}) ~> rule`](#V-propsOr) <small><sup>v0.3.0</sup></small>
   * [Conditional](#conditional)
-    * [`V.cases(...[(value, index) => testable, rule][, [rule]]) ~> rule`](#V-cases) <small><sup>v0.3.0</sup></small>
-    * [`V.casesOf(lens, ...[(value, index) => testable, rule][, [rule]]) ~> rule`](#V-casesOf) <small><sup>v0.3.4</sup></small>
+    * <a href="#V-cases"><code>V.cases(...[(value, index) =&gt; testable, rule][, [rule]]) ~&gt; rule</code></a> <small><sup>v0.3.0</sup></small>
+    * <a href="#V-casesOf"><code>V.casesOf(lens, ...[(value, index) =&gt; testable, rule][, [rule]]) ~&gt; rule</code></a> <small><sup>v0.3.4</sup></small>
     * [`V.ifElse((value, index) => testable, rule, rule) ~> rule`](#V-ifElse) <small><sup>v0.3.0</sup></small>
   * [Dependent](#dependent)
     * [`V.choose((value, index) => rule) ~> rule`](#V-choose) <small><sup>v0.3.0</sup></small>
@@ -81,9 +81,9 @@ structure.
       * [`V.setAfter(rule, value) ~> rule`](#V-setAfter) <small><sup>v0.3.3</sup></small>
       * [`V.removeAfter(rule) ~> rule`](#V-removeAfter) <small><sup>v0.3.3</sup></small>
     * [Promotion](#promotion)
-      * [`V.promote(...[rule[, (value, index) => value]]) ~> rule`](#V-promote) <small><sup>v0.3.6</sup></small>
-      * [`V.upgrades(...[(value, index) => testable, rule[, (value, index) => value]]) ~> rule`](#V-upgrades) <small><sup>v0.3.6</sup></small>
-      * [`V.upgradesOf(lens, ...[(value, index) => testable, rule[, (value, index) => value]]) ~> rule`](#V-upgradesOf) <small><sup>v0.3.6</sup></small>
+      * <a href="#V-promote"><code>V.promote(...[rule[, (value, index) =&gt; value]]) ~&gt; rule</code></a> <small><sup>v0.3.6</sup></small>
+      * <a href="#V-upgrades"><code>V.upgrades(...[(value, index) =&gt; testable, rule[, (value, index) =&gt; value]]) ~&gt; rule</code></a> <small><sup>v0.3.6</sup></small>
+      * <a href="#V-upgradesOf"><code>V.upgradesOf(lens, ...[(value, index) =&gt; testable, rule[, (value, index) => value]]) ~&gt; rule</code></a> <small><sup>v0.3.6</sup></small>
 * [Tips](#tips)
   * [Prefer case analysis to logical OR](#prefer-case-analysis-to-logical-or)
   * [Prefer rule templates to logical AND](#prefer-rule-templates-to-logical-and)
@@ -177,14 +177,14 @@ V.validate(
   V.casesOf(
     'type',
     [
-      R.equals('number'),
+      R.identical('number'),
       V.props({
         type: R.is(String),
         value: R.isNumber
       })
     ],
     [
-      R.equals('boolean'),
+      R.identical('boolean'),
       V.props({
         type: R.is(String),
         value: R.is(Boolean)
@@ -369,7 +369,7 @@ const ghInfoOfAsyncChecked = V.tryValidateAsyncNow(
     V.args(R.and(R.is(String), V.not(R.isEmpty))),
     name => V.optional(
       V.propsOr(V.accept, {
-        name: R.equals(name),
+        name: R.identical(name),
         stargazers_count: R.is(Number)
         // ...
       })
@@ -461,7 +461,7 @@ such, and is usually combined with e.g. [`V.and`](#V-and).
 For example:
 
 ```js
-V.validate(V.and(R.equals(1), V.acceptAs('one')), 1)
+V.validate(V.and(R.identical(1), V.acceptAs('one')), 1)
 // 'one'
 ```
 
@@ -643,7 +643,7 @@ V.errors(
     return V.props({
       numbers: V.arrayIx(R.is(Number)),
       sum: [ // <-- Implicit `V.modifyError`
-        R.equals(expectedSum),
+        R.identical(expectedSum),
         actualSum => `Expected ${expectedSum} instead of ${actualSum}`
       ]
     })
@@ -678,7 +678,7 @@ V.errors(
     return V.props({
       numbers: V.arrayIx(R.is(Number)),
       sum: [ // <-- Implicit `V.setError`
-        R.equals(expectedSum),
+        R.identical(expectedSum),
         `Expected ${expectedSum}`
       ]
     })
@@ -925,7 +925,7 @@ rules with which to validate the corresponding fields.  Note that
 
 Rules can be chosen conditionally on the data being validated.
 
-#### <a id="V-cases"></a> [≡](#contents) [▶](https://calmm-js.github.io/partial.lenses.validation/index.html#V-cases) [`V.cases(...[(value, index) => testable, rule][, [rule]]) ~> rule`](#V-cases) <small><sup>v0.3.0</sup></small>
+#### <a id="V-cases"></a> [≡](#contents) [▶](https://calmm-js.github.io/partial.lenses.validation/index.html#V-cases) <a href="#V-cases"><code>V.cases(...[(value, index) =&gt; testable, rule][, [rule]]) ~&gt; rule</code></a> <small><sup>v0.3.0</sup></small>
 
 `V.cases([p1, r1], ..., [pN, rN], [r])` is given `[predicate, rule]` -pairs as
 arguments.  The predicates are called from first to last with the focus.  In
@@ -966,7 +966,7 @@ Note that, like with [`V.ifElse`](#V-ifElse), `V.cases([p1, r1], ..., [rN])` can
 be expressed in terms of the logical operators, but `V.cases` has a simpler
 internal implementation and is likely to be faster.
 
-#### <a id="V-casesOf"></a> [≡](#contents) [▶](https://calmm-js.github.io/partial.lenses.validation/index.html#V-casesOf) [`V.casesOf(lens, ...[(value, index) => testable, rule][, [rule]]) ~> rule`](#V-casesOf) <small><sup>v0.3.4</sup></small>
+#### <a id="V-casesOf"></a> [≡](#contents) [▶](https://calmm-js.github.io/partial.lenses.validation/index.html#V-casesOf) <a href="#V-casesOf"><code>V.casesOf(lens, ...[(value, index) =&gt; testable, rule][, [rule]]) ~&gt; rule</code></a> <small><sup>v0.3.4</sup></small>
 
 `V.casesOf(lens, [p1, r1], ..., [pN, rN], [r])` is like [`V.cases`](#V-cases)
 except that the subfocus for the predicates is produced by the given lens from
@@ -978,8 +978,8 @@ For example:
 V.validate(
   V.casesOf(
     'type',
-    [R.equals('number'), V.props({type: R.is(String), value: R.is(Number)})],
-    [R.equals('string'), V.props({type: R.is(String), value: R.is(String)})]
+    [R.identical('number'), V.props({type: R.is(String), value: R.is(Number)})],
+    [R.identical('string'), V.props({type: R.is(String), value: R.is(String)})]
   ),
   {
     type: 'string',
@@ -1089,7 +1089,7 @@ validate any one of the versions and also convert the data to desired version
 &mdash; usually to the latest version &mdash; so that rest of the program does
 not need to deal with different versions.
 
-##### <a id="V-promote"></a> [≡](#contents) [▶](https://calmm-js.github.io/partial.lenses.validation/index.html#V-promote) [`V.promote(...[rule[, (value, index) => value]]) ~> rule`](#V-promote) <small><sup>v0.3.6</sup></small>
+##### <a id="V-promote"></a> [≡](#contents) [▶](https://calmm-js.github.io/partial.lenses.validation/index.html#V-promote) <a href="#V-promote"><code>V.promote(...[rule[, (value, index) =&gt; value]]) ~&gt; rule</code></a> <small><sup>v0.3.6</sup></small>
 
 `V.promote` is like [`V.or`](#V-or), but the rules given to `V.promote` need to
 be wrapped inside an array `[rule]` and may optionally include a transformation
@@ -1106,13 +1106,13 @@ V.validate(
   V.promote(
     [
       V.props({
-        type: R.equals('v2'),
+        type: R.identical('v2'),
         value: R.is(Number)
       })
     ],
     [
       V.props({
-        type: R.equals('v1'),
+        type: R.identical('v1'),
         constant: R.is(Number)
       }),
       ({constant}) => ({type: 'v2', value: constant})
@@ -1126,7 +1126,7 @@ V.validate(
 Note that [`V.or(r1, ..., rN)`](#V-or) is equivalent to `V.promote([r1], ...,
 [rN])`.
 
-##### <a id="V-upgrades"></a> [≡](#contents) [▶](https://calmm-js.github.io/partial.lenses.validation/index.html#V-upgrades) [`V.upgrades(...[(value, index) => testable, rule[, (value, index) => value]]) ~> rule`](#V-upgrades) <small><sup>v0.3.6</sup></small>
+##### <a id="V-upgrades"></a> [≡](#contents) [▶](https://calmm-js.github.io/partial.lenses.validation/index.html#V-upgrades) <a href="#V-upgrades"><code>V.upgrades(...[(value, index) =&gt; testable, rule[, (value, index) =&gt; value]]) ~&gt; rule</code></a> <small><sup>v0.3.6</sup></small>
 
 `V.upgrades` is like [`V.cases`](#V-cases), but each case may optionally include
 a transformation function, `[predicate, rule, fn]`.  `V.upgrades` tries, like
@@ -1142,19 +1142,19 @@ For example:
 V.validate(
   V.upgrades(
     [
-      L.get(['type', R.equals('v2')]),
-      V.props({
-        type: R.is(String),
-        value: R.is(Number)
-      })
-    ],
-    [
-      L.get(['type', R.equals('v1')]),
+      L.get(['type', R.identical('v1')]),
       V.props({
         type: R.is(String),
         constant: R.is(Number)
       }),
       ({constant}) => ({type: 'v2', value: constant})
+    ],
+    [
+      L.get(['type', R.identical('v2')]),
+      V.props({
+        type: R.is(String),
+        value: R.is(Number)
+      })
     ]
   ),
   {type: 'v1', constant: 42}
@@ -1162,10 +1162,10 @@ V.validate(
 // { type: 'v2', value: 42 }
 ```
 
-Note that [`V.cases([p1, r1], ..., [[pN, ]rN])`](#V-cases) is equivalent to
-`V.upgrades([p1, r1], ..., [[pN, ]rN])`.
+Note that `V.cases([p1, r1], ..., [[pN, ]rN])` is equivalent to `V.upgrades([p1,
+r1], ..., [[pN, ]rN])`.
 
-##### <a id="V-upgradesOf"></a> [≡](#contents) [▶](https://calmm-js.github.io/partial.lenses.validation/index.html#V-upgradesOf) [`V.upgradesOf(lens, ...[(value, index) => testable, rule[, (value, index) => value]]) ~> rule`](#V-upgradesOf) <small><sup>v0.3.6</sup></small>
+##### <a id="V-upgradesOf"></a> [≡](#contents) [▶](https://calmm-js.github.io/partial.lenses.validation/index.html#V-upgradesOf) <a href="#V-upgradesOf"><code>V.upgradesOf(lens, ...[(value, index) =&gt; testable, rule[, (value, index) => value]]) ~&gt; rule</code></a> <small><sup>v0.3.6</sup></small>
 
 `V.upgradesOf` is like [`V.casesOf`](#V-casesOf), but each case may optionally
 include a transformation function, `[predicate, rule, fn]`.  `V.upgradesOf`
@@ -1183,19 +1183,19 @@ V.validate(
   V.upgradesOf(
     'type',
     [
-      R.equals('v2'),
-      V.props({
-        type: R.is(String),
-        value: R.is(Number)
-      })
-    ],
-    [
-      R.equals('v1'),
+      R.identical('v1'),
       V.props({
         type: R.is(String),
         constant: R.is(Number)
       }),
       ({constant}) => ({type: 'v2', value: constant})
+    ],
+    [
+      R.identical('v2'),
+      V.props({
+        type: R.is(String),
+        value: R.is(Number)
+      })
     ]
   ),
   {type: 'v1', constant: 42}
@@ -1203,8 +1203,8 @@ V.validate(
 // { type: 'v2', value: 42 }
 ```
 
-Note that [`V.casesOf(lens, [p1, r1], ..., [[pN, ]rN])`](#V-cases) is equivalent
-to `V.upgradesOf(lens, [p1, r1], ..., [[pN, ]rN])`.
+Note that `V.casesOf(lens, [p1, r1], ..., [[pN, ]rN])` is equivalent to
+`V.upgradesOf(lens, [p1, r1], ..., [[pN, ]rN])`.
 
 #### <a id="V-lazy"></a> [≡](#contents) [▶](https://calmm-js.github.io/partial.lenses.validation/index.html#V-lazy) [`V.lazy(rule => rule) ~> rule`](#V-lazy) <small><sup>v0.3.0</sup></small>
 

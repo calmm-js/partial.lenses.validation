@@ -54,7 +54,7 @@
     return isThenable(xP) ? xP.then(xyP) : xyP(xP);
   };
 
-  var Async = /*#__PURE__*/(I.freeze)({
+  var Async = /*#__PURE__*/(0, I.freeze)({
     map: chain,
     ap: function ap(xyP, xP) {
       return chain(function (xP) {

@@ -1,4 +1,4 @@
-import { isFunction, isString, isNumber, arityN, sndU, curry, identicalU, id, freeze, isArray, always, curryN } from 'infestines';
+import { isFunction, isString, isNumber, arityN, sndU, id, freeze, isArray, always, curryN, curry, identicalU } from 'infestines';
 import { rewrite, any, modify, elems, values, get, ifElse, toFunction, choose, zero, setOp, modifyOp, Identity, traverse, setter, set, optional, branchOr, Constant, lazy } from 'partial.lenses';
 
 var isThenable = function isThenable(x) {
