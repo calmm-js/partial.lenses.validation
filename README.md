@@ -1054,6 +1054,38 @@ Rules for recursive data structures can be constructed with the help of
 [`V.choose`](#V-choose) and [`V.lazy`](#V-lazy), which both allow one to refer
 back to the rule itself or to delay the invocation of a rule computing function.
 
+#### <a id="V-lazy"></a> [≡](#contents) [▶](https://calmm-js.github.io/partial.lenses.validation/index.html#V-lazy) [`V.lazy(rule => rule) ~> rule`](#V-lazy) <small><sup>v0.3.0</sup></small>
+
+`V.lazy(fn)` constructs a rule lazily.  The given function is passed a
+forwarding proxy to its own return value.  This allows the rule to use itself as
+a subrule and construct a recursive rule.
+
+For example:
+
+```js
+V.accepts(
+  V.lazy(tree => V.arrayId(
+    V.props({
+      name: R.is(String),
+      children: tree
+    })
+  )),
+  [
+    {
+      name: 'root',
+      children: [
+        {name: '1st child', children: []},
+        {
+          name: '2nd child',
+          children: [{name: 'You got the point', children: []}]
+        },
+      ]
+    }
+  ]
+)
+// true
+```
+
 ### <a id="transformation"></a> [≡](#contents) [▶](https://calmm-js.github.io/partial.lenses.validation/index.html#transformation) [Transformation](#transformation)
 
 Rules can modify the value after a rule has accepted the focus.
@@ -1205,38 +1237,6 @@ V.validate(
 
 Note that `V.casesOf(lens, [p1, r1], ..., [[pN, ]rN])` is equivalent to
 `V.upgradesOf(lens, [p1, r1], ..., [[pN, ]rN])`.
-
-#### <a id="V-lazy"></a> [≡](#contents) [▶](https://calmm-js.github.io/partial.lenses.validation/index.html#V-lazy) [`V.lazy(rule => rule) ~> rule`](#V-lazy) <small><sup>v0.3.0</sup></small>
-
-`V.lazy(fn)` constructs a rule lazily.  The given function is passed a
-forwarding proxy to its own return value.  This allows the rule to use itself as
-a subrule and construct a recursive rule.
-
-For example:
-
-```js
-V.accepts(
-  V.lazy(tree => V.arrayId(
-    V.props({
-      name: R.is(String),
-      children: tree
-    })
-  )),
-  [
-    {
-      name: 'root',
-      children: [
-        {name: '1st child', children: []},
-        {
-          name: '2nd child',
-          children: [{name: 'You got the point', children: []}]
-        },
-      ]
-    }
-  ]
-)
-// true
-```
 
 ## <a id="tips"></a> [≡](#contents) [▶](https://calmm-js.github.io/partial.lenses.validation/index.html#tips) [Tips](#tips)
 

@@ -864,6 +864,33 @@ constructed rules.</p>
 <p>Rules for recursive data structures can be constructed with the help of
 <a href="#V-choose"><code>V.choose</code></a> and <a href="#V-lazy"><code>V.lazy</code></a>, which both allow one to refer
 back to the rule itself or to delay the invocation of a rule computing function.</p>
+<h4><a id="V-lazy"></a> <a href="#contents">≡</a> <a href="https://github.com/calmm-js/partial.lenses.validation/blob/master/README.md#V-lazy">■</a> <a href="#V-lazy"><code>V.lazy(rule =&gt; rule) ~&gt; rule</code></a> <small><sup>v0.3.0</sup></small></h4>
+<p><code>V.lazy(fn)</code> constructs a rule lazily.  The given function is passed a
+forwarding proxy to its own return value.  This allows the rule to use itself as
+a subrule and construct a recursive rule.</p>
+<p>For example:</p>
+<pre><code class="hljs lang-js">V.accepts(
+  V.lazy(tree =&gt; V.arrayId(
+    V.props({
+      name: R.is(String),
+      children: tree
+    })
+  )),
+  [
+    {
+      name: &#39;root&#39;,
+      children: [
+        {name: &#39;1st child&#39;, children: []},
+        {
+          name: &#39;2nd child&#39;,
+          children: [{name: &#39;You got the point&#39;, children: []}]
+        },
+      ]
+    }
+  ]
+)
+
+</code></pre>
 <h3><a id="transformation"></a> <a href="#contents">≡</a> <a href="https://github.com/calmm-js/partial.lenses.validation/blob/master/README.md#transformation">■</a> <a href="#transformation">Transformation</a></h3>
 <p>Rules can modify the value after a rule has accepted the focus.</p>
 <h4><a id="ad-hoc"></a> <a href="#contents">≡</a> <a href="https://github.com/calmm-js/partial.lenses.validation/blob/master/README.md#ad-hoc">■</a> <a href="#ad-hoc">Ad-hoc</a></h4>
@@ -986,33 +1013,6 @@ transformations is also validated.</p>
 </code></pre>
 <p>Note that <code>V.casesOf(lens, [p1, r1], ..., [[pN, ]rN])</code> is equivalent to
 <code>V.upgradesOf(lens, [p1, r1], ..., [[pN, ]rN])</code>.</p>
-<h4><a id="V-lazy"></a> <a href="#contents">≡</a> <a href="https://github.com/calmm-js/partial.lenses.validation/blob/master/README.md#V-lazy">■</a> <a href="#V-lazy"><code>V.lazy(rule =&gt; rule) ~&gt; rule</code></a> <small><sup>v0.3.0</sup></small></h4>
-<p><code>V.lazy(fn)</code> constructs a rule lazily.  The given function is passed a
-forwarding proxy to its own return value.  This allows the rule to use itself as
-a subrule and construct a recursive rule.</p>
-<p>For example:</p>
-<pre><code class="hljs lang-js">V.accepts(
-  V.lazy(tree =&gt; V.arrayId(
-    V.props({
-      name: R.is(String),
-      children: tree
-    })
-  )),
-  [
-    {
-      name: &#39;root&#39;,
-      children: [
-        {name: &#39;1st child&#39;, children: []},
-        {
-          name: &#39;2nd child&#39;,
-          children: [{name: &#39;You got the point&#39;, children: []}]
-        },
-      ]
-    }
-  ]
-)
-
-</code></pre>
 <h2><a id="tips"></a> <a href="#contents">≡</a> <a href="https://github.com/calmm-js/partial.lenses.validation/blob/master/README.md#tips">■</a> <a href="#tips">Tips</a></h2>
 <p>The following subsections give some tips on effective use of this library.</p>
 <h3><a id="prefer-case-analysis-to-logical-or"></a> <a href="#contents">≡</a> <a href="https://github.com/calmm-js/partial.lenses.validation/blob/master/README.md#prefer-case-analysis-to-logical-or">■</a> <a href="#prefer-case-analysis-to-logical-or">Prefer case analysis to logical OR</a></h3>
