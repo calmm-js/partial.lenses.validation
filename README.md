@@ -8,6 +8,12 @@ way validation errors can be accessed at the same path as the data and can be
 mechanically associated with the corresponding elements of the validated data
 structure.
 
+Note that the [▶
+links](https://calmm-js.github.io/partial.lenses.validation/index.html#) take
+you to a live version of this page and that there is a
+[playground](https://calmm-js.github.io/partial.lenses.validation/playground.html#GoOghgxhCmAOAuBnAFAKAEogJYoMrwCcsA7AcwEoAaVAcgHUj5oACCAewBMWALaA6AIQ1U5IA)
+for sharing examples.
+
 [![npm version](https://badge.fury.io/js/partial.lenses.validation.svg)](http://badge.fury.io/js/partial.lenses.validation)
 [![Bower version](https://badge.fury.io/bo/partial.lenses.validation.svg)](https://badge.fury.io/bo/partial.lenses.validation)
 [![Build Status](https://travis-ci.org/calmm-js/partial.lenses.validation.svg?branch=master)](https://travis-ci.org/calmm-js/partial.lenses.validation)
