@@ -17,10 +17,9 @@ const toExpr = thunk =>
   thunk
     .toString()
     .replace(/\s+/g, ' ')
-    .replace(/^\s*function\s*\(\s*\)\s*{\s*(return\s*)?/, '')
-    .replace(/\s*;?\s*}\s*$/, '')
+    .replace(/^\s*function\s*\(\s*\)\s*{\s*(return\s*)?/g, '')
+    .replace(/\s*;?\s*}\s*$/g, '')
     .replace(/function\s*(\([a-zA-Z]*\))\s*/g, '$1 => ')
-    .replace(/{\s*return\s*([^{;]+)\s*;\s*}/g, '$1')
     .replace(/{\s*return\s*([^{;]+)\s*;\s*}/g, '$1')
 
 const assertEqual = (expected, actual) =>

@@ -3,11 +3,13 @@ import nodeResolve from 'rollup-plugin-node-resolve'
 import replace from 'rollup-plugin-replace'
 import uglify from 'rollup-plugin-uglify'
 
+const globals = {infestines: 'I', 'partial.lenses': 'L'}
+
 const build = ({NODE_ENV, format, suffix}) => ({
-  external: ['infestines', 'partial.lenses'],
+  external: Object.keys(globals),
   input: 'src/partial.lenses.validation.js',
   output: {
-    globals: {infestines: 'I', 'partial.lenses': 'L'},
+    globals,
     name: 'V',
     format,
     file: `dist/partial.lenses.validation.${suffix}`
