@@ -781,6 +781,17 @@ describe('V.run', () => {
   )
 })
 
+describe('cloning avoidance', () => {
+  it('Avoids cloning', () => {
+    const x = [{x: [1], y: 2}]
+    const y = V.validate(
+      V.arrayIx(V.propsOr(R.is(Number), {x: V.arrayId(R.is(Number))})),
+      x
+    )
+    if (x !== y) throw Error('Cloned')
+  })
+})
+
 if (process.env.NODE_ENV !== 'production') {
   describe('diagnostics', () => {
     testThrows(() => V.cases([]))
