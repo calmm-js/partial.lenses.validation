@@ -217,6 +217,11 @@ V.validate(
 throws an error, because `R.isNumber` is not defined.  The error is thrown as
 soon as the call to [`V.props`](#V-props) is made.
 
+Examples of other libraries using Partial Lenses Validation for contract
+checking:
+
+* [Prettier Printer](https://github.com/polytypic/prettier-printer/blob/master/src/prettier-printer.js)
+
 ## <a id="reference"></a> [≡](#contents) [▶](https://calmm-js.github.io/partial.lenses.validation/index.html#reference) [Reference](#reference)
 
 The [combinators](https://wiki.haskell.org/Combinator) provided by this library
