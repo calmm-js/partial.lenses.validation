@@ -116,9 +116,9 @@ const compose = I.o(L.toFunction, toRules)
 const tupleOr = ({less, rest}) => (
   (rest = toRule(rest)),
   function() {
-    const rules = []
     const n = arguments.length
-    for (let i = 0; i < n; ++i) rules.push(toRule(arguments[i]))
+    const rules = Array(n)
+    for (let i = 0; i < n; ++i) rules[i] = toRule(arguments[i])
     return andCompose(
       less ? I.isArray : I.both(I.isArray, I.o(I.lte(n), I.length)),
       [
