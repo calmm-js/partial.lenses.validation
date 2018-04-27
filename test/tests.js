@@ -334,11 +334,13 @@ describe('V.cases', () => {
 
 describe('V.arrayIx', () => {
   testRejected(42, () => V.arrayIx(V.reject))
+  testAcceptedAs([], [undefined], () => V.arrayIx(V.accept))
 })
 
 describe('V.arrayId', () => {
   testRejected({}, () => V.arrayId(V.reject))
   testRejected(42, () => V.arrayId(V.reject))
+  testAcceptedAs([], [undefined], () => V.arrayId(V.accept))
 })
 
 describe('V.choose', () => {
