@@ -1,5 +1,5 @@
-import { isFunction, isString, isNumber, arityN, sndU, id, freeze, isArray, always, curryN, curry, identicalU } from 'infestines';
-import { rewrite, any, modify, elems, values, get, ifElse, toFunction, choose, zero, setOp, modifyOp, Identity, traverse, setter, set, optional, branchOr, Constant, lazy } from 'partial.lenses';
+import { isFunction, isString, isNumber, arityN, sndU, curry, identicalU, id, freeze, isArray, always, curryN } from 'infestines';
+import { any, modify, rewrite, elems, values, get, ifElse, toFunction, elemsTotal, choose, zero, setOp, modifyOp, Identity, traverse, setter, set, optional, branchOr, Constant, lazy } from 'partial.lenses';
 
 var isThenable = function isThenable(x) {
   return null != x && isFunction(x.then);
@@ -63,28 +63,6 @@ var Async = /*#__PURE__*/(process.env.NODE_ENV === 'production' ? id : freeze)({
   of: id,
   chain: chain
 });
-
-//
-
-var unique = {};
-
-var uniqueToUndefined = function uniqueToUndefined(x) {
-  return x === unique ? undefined : x;
-};
-var undefinedToUnique = function undefinedToUnique(y) {
-  return undefined !== y ? y : unique;
-};
-
-var fromUniques = /*#__PURE__*/rewrite(function (xs) {
-  var r = isRejected(xs);
-  if (r) xs = value(xs);
-  xs = xs.map(uniqueToUndefined);
-  return r ? rejected(xs) : xs;
-});
-
-var toUnique = function toUnique(x, i, M, xi2yM) {
-  return M.map(undefinedToUnique, xi2yM(x, i));
-};
 
 //
 
@@ -184,22 +162,22 @@ var tupleOr = function tupleOr(_ref) {
   var less = _ref.less,
       rest = _ref.rest;
   return rest = toRule(rest), function () {
-    var rules = [];
     var n = arguments.length;
+    var rules = Array(n);
     for (var i = 0; i < n; ++i) {
-      rules.push(toRule(arguments[i]));
-    }return andCompose(less ? isArray : both(isArray, o(lte(n), length)), [fromUniques, arrayIxTrickle, less ? function (xs, i, M, xi2yM) {
+      rules[i] = toRule(arguments[i]);
+    }return andCompose(less ? isArray : both(isArray, o(lte(n), length)), [arrayIxTrickle, less ? function (xs, i, M, xi2yM) {
       var m = length(xs);
       if (m < n) {
         xs = xs.slice();
         xs.length = n;
         return M.map(function (ys) {
           return any(isRejected, elems, ys) ? ys : ys.slice(0, m);
-        }, elems(xs, i, M, xi2yM));
+        }, elemsTotal(xs, i, M, xi2yM));
       } else {
-        return elems(xs, i, M, xi2yM);
+        return elemsTotal(xs, i, M, xi2yM);
       }
-    } : elems, toUnique, choose(function (_, i) {
+    } : elemsTotal, choose(function (_, i) {
       return rules[i] || rest;
     })]);
   };
@@ -210,6 +188,8 @@ var runWith = function runWith(Monad, onAccept, onReject) {
 };
 
 //
+
+var unique = {};
 
 var raised = unique;
 

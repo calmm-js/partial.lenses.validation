@@ -69,28 +69,6 @@
 
   //
 
-  var unique = {};
-
-  var uniqueToUndefined = function uniqueToUndefined(x) {
-    return x === unique ? undefined : x;
-  };
-  var undefinedToUnique = function undefinedToUnique(y) {
-    return undefined !== y ? y : unique;
-  };
-
-  var fromUniques = /*#__PURE__*/L.rewrite(function (xs) {
-    var r = isRejected(xs);
-    if (r) xs = value(xs);
-    xs = xs.map(uniqueToUndefined);
-    return r ? rejected(xs) : xs;
-  });
-
-  var toUnique = function toUnique(x, i, M, xi2yM) {
-    return M.map(undefinedToUnique, xi2yM(x, i));
-  };
-
-  //
-
   function Rejected(value) {
     this.value = undefined !== value ? value : null;
   }
@@ -187,22 +165,22 @@
     var less = _ref.less,
         rest = _ref.rest;
     return rest = toRule(rest), function () {
-      var rules = [];
       var n = arguments.length;
+      var rules = Array(n);
       for (var i = 0; i < n; ++i) {
-        rules.push(toRule(arguments[i]));
-      }return andCompose(less ? I.isArray : both(I.isArray, o(lte(n), length)), [fromUniques, arrayIxTrickle, less ? function (xs, i, M, xi2yM) {
+        rules[i] = toRule(arguments[i]);
+      }return andCompose(less ? I.isArray : both(I.isArray, o(lte(n), length)), [arrayIxTrickle, less ? function (xs, i, M, xi2yM) {
         var m = length(xs);
         if (m < n) {
           xs = xs.slice();
           xs.length = n;
           return M.map(function (ys) {
             return L.any(isRejected, L.elems, ys) ? ys : ys.slice(0, m);
-          }, L.elems(xs, i, M, xi2yM));
+          }, L.elemsTotal(xs, i, M, xi2yM));
         } else {
-          return L.elems(xs, i, M, xi2yM);
+          return L.elemsTotal(xs, i, M, xi2yM);
         }
-      } : L.elems, toUnique, L.choose(function (_, i) {
+      } : L.elemsTotal, L.choose(function (_, i) {
         return rules[i] || rest;
       })]);
     };
@@ -213,6 +191,8 @@
   };
 
   //
+
+  var unique = {};
 
   var raised = unique;
 
