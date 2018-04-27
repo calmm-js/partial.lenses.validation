@@ -19,22 +19,6 @@ const Async = (process.env.NODE_ENV === 'production' ? I.id : I.freeze)({
 
 //
 
-const unique = {}
-
-const uniqueToUndefined = x => (x === unique ? undefined : x)
-const undefinedToUnique = y => (undefined !== y ? y : unique)
-
-const fromUniques = L.rewrite(xs => {
-  const r = isRejected(xs)
-  if (r) xs = value(xs)
-  xs = xs.map(uniqueToUndefined)
-  return r ? rejected(xs) : xs
-})
-
-const toUnique = (x, i, M, xi2yM) => M.map(undefinedToUnique, xi2yM(x, i))
-
-//
-
 function Rejected(value) {
   this.value = undefined !== value ? value : null
 }
@@ -122,7 +106,6 @@ const tupleOr = ({less, rest}) => (
     return andCompose(
       less ? I.isArray : I.both(I.isArray, I.o(I.lte(n), I.length)),
       [
-        fromUniques,
         arrayIxTrickle,
         less
           ? (xs, i, M, xi2yM) => {
@@ -132,14 +115,13 @@ const tupleOr = ({less, rest}) => (
                 xs.length = n
                 return M.map(
                   ys => (L.any(isRejected, L.elems, ys) ? ys : ys.slice(0, m)),
-                  L.elems(xs, i, M, xi2yM)
+                  L.elemsTotal(xs, i, M, xi2yM)
                 )
               } else {
-                return L.elems(xs, i, M, xi2yM)
+                return L.elemsTotal(xs, i, M, xi2yM)
               }
             }
-          : L.elems,
-        toUnique,
+          : L.elemsTotal,
         L.choose((_, i) => rules[i] || rest)
       ]
     )
@@ -149,6 +131,8 @@ const tupleOr = ({less, rest}) => (
 const runWith = (Monad, onAccept, onReject) => run({Monad, onAccept, onReject})
 
 //
+
+const unique = {}
 
 let raised = unique
 
