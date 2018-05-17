@@ -3,19 +3,8 @@ import * as I from './ext/infestines'
 
 //
 
-const P = Promise
-
-const throwAsync = P.reject.bind(P)
-const returnAsync = P.resolve.bind(P)
-
-const chain = (xyP, xP) => (I.isThenable(xP) ? xP.then(xyP) : xyP(xP))
-
-const Async = (process.env.NODE_ENV === 'production' ? I.id : I.freeze)({
-  map: chain,
-  ap: (xyP, xP) => chain(xP => chain(xyP => xyP(xP), xyP), xP),
-  of: I.id,
-  chain
-})
+const throwAsync = x => Promise.reject(x)
+const returnAsync = x => Promise.resolve(x)
 
 //
 
@@ -217,17 +206,25 @@ export const validate = runWith()
 // Asynchronous
 
 export const acceptsAsync = runWith(
-  Async,
+  L.IdentityAsync,
   I.always(returnAsync(true)),
   I.always(returnAsync(false))
 )
 
-export const errorsAsync = runWith(Async, I.always(returnAsync()), returnAsync)
+export const errorsAsync = runWith(
+  L.IdentityAsync,
+  I.always(returnAsync()),
+  returnAsync
+)
 
-export const tryValidateAsyncNow = runWith(Async, 0, I.o(raise, toError))
+export const tryValidateAsyncNow = runWith(
+  L.IdentityAsync,
+  0,
+  I.o(raise, toError)
+)
 
 export const validateAsync = runWith(
-  Async,
+  L.IdentityAsync,
   returnAsync,
   I.o(throwAsync, toError)
 )

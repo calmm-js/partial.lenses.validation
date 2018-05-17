@@ -1,5 +1,5 @@
-import { isFunction, isString, isNumber, arityN, sndU, curry, identicalU, id, freeze, isArray, always, curryN } from 'infestines';
-import { any, modify, rewrite, elems, values, get, ifElse, toFunction, elemsTotal, choose, zero, setOp, modifyOp, Identity, traverse, setter, set, optional, branchOr, Constant, lazy } from 'partial.lenses';
+import { curryN, isFunction, curry, isString, isNumber, arityN, sndU, id, freeze, isArray, always, identicalU } from 'infestines';
+import { zero, ifElse, modifyOp, any, modify, rewrite, elems, values, get, toFunction, elemsTotal, choose, setOp, Identity, traverse, IdentityAsync, setter, set, optional, branchOr, Constant, lazy } from 'partial.lenses';
 
 var isThenable = function isThenable(x) {
   return null != x && isFunction(x.then);
@@ -42,27 +42,12 @@ var ignore = function ignore(_) {};
 
 //
 
-var P = Promise;
-
-var throwAsync = /*#__PURE__*/P.reject.bind(P);
-var returnAsync = /*#__PURE__*/P.resolve.bind(P);
-
-var chain = function chain(xyP, xP) {
-  return isThenable(xP) ? xP.then(xyP) : xyP(xP);
+var throwAsync = function throwAsync(x) {
+  return Promise.reject(x);
 };
-
-var Async = /*#__PURE__*/(process.env.NODE_ENV === 'production' ? id : freeze)({
-  map: chain,
-  ap: function ap(xyP, xP) {
-    return chain(function (xP) {
-      return chain(function (xyP) {
-        return xyP(xP);
-      }, xyP);
-    }, xP);
-  },
-  of: id,
-  chain: chain
-});
+var returnAsync = function returnAsync(x) {
+  return Promise.resolve(x);
+};
 
 //
 
@@ -297,13 +282,13 @@ var validate = /*#__PURE__*/runWith();
 
 // Asynchronous
 
-var acceptsAsync = /*#__PURE__*/runWith(Async, /*#__PURE__*/always( /*#__PURE__*/returnAsync(true)), /*#__PURE__*/always( /*#__PURE__*/returnAsync(false)));
+var acceptsAsync = /*#__PURE__*/runWith(IdentityAsync, /*#__PURE__*/always( /*#__PURE__*/returnAsync(true)), /*#__PURE__*/always( /*#__PURE__*/returnAsync(false)));
 
-var errorsAsync = /*#__PURE__*/runWith(Async, /*#__PURE__*/always( /*#__PURE__*/returnAsync()), returnAsync);
+var errorsAsync = /*#__PURE__*/runWith(IdentityAsync, /*#__PURE__*/always( /*#__PURE__*/returnAsync()), returnAsync);
 
-var tryValidateAsyncNow = /*#__PURE__*/runWith(Async, 0, /*#__PURE__*/o(raise, toError));
+var tryValidateAsyncNow = /*#__PURE__*/runWith(IdentityAsync, 0, /*#__PURE__*/o(raise, toError));
 
-var validateAsync = /*#__PURE__*/runWith(Async, returnAsync, /*#__PURE__*/o(throwAsync, toError));
+var validateAsync = /*#__PURE__*/runWith(IdentityAsync, returnAsync, /*#__PURE__*/o(throwAsync, toError));
 
 // Predicates
 

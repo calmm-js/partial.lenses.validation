@@ -45,27 +45,12 @@
 
   //
 
-  var P = Promise;
-
-  var throwAsync = /*#__PURE__*/P.reject.bind(P);
-  var returnAsync = /*#__PURE__*/P.resolve.bind(P);
-
-  var chain = function chain(xyP, xP) {
-    return isThenable(xP) ? xP.then(xyP) : xyP(xP);
+  var throwAsync = function throwAsync(x) {
+    return Promise.reject(x);
   };
-
-  var Async = /*#__PURE__*/(0, I.freeze)({
-    map: chain,
-    ap: function ap(xyP, xP) {
-      return chain(function (xP) {
-        return chain(function (xyP) {
-          return xyP(xP);
-        }, xyP);
-      }, xP);
-    },
-    of: I.id,
-    chain: chain
-  });
+  var returnAsync = function returnAsync(x) {
+    return Promise.resolve(x);
+  };
 
   //
 
@@ -300,13 +285,13 @@
 
   // Asynchronous
 
-  var acceptsAsync = /*#__PURE__*/runWith(Async, /*#__PURE__*/I.always( /*#__PURE__*/returnAsync(true)), /*#__PURE__*/I.always( /*#__PURE__*/returnAsync(false)));
+  var acceptsAsync = /*#__PURE__*/runWith(L.IdentityAsync, /*#__PURE__*/I.always( /*#__PURE__*/returnAsync(true)), /*#__PURE__*/I.always( /*#__PURE__*/returnAsync(false)));
 
-  var errorsAsync = /*#__PURE__*/runWith(Async, /*#__PURE__*/I.always( /*#__PURE__*/returnAsync()), returnAsync);
+  var errorsAsync = /*#__PURE__*/runWith(L.IdentityAsync, /*#__PURE__*/I.always( /*#__PURE__*/returnAsync()), returnAsync);
 
-  var tryValidateAsyncNow = /*#__PURE__*/runWith(Async, 0, /*#__PURE__*/o(raise, toError));
+  var tryValidateAsyncNow = /*#__PURE__*/runWith(L.IdentityAsync, 0, /*#__PURE__*/o(raise, toError));
 
-  var validateAsync = /*#__PURE__*/runWith(Async, returnAsync, /*#__PURE__*/o(throwAsync, toError));
+  var validateAsync = /*#__PURE__*/runWith(L.IdentityAsync, returnAsync, /*#__PURE__*/o(throwAsync, toError));
 
   // Predicates
 
