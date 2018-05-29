@@ -221,6 +221,7 @@ Examples of other libraries using Partial Lenses Validation for contract
 checking:
 
 * [Prettier Printer](https://github.com/polytypic/prettier-printer/blob/master/src/prettier-printer.js)
+* [Partial Lenses History](https://github.com/calmm-js/partial.lenses.history/blob/master/src/partial.lenses.history.js)
 
 ## <a id="reference"></a> [≡](#contents) [▶](https://calmm-js.github.io/partial.lenses.validation/index.html#reference) [Reference](#reference)
 
