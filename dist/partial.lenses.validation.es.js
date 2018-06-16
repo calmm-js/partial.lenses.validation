@@ -1,4 +1,4 @@
-import { isFunction, isString, isNumber, arityN, sndU, defineNameU, freeze, isArray, always, curryN, curry, identicalU } from 'infestines';
+import { isFunction, isString, isNumber, arityN, sndU, defineNameU, id, freeze, isArray, always, curryN, curry, identicalU } from 'infestines';
 import { zero, any, modify, rewrite, elems, values, get, ifElse, toFunction, elemsTotal, choose, setOp, modifyOp, Identity, traverse, IdentityAsync, setter, set, optional, branchOr, Constant, lazy } from 'partial.lenses';
 
 var isThenable = function isThenable(x) {
@@ -42,11 +42,9 @@ var ignore = function ignore(_) {};
 
 //
 
-var id = function id(x) {
+var copyName = process.env.NODE_ENV === 'production' ? function (x) {
   return x;
-};
-
-var copyName = process.env.NODE_ENV === 'production' ? id : function (to, from) {
+} : function (to, from) {
   return defineNameU(to, from.name);
 };
 

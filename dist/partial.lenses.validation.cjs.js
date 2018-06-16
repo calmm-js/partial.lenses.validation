@@ -46,11 +46,9 @@ var ignore = function ignore(_) {};
 
 //
 
-var id = function id(x) {
+var copyName = process.env.NODE_ENV === 'production' ? function (x) {
   return x;
-};
-
-var copyName = process.env.NODE_ENV === 'production' ? id : function (to, from) {
+} : function (to, from) {
   return I.defineNameU(to, from.name);
 };
 
@@ -71,7 +69,7 @@ function Rejected(value) {
 
 var isRejected = /*#__PURE__*/isInstanceOf(Rejected);
 
-var rejected = /*#__PURE__*/(process.env.NODE_ENV === 'production' ? id : o(I.freeze))(function (value) {
+var rejected = /*#__PURE__*/(process.env.NODE_ENV === 'production' ? I.id : o(I.freeze))(function (value) {
   return new Rejected(value);
 });
 
@@ -274,7 +272,7 @@ var upgradesCase = function upgradesCase(revalidate) {
 
 var run = /*#__PURE__*/I.curryN(3, function run(c) {
   var M = c.Monad || L.Identity;
-  var onAccept = c.onAccept || id;
+  var onAccept = c.onAccept || I.id;
   var onReject = c.onReject || raise;
   var handler = function handler(r) {
     return isRejected(r) ? onReject(value(r)) : onAccept(r);
@@ -282,7 +280,7 @@ var run = /*#__PURE__*/I.curryN(3, function run(c) {
   return function run(rule) {
     rule = toRule(rule);
     return function run(data) {
-      return M.chain(handler, L.traverse(M, id, rule, data));
+      return M.chain(handler, L.traverse(M, I.id, rule, data));
     };
   };
 });
@@ -291,7 +289,7 @@ var run = /*#__PURE__*/I.curryN(3, function run(c) {
 
 var accepts = /*#__PURE__*/runWith(0, /*#__PURE__*/I.always(true), /*#__PURE__*/I.always(false));
 
-var errors = /*#__PURE__*/runWith(0, ignore, id);
+var errors = /*#__PURE__*/runWith(0, ignore, I.id);
 
 var validate = /*#__PURE__*/runWith();
 
@@ -400,9 +398,9 @@ var dependentFn = /*#__PURE__*/I.curry(function dependentFn(argsRule, toResRule)
 
       return M.chain(function (args) {
         return isRejected(args) ? raise(toError(value(args))) : M.chain(function (res) {
-          return M.map(raiseRejected, L.traverse(M, id, toRule(toResRule.apply(null, args)), res));
+          return M.map(raiseRejected, L.traverse(M, I.id, toRule(toResRule.apply(null, args)), res));
         }, fn.apply(null, args));
-      }, L.traverse(M, id, argsRule, args));
+      }, L.traverse(M, I.id, argsRule, args));
     }, fn) : rejected(fn));
   };
 });

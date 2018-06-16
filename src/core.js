@@ -3,11 +3,9 @@ import * as I from './ext/infestines'
 
 //
 
-const id = x => x
-
 export const copyName =
   process.env.NODE_ENV === 'production'
-    ? id
+    ? x => x
     : (to, from) => I.defineNameU(to, from.name)
 
 //
@@ -23,7 +21,7 @@ function Rejected(value) {
 
 const isRejected = I.isInstanceOf(Rejected)
 
-const rejected = (process.env.NODE_ENV === 'production' ? id : I.o(I.freeze))(
+const rejected = (process.env.NODE_ENV === 'production' ? I.id : I.o(I.freeze))(
   value => new Rejected(value)
 )
 
@@ -204,13 +202,13 @@ const upgradesCase = revalidate => c =>
 
 export const run = I.curryN(3, function run(c) {
   const M = c.Monad || L.Identity
-  const onAccept = c.onAccept || id
+  const onAccept = c.onAccept || I.id
   const onReject = c.onReject || raise
   const handler = r => (isRejected(r) ? onReject(value(r)) : onAccept(r))
   return function run(rule) {
     rule = toRule(rule)
     return function run(data) {
-      return M.chain(handler, L.traverse(M, id, rule, data))
+      return M.chain(handler, L.traverse(M, I.id, rule, data))
     }
   }
 })
@@ -219,7 +217,7 @@ export const run = I.curryN(3, function run(c) {
 
 export const accepts = runWith(0, I.always(true), I.always(false))
 
-export const errors = runWith(0, I.ignore, id)
+export const errors = runWith(0, I.ignore, I.id)
 
 export const validate = runWith()
 
@@ -343,14 +341,14 @@ export const dependentFn = I.curry(function dependentFn(argsRule, toResRule) {
                             raiseRejected,
                             L.traverse(
                               M,
-                              id,
+                              I.id,
                               toRule(toResRule.apply(null, args)),
                               res
                             )
                           ),
                         fn.apply(null, args)
                       ),
-                L.traverse(M, id, argsRule, args)
+                L.traverse(M, I.id, argsRule, args)
               ),
             fn
           )
