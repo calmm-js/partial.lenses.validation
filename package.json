@@ -1,6 +1,6 @@
 {
   "name": "partial.lenses.validation",
-  "version": "1.0.2",
+  "version": "1.0.3",
   "description": "Partial Lenses Validation is a JavaScript library for validating and transforming data",
   "module": "dist/partial.lenses.validation.es.js",
   "main": "dist/partial.lenses.validation.cjs.js",

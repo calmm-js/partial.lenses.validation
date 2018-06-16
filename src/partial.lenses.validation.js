@@ -72,7 +72,7 @@ const fml = (firsts, middle, lasts) =>
     )
   )
 
-const variadicFn1 = fn => (x, ...xs) => fn(x, ...xs)
+const variadicFn1 = fn => V.copyName((x, ...xs) => fn(x, ...xs), fn)
 
 const caseR = V.tuple(rule)
 const casePR = V.tuple(predicateFn, rule)

@@ -3,6 +3,15 @@ import * as I from './ext/infestines'
 
 //
 
+const id = x => x
+
+export const copyName =
+  process.env.NODE_ENV === 'production'
+    ? id
+    : (to, from) => I.defineNameU(to, from.name)
+
+//
+
 const throwAsync = x => Promise.reject(x)
 const returnAsync = x => Promise.resolve(x)
 
@@ -14,7 +23,7 @@ function Rejected(value) {
 
 const isRejected = I.isInstanceOf(Rejected)
 
-const rejected = (process.env.NODE_ENV === 'production' ? I.id : I.o(I.freeze))(
+const rejected = (process.env.NODE_ENV === 'production' ? id : I.o(I.freeze))(
   value => new Rejected(value)
 )
 
@@ -53,7 +62,7 @@ const getEither = (k, r, x) => (
 )
 
 const sumRight = (zero, one, plus) =>
-  function() {
+  copyName(function() {
     let n = arguments.length
     let r = zero
     if (n) {
@@ -61,7 +70,7 @@ const sumRight = (zero, one, plus) =>
       while (n) r = plus(arguments[--n], r)
     }
     return r
-  }
+  }, plus)
 
 //
 
@@ -88,7 +97,7 @@ const compose = I.o(L.toFunction, toRules)
 
 const tupleOr = ({less, rest}) => (
   (rest = toRule(rest)),
-  function() {
+  function tupleOr() {
     const n = arguments.length
     const rules = Array(n)
     for (let i = 0; i < n; ++i) rules[i] = toRule(arguments[i])
@@ -145,12 +154,18 @@ const protect = (predicate, orElse) => (x, i) => {
 
 export const accept = L.zero
 
-export const acceptAs = value => (x, i, M, xi2yM) => xi2yM(value, i)
+export const acceptAs = value =>
+  function acceptAs(x, i, M, xi2yM) {
+    return xi2yM(value, i)
+  }
 
 export const acceptWith = fn => (x, i, M, xi2yM) =>
   M.chain(x => xi2yM(x, i), fn(x, i))
 
-export const rejectWith = fn => (x, i, M, _xi2yM) => M.map(rejected, fn(x, i))
+export const rejectWith = fn =>
+  function rejectWith(x, i, M, _xi2yM) {
+    return M.map(rejected, fn(x, i))
+  }
 
 export const rejectAs = I.o(L.setOp, rejected)
 
@@ -175,7 +190,10 @@ const casesOfCase = (p, o, r) => (y, j) => (x, i, M, xi2yM) =>
 //
 
 const ruleBinOp = op =>
-  I.curryN(2, l => ((l = toRule(l)), r => ((r = toRule(r)), op(l, r))))
+  I.curryN(
+    2,
+    copyName(l => ((l = toRule(l)), r => ((r = toRule(r)), op(l, r))), op)
+  )
 
 //
 
@@ -184,22 +202,24 @@ const upgradesCase = revalidate => c =>
 
 // General
 
-export const run = I.curryN(3, c => {
+export const run = I.curryN(3, function run(c) {
   const M = c.Monad || L.Identity
-  const onAccept = c.onAccept || I.id
+  const onAccept = c.onAccept || id
   const onReject = c.onReject || raise
   const handler = r => (isRejected(r) ? onReject(value(r)) : onAccept(r))
-  return rule => (
-    (rule = toRule(rule)),
-    data => M.chain(handler, L.traverse(M, I.id, rule, data))
-  )
+  return function run(rule) {
+    rule = toRule(rule)
+    return function run(data) {
+      return M.chain(handler, L.traverse(M, id, rule, data))
+    }
+  }
 })
 
 // Synchronous
 
 export const accepts = runWith(0, I.always(true), I.always(false))
 
-export const errors = runWith(0, I.ignore, I.id)
+export const errors = runWith(0, I.ignore, id)
 
 export const validate = runWith()
 
@@ -239,47 +259,54 @@ export const where = predicate => (
 
 // Elaboration
 
-export const modifyError = I.curry(
-  (fn, rule) => (
-    (rule = toRule(rule)),
-    (x, i, M, xi2yM) =>
-      M.chain(
-        r => (isRejected(r) ? M.map(rejected, fn(x, value(r), i)) : M.of(r)),
-        rule(x, i, M, xi2yM)
-      )
-  )
-)
+export const modifyError = I.curry(function modifyError(fn, rule) {
+  rule = toRule(rule)
+  return function modifyError(x, i, M, xi2yM) {
+    return M.chain(
+      r => (isRejected(r) ? M.map(rejected, fn(x, value(r), i)) : M.of(r)),
+      rule(x, i, M, xi2yM)
+    )
+  }
+})
 
-export const setError = I.curry((error, rule) =>
-  compose([L.rewrite(r => (isRejected(r) ? rejected(error) : r)), rule])
-)
+export const setError = I.curry(function setError(error, rule) {
+  return compose([L.rewrite(r => (isRejected(r) ? rejected(error) : r)), rule])
+})
 
 // Ad-hoc
 
-export const modifyAfter = I.curryN(2, rule => I.o(both(rule), acceptWith))
-export const setAfter = I.curryN(2, rule => I.o(both(rule), acceptAs))
+export const modifyAfter = I.curryN(2, function modifyAfter(rule) {
+  return I.o(both(rule), acceptWith)
+})
+export const setAfter = I.curryN(2, function setAfter(rule) {
+  return I.o(both(rule), acceptAs)
+})
 export const removeAfter = rule => both(rule, remove)
 
 // Logical
 
-export const both = ruleBinOp((rule, rest) => (x, i, M, xi2yM) =>
-  M.chain(
-    r => (isRejected(r) ? M.of(r) : rest(r, i, M, xi2yM)),
-    rule(x, i, M, xi2yM)
-  )
-)
+export const both = ruleBinOp(function both(rule, rest) {
+  return function both(x, i, M, xi2yM) {
+    return M.chain(
+      r => (isRejected(r) ? M.of(r) : rest(r, i, M, xi2yM)),
+      rule(x, i, M, xi2yM)
+    )
+  }
+})
 
 export const and = sumRight(accept, toRule, both)
 
 export const not = rule =>
   compose([L.setter((r, x) => (isRejected(r) ? x : rejected(x))), rule])
 
-export const either = ruleBinOp((rule, rest) => (x, i, M, xi2yM) =>
-  M.chain(
-    r => (isRejected(r) ? rest(x, i, M, xi2yM) : M.of(r)),
-    rule(x, i, M, xi2yM)
-  )
-)
+export const either = ruleBinOp(function either(rule, rest) {
+  return function either(x, i, M, xi2yM) {
+    return M.chain(
+      r => (isRejected(r) ? rest(x, i, M, xi2yM) : M.of(r)),
+      rule(x, i, M, xi2yM)
+    )
+  }
+})
 
 export const or = sumRight(reject, toRule, either)
 
@@ -299,13 +326,13 @@ export const tuple = tupleOr({less: false, rest: reject})
 
 // Functions
 
-export const dependentFn = I.curry(
-  (argsRule, toResRule) => (
-    (argsRule = toRule(argsRule)),
-    (fn, i, M, _xi2yM) =>
-      M.of(
-        I.isFunction(fn)
-          ? (...args) =>
+export const dependentFn = I.curry(function dependentFn(argsRule, toResRule) {
+  argsRule = toRule(argsRule)
+  return (fn, i, M, _xi2yM) =>
+    M.of(
+      I.isFunction(fn)
+        ? copyName(
+            (...args) =>
               M.chain(
                 args =>
                   isRejected(args)
@@ -316,28 +343,29 @@ export const dependentFn = I.curry(
                             raiseRejected,
                             L.traverse(
                               M,
-                              I.id,
+                              id,
                               toRule(toResRule.apply(null, args)),
                               res
                             )
                           ),
                         fn.apply(null, args)
                       ),
-                L.traverse(M, I.id, argsRule, args)
-              )
-          : rejected(fn)
-      )
-  )
-)
+                L.traverse(M, id, argsRule, args)
+              ),
+            fn
+          )
+        : rejected(fn)
+    )
+})
 
-export const freeFn = I.curry((argsRule, resRule) =>
-  dependentFn(argsRule, I.always(resRule))
-)
+export const freeFn = I.curry(function freeFn(argsRule, resRule) {
+  return dependentFn(argsRule, I.always(resRule))
+})
 
 // Objects
 
-export const keep = I.curry((key, rule) =>
-  andCompose(I.isInstanceOfObject, [
+export const keep = I.curry(function keep(key, rule) {
+  return andCompose(I.isInstanceOfObject, [
     L.setter(
       (r, x) =>
         isRejected(r)
@@ -346,16 +374,16 @@ export const keep = I.curry((key, rule) =>
     ),
     rule
   ])
-)
+})
 
 export const optional = rule => compose([L.optional, rule])
 
-export const propsOr = I.curry((onOthers, template) =>
-  andCompose(I.isInstanceOfObject, [
+export const propsOr = I.curry(function propsOr(onOthers, template) {
+  return andCompose(I.isInstanceOfObject, [
     propsTrickle,
     L.branchOr(toRule(onOthers), L.modify(L.values, toRule, template))
   ])
-)
+})
 
 export const props = propsOr(reject)
 
@@ -363,11 +391,14 @@ export const props = propsOr(reject)
 
 export const choose = xi2r => (
   (xi2r = protect(xi2r)),
-  (x, i, M, xi2yM) =>
-    M.chain(
-      r => (r ? toRule(r)(x, i, M, xi2yM) : rejectRaisedOr(M, x)),
-      xi2r(x, i)
-    )
+  copyName(
+    (x, i, M, xi2yM) =>
+      M.chain(
+        r => (r ? toRule(r)(x, i, M, xi2yM) : rejectRaisedOr(M, x)),
+        xi2r(x, i)
+      ),
+    xi2r
+  )
 )
 
 // Conditional
@@ -375,26 +406,27 @@ export const choose = xi2r => (
 export const cases = sumRight(
   reject,
   (alt, rest) => (I.length(alt) === 1 ? alt[0] : ifElse(alt[0], alt[1], rest)),
-  (alt, rest) => ifElse(alt[0], alt[1], rest)
+  function cases(alt, rest) {
+    return ifElse(alt[0], alt[1], rest)
+  }
 )
 
-export const ifElse = I.curry(
-  (p, c, a) => (
-    (p = protect(p)),
-    (c = toRule(c)),
-    (a = toRule(a)),
-    (x, i, M, xi2yM) =>
-      M.chain(
-        b =>
-          b
-            ? c(x, i, M, xi2yM)
-            : undefined !== b || raised === unique
-              ? a(x, i, M, xi2yM)
-              : rejectRaisedOr(M, x),
-        p(x, i)
-      )
-  )
-)
+export const ifElse = I.curry(function ifElse(p, c, a) {
+  p = protect(p)
+  c = toRule(c)
+  a = toRule(a)
+  return function ifElse(x, i, M, xi2yM) {
+    return M.chain(
+      b =>
+        b
+          ? c(x, i, M, xi2yM)
+          : undefined !== b || raised === unique
+            ? a(x, i, M, xi2yM)
+            : rejectRaisedOr(M, x),
+      p(x, i)
+    )
+  }
+})
 
 export function casesOf(lens) {
   lens = L.toFunction(lens)
@@ -407,7 +439,9 @@ export function casesOf(lens) {
         ? casesOfCase(protect(c[0]), toRule(c[1]), op)
         : I.always(toRule(c[0]))
   }
-  return (x, i, M, xi2yM) => lens(x, i, L.Constant, op)(x, i, M, xi2yM)
+  return function casesOf(x, i, M, xi2yM) {
+    return lens(x, i, L.Constant, op)(x, i, M, xi2yM)
+  }
 }
 
 // Recursive

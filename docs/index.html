@@ -181,8 +181,7 @@ and an <code>event</code> field:</p>
   {&quot;date&quot;: &quot;2017-09-11&quot;, &quot;event&quot;: &quot;EFSA-H&quot;},
   {&quot;date&quot;: &quot;2017-09-20&quot;, &quot;event&quot;: &quot;EFSA-T&quot;},
   {&quot;date&quot;: &quot;&quot;,           &quot;event&quot;: &quot;EFSA-T&quot;}
-]
-</code></pre>
+]</code></pre>
 <p>We need to validate that each object has a valid date and an event and that
 dates and events are unique.  Furthermore, we wish to give feedback on all
 elements with errors so as to guide the user.</p>
@@ -195,8 +194,7 @@ elements with errors so as to guide the user.</p>
   event: V.and(
     [isNonEmpty,                  &#39;required&#39;],
     [isUniqueBy(&#39;event&#39;, events), &#39;duplicate&#39;])
-})))
-</code></pre>
+})))</code></pre>
 <p>where</p>
 <pre><code class="hljs lang-js">var isNonEmpty = R.identity
 
@@ -205,8 +203,7 @@ function isUniqueBy(p, xs) {
   return x =&gt; counts.get(x) &lt;= 1
 }
 
-var isValidDate = R.test(/^\d{4}-\d{2}-\d{2}$/)
-</code></pre>
+var isValidDate = R.test(/^\d{4}-\d{2}-\d{2}$/)</code></pre>
 <p>to give such validation feedback.  The rules basically just follow the structure
 of the data.</p>
 <p>Validating with those rules we get a data structure with the potential error
@@ -216,7 +213,6 @@ feedback at the same location as the offending element:</p>
   {&quot;date&quot;: &quot;2017-09-20&quot;, &quot;event&quot;: &quot;EFSA-T&quot;},
   {&quot;date&quot;: &quot;&quot;,           &quot;event&quot;: &quot;EFSA-T&quot;}
 ])
-
 </code></pre>
 <p>The result tells us that the first object is valid (i.e. there are no validation
 errors in it).  The <code>event</code> in the second object is a duplicate.  The third
@@ -251,7 +247,6 @@ For example,</p>
     value: false
   }
 )
-
 </code></pre>
 <p>throws an error, because <code>R.isNumber</code> is not defined.  The error is thrown as
 soon as the call to <a href="#V-props"><code>V.props</code></a> is made.</p>
@@ -264,8 +259,7 @@ checking:</p>
 <h2><a id="reference"></a> <a href="#contents">≡</a> <a href="https://github.com/calmm-js/partial.lenses.validation/blob/master/README.md#reference">■</a> <a href="#reference">Reference</a></h2>
 <p>The <a href="https://wiki.haskell.org/Combinator">combinators</a> provided by this library
 are available as named imports.  Typically one just imports the library as:</p>
-<pre><code class="hljs lang-jsx">import * as V from &#39;partial.lenses.validation&#39;
-</code></pre>
+<pre><code class="hljs lang-jsx">import * as V from &#39;partial.lenses.validation&#39;</code></pre>
 <p>This library is actually built on top of <a href="https://github.com/calmm-js/partial.lenses/">Partial
 Lenses</a>
 <a href="https://github.com/calmm-js/partial.lenses#transforms">transforms</a>.  It is also
@@ -282,7 +276,6 @@ asynchronous validation.</p>
 simply returns <code>true</code> in case the data is accepted and <code>false</code> if not.</p>
 <p>For example:</p>
 <pre><code class="hljs lang-js">V.accepts(V.arrayIx(R.is(String)), [&#39;Yes&#39;, &#39;No&#39;])
-
 </code></pre>
 <h5><a id="V-errors"></a> <a href="#contents">≡</a> <a href="https://github.com/calmm-js/partial.lenses.validation/blob/master/README.md#V-errors">■</a> <a href="#V-errors"><code>V.errors(rule, data) ~&gt; errors | undefined</code></a> <small><sup>v0.3.0</sup></small></h5>
 <p><code>V.errors(rule, data)</code> runs the given validation rule on the given data.  In
@@ -299,7 +292,6 @@ validation errors.</p>
     yes: 101,
   }
 )
-
 </code></pre>
 <p>Note that in case a validation error would be <code>undefined</code>, a <code>null</code> is reported
 instead.</p>
@@ -319,7 +311,6 @@ extra <code>errors</code> property that has the (non-stringified) validation err
     unexpected: &#39;field&#39;
   }
 )
-
 </code></pre>
 <h4><a id="asynchronous"></a> <a href="#contents">≡</a> <a href="https://github.com/calmm-js/partial.lenses.validation/blob/master/README.md#asynchronous">■</a> <a href="#asynchronous">Asynchronous</a></h4>
 <p>In case a validation rule contains asynchronous parts, it is necessary to use
@@ -333,8 +324,7 @@ information on a GitHub project of specified name:</p>
   const res = await fetch(`https://api.github.com/search/repositories?q=${q}`)
   const body = await res.json()
   return L.get([&#39;items&#39;, L.find(R.whereEq({name}))], body)
-}
-</code></pre>
+}</code></pre>
 <h5><a id="V-acceptsAsync"></a> <a href="#contents">≡</a> <a href="https://github.com/calmm-js/partial.lenses.validation/blob/master/README.md#V-acceptsAsync">■</a> <a href="#V-acceptsAsync"><code>V.acceptsAsync(rule, data) ~&gt; promise(boolean)</code></a> <small><sup>v0.3.0</sup></small></h5>
 <p><code>V.acceptsAsync(rule, data)</code> runs the given validation rule on the given data
 like <a href="#V-accepts"><code>V.accepts</code></a> except that the validation rule is allowed to
@@ -357,7 +347,6 @@ always be returned as a
     &#39;partial.lenses.validation&#39;
   ]
 ).catch(R.identity).then(console.log)
-
 </code></pre>
 <h5><a id="V-tryValidateAsyncNow"></a> <a href="#contents">≡</a> <a href="https://github.com/calmm-js/partial.lenses.validation/blob/master/README.md#V-tryValidateAsyncNow">■</a> <a href="#V-tryValidateAsyncNow"><code>V.tryValidateAsyncNow(rule, data) ~{throws}~&gt; data | promise(data)</code></a> <small><sup>v0.3.0</sup></small></h5>
 <p><code>V.tryValidateAsyncNow(rule, data)</code> runs the given validation rule on the given
@@ -381,8 +370,7 @@ example, because the first stage of validating a function is always synchronous.
     )
   ),
   ghInfoOfAsync
-)
-</code></pre>
+)</code></pre>
 <h5><a id="V-validateAsync"></a> <a href="#contents">≡</a> <a href="https://github.com/calmm-js/partial.lenses.validation/blob/master/README.md#V-validateAsync">■</a> <a href="#V-validateAsync"><code>V.validateAsync(rule, data) ~&gt; promise(data)</code></a> <small><sup>v0.3.0</sup></small></h5>
 <p><code>V.validateAsync(rule, data)</code> runs the given validation rule on the given data
 like <a href="#V-validate"><code>V.validate</code></a> except that the validation rule is allowed to
@@ -412,7 +400,6 @@ whether accepted or rejected, is returned as a
     &#39;partial.lenses.validation&#39;
   ]
 ).catch(R.identity).then(console.log)
-
 </code></pre>
 <h4><a id="general"></a> <a href="#contents">≡</a> <a href="https://github.com/calmm-js/partial.lenses.validation/blob/master/README.md#general">■</a> <a href="#general">General</a></h4>
 <p>It is also possible to run validation rules with an arbitrary computational
@@ -439,7 +426,6 @@ value.  <code>V.acceptAs</code> is rarely used alone, because it performs no val
 such, and is usually combined with e.g. <a href="#V-and"><code>V.and</code></a>.</p>
 <p>For example:</p>
 <pre><code class="hljs lang-js">V.validate(V.and(R.identical(1), V.acceptAs(&#39;one&#39;)), 1)
-
 </code></pre>
 <h4><a id="V-acceptWith"></a> <a href="#contents">≡</a> <a href="https://github.com/calmm-js/partial.lenses.validation/blob/master/README.md#V-acceptWith">■</a> <a href="#V-acceptWith"><code>V.acceptWith((value, index) =&gt; value) ~&gt; rule</code></a> <small><sup>v0.3.0</sup></small></h4>
 <p><code>V.acceptWith(fn)</code> accepts the current focus and replaces it with the value
@@ -464,7 +450,6 @@ rule.</p>
   ),
   10
 )
-
 </code></pre>
 <h4><a id="V-reject"></a> <a href="#contents">≡</a> <a href="https://github.com/calmm-js/partial.lenses.validation/blob/master/README.md#V-reject">■</a> <a href="#V-reject"><code>V.reject ~&gt; rule</code></a> <small><sup>v0.3.0</sup></small></h4>
 <p><code>V.reject</code> rejects the current focus as is.  In case the focus is <code>undefined</code>,
@@ -479,7 +464,6 @@ programmer who is familiar with the system to quickly diagnose the problem.</p>
     thisField: &#39;is not allowed&#39;,
   }
 )
-
 </code></pre>
 <h4><a id="V-rejectAs"></a> <a href="#contents">≡</a> <a href="https://github.com/calmm-js/partial.lenses.validation/blob/master/README.md#V-rejectAs">■</a> <a href="#V-rejectAs"><code>V.rejectAs(error) ~&gt; rule</code></a> <small><sup>v0.3.0</sup></small></h4>
 <p><code>V.rejectAs(error)</code> rejects the current focus as the given error value.  In case
@@ -494,7 +478,6 @@ to be displayed in a form that an end user can understand.</p>
     thisField: &#39;is not allowed&#39;,
   }
 )
-
 </code></pre>
 <h4><a id="V-rejectWith"></a> <a href="#contents">≡</a> <a href="https://github.com/calmm-js/partial.lenses.validation/blob/master/README.md#V-rejectWith">■</a> <a href="#V-rejectWith"><code>V.rejectWith((value, index) =&gt; error) ~&gt; rule</code></a> <small><sup>v0.3.0</sup></small></h4>
 <p><code>V.rejectWith(fn)</code> rejects the current focus with the error value returned by
@@ -512,7 +495,6 @@ value in focus.  This allows detailed error messages to be constructed.</p>
     thisField: &#39;is not allowed&#39;,
   }
 )
-
 </code></pre>
 <h4><a id="V-remove"></a> <a href="#contents">≡</a> <a href="https://github.com/calmm-js/partial.lenses.validation/blob/master/README.md#V-remove">■</a> <a href="#V-remove"><code>V.remove ~&gt; rule</code></a> <small><sup>v0.3.0</sup></small></h4>
 <p><code>V.remove</code> replaces the not yet rejected value in focus with <code>undefined</code>,
@@ -529,7 +511,6 @@ that <code>V.remove</code> by itself performs no validation.  You usually combin
     unexpected: &#39;and removed&#39;
   }
 )
-
 </code></pre>
 <h3><a id="predicates"></a> <a href="#contents">≡</a> <a href="https://github.com/calmm-js/partial.lenses.validation/blob/master/README.md#predicates">■</a> <a href="#predicates">Predicates</a></h3>
 <p>Unary (and binary) functions are implicitly treated as predicates and lifted to
@@ -552,7 +533,6 @@ predicate, it is rejected with <a href="#V-reject"><code>V.reject</code></a>.</p
     alsoNumber: 42
   }
 )
-
 </code></pre>
 <p>In case the predicate throws an exception, the focus is rejected with the
 exception as the error value.</p>
@@ -584,7 +564,6 @@ attach detailed error messages to rules.</p>
     sum: 9
   }
 )
-
 </code></pre>
 <h4><a id="V-setError"></a> <a href="#contents">≡</a> <a href="https://github.com/calmm-js/partial.lenses.validation/blob/master/README.md#V-setError">■</a> <a href="#V-setError"><code>V.setError(error, rule) ~&gt; rule</code></a> <small><sup>v0.3.0</sup></small></h4>
 <p><code>V.setError(error, rule)</code>, or using the shorthand notation <code>[rule, error]</code> when
@@ -613,7 +592,6 @@ messages to rules.</p>
     sum: 9
   }
 )
-
 </code></pre>
 <h3><a id="logical"></a> <a href="#contents">≡</a> <a href="https://github.com/calmm-js/partial.lenses.validation/blob/master/README.md#logical">■</a> <a href="#logical">Logical</a></h3>
 <p>Logical connectives provide a simple means to combine rules to form more complex
@@ -680,7 +658,6 @@ element of the array with a specific rule.  See also <a href="#V-args"><code>V.a
   V.tuple(R.is(String), R.is(Number)),
   [&#39;one&#39;, 2]
 )
-
 </code></pre>
 <p>Note that elements cannot be removed from a tuple using <a href="#V-remove"><code>V.remove</code></a>.</p>
 <h3><a id="functions"></a> <a href="#contents">≡</a> <a href="https://github.com/calmm-js/partial.lenses.validation/blob/master/README.md#functions">■</a> <a href="#functions">Functions</a></h3>
@@ -709,7 +686,6 @@ instead.</p>
 )
 
 sqrt(4)
-
 </code></pre>
 <p>Note that the wrapped function produced by <code>V.dependentFn</code> is not curried and
 has zero arity.  If necessary, you can wrap the produced function with
@@ -732,7 +708,6 @@ value depending on the arguments you need to use the
 )
 
 random(&#39;Does not take arguments!&#39;)
-
 </code></pre>
 <p>Note that the wrapped function produced by <code>V.freeFn</code> is not curried and has
 zero arity.  If necessary, you can wrap the produced function with
@@ -764,7 +739,6 @@ particularly designed for specifying that an object property is optional.</p>
     {field: 76}
   ]
 )
-
 </code></pre>
 <h4><a id="V-props"></a> <a href="#contents">≡</a> <a href="https://github.com/calmm-js/partial.lenses.validation/blob/master/README.md#V-props">■</a> <a href="#V-props"><code>V.props({...prop: rule}) ~&gt; rule</code></a> <small><sup>v0.3.0</sup></small></h4>
 <p><code>V.props({prop: rule, ...})</code> is for validating an object and is given a template
@@ -806,7 +780,6 @@ predicates fail and there is no default rule, the focus is rejected.</p>
     foo: 10
   }
 )
-
 </code></pre>
 <p>Note that, like with <a href="#V-ifElse"><code>V.ifElse</code></a>, <code>V.cases([p1, r1], ..., [rN])</code> can
 be expressed in terms of the logical operators, but <code>V.cases</code> has a simpler
@@ -827,7 +800,6 @@ the current focus.</p>
     value: &#39;foo&#39;
   }
 )
-
 </code></pre>
 <h4><a id="V-ifElse"></a> <a href="#contents">≡</a> <a href="https://github.com/calmm-js/partial.lenses.validation/blob/master/README.md#V-ifElse">■</a> <a href="#V-ifElse"><code>V.ifElse((value, index) =&gt; testable, rule, rule) ~&gt; rule</code></a> <small><sup>v0.3.0</sup></small></h4>
 <p><code>V.ifElse(predicate, consequent, alternative)</code> acts like the given consequent
@@ -838,7 +810,6 @@ given alternative rule.</p>
   V.ifElse(R.is(Number), R.lte(0), R.is(String)),
   -1
 )
-
 </code></pre>
 <p>Note that <code>V.ifElse(p, c, a)</code> can be expressed as <code>V.or(V.and(p, c),
 V.and(V.not(p), a))</code>, but <code>V.ifElse</code> has a simpler internal implementation and
@@ -860,7 +831,6 @@ and allows rules that examine multiple parts of the data.</p>
     b: 2
   }
 )
-
 </code></pre>
 <p>Note that <code>V.choose</code> can be used to implement conditionals like
 <a href="#V-cases"><code>V.cases</code></a> and <a href="#V-ifElse"><code>V.ifElse</code></a>.  Also note that code inside
@@ -900,7 +870,6 @@ a subrule and construct a recursive rule.</p>
     }
   ]
 )
-
 </code></pre>
 <h3><a id="transformation"></a> <a href="#contents">≡</a> <a href="https://github.com/calmm-js/partial.lenses.validation/blob/master/README.md#transformation">■</a> <a href="#transformation">Transformation</a></h3>
 <p>Rules can modify the value after a rule has accepted the focus.</p>
@@ -952,7 +921,6 @@ any sequence of transformations is also validated.</p>
   ),
   {type: &#39;v1&#39;, constant: 42}
 )
-
 </code></pre>
 <p>Note that <a href="#V-or"><code>V.or(r1, ..., rN)</code></a> is equivalent to <code>V.promote([r1], ...,
 [rN])</code>.</p>
@@ -985,7 +953,6 @@ process is rerun.  This way any sequence of transformations is also validated.</
   ),
   {type: &#39;v1&#39;, constant: 42}
 )
-
 </code></pre>
 <p>Note that <code>V.cases([p1, r1], ..., [[pN, ]rN])</code> is equivalent to <code>V.upgrades([p1,
 r1], ..., [[pN, ]rN])</code>.</p>
@@ -1020,7 +987,6 @@ transformations is also validated.</p>
   ),
   {type: &#39;v1&#39;, constant: 42}
 )
-
 </code></pre>
 <p>Note that <code>V.casesOf(lens, [p1, r1], ..., [[pN, ]rN])</code> is equivalent to
 <code>V.upgradesOf(lens, [p1, r1], ..., [[pN, ]rN])</code>.</p>
@@ -1040,8 +1006,7 @@ resulting error is likely to be of higher quality.</p>
   V.propsOr(V.accept, rules1),
   V.propsOr(V.accept, rules2),
   // ...
-)
-</code></pre>
+)</code></pre>
 <p>but this has a couple of disadvantages:</p>
 <ul>
 <li>The resulting rule will accept additional properties.</li>
@@ -1053,8 +1018,7 @@ reported.</li>
   ...rules1,
   ...rules2,
   // ...
-})
-</code></pre>
+})</code></pre>
 <p>This way additional properties are not accepted and errors from all rules are
 reported in case of rejection.</p>
 <h2><a id="known-caveats"></a> <a href="#contents">≡</a> <a href="https://github.com/calmm-js/partial.lenses.validation/blob/master/README.md#known-caveats">■</a> <a href="#known-caveats">Known caveats</a></h2>

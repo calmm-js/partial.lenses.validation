@@ -1,5 +1,5 @@
-import { curryN, isFunction, curry, isString, isNumber, arityN, sndU, id, freeze, isArray, always, identicalU } from 'infestines';
-import { zero, ifElse, modifyOp, any, modify, rewrite, elems, values, get, toFunction, elemsTotal, choose, setOp, Identity, traverse, IdentityAsync, setter, set, optional, branchOr, Constant, lazy } from 'partial.lenses';
+import { isFunction, isString, isNumber, arityN, sndU, defineNameU, freeze, isArray, always, curryN, curry, identicalU } from 'infestines';
+import { zero, any, modify, rewrite, elems, values, get, ifElse, toFunction, elemsTotal, choose, setOp, modifyOp, Identity, traverse, IdentityAsync, setter, set, optional, branchOr, Constant, lazy } from 'partial.lenses';
 
 var isThenable = function isThenable(x) {
   return null != x && isFunction(x.then);
@@ -39,6 +39,16 @@ var both = /*#__PURE__*/curry(function (p1, p2) {
 });
 
 var ignore = function ignore(_) {};
+
+//
+
+var id = function id(x) {
+  return x;
+};
+
+var copyName = process.env.NODE_ENV === 'production' ? id : function (to, from) {
+  return defineNameU(to, from.name);
+};
 
 //
 
@@ -107,7 +117,7 @@ var getEither = function getEither(k, r, x) {
 };
 
 var sumRight = function sumRight(zero$$1, one, plus) {
-  return function () {
+  return copyName(function () {
     var n = arguments.length;
     var r = zero$$1;
     if (n) {
@@ -117,7 +127,7 @@ var sumRight = function sumRight(zero$$1, one, plus) {
       }
     }
     return r;
-  };
+  }, plus);
 };
 
 //
@@ -146,7 +156,7 @@ var compose = /*#__PURE__*/o(toFunction, toRules);
 var tupleOr = function tupleOr(_ref) {
   var less = _ref.less,
       rest = _ref.rest;
-  return rest = toRule(rest), function () {
+  return rest = toRule(rest), function tupleOr() {
     var n = arguments.length;
     var rules = Array(n);
     for (var i = 0; i < n; ++i) {
@@ -200,7 +210,7 @@ var protect = function protect(predicate, orElse) {
 var accept = zero;
 
 var acceptAs = function acceptAs(value) {
-  return function (x, i, M, xi2yM) {
+  return function acceptAs(x, i, M, xi2yM) {
     return xi2yM(value, i);
   };
 };
@@ -214,7 +224,7 @@ var acceptWith = function acceptWith(fn) {
 };
 
 var rejectWith = function rejectWith(fn) {
-  return function (x, i, M, _xi2yM) {
+  return function rejectWith(x, i, M, _xi2yM) {
     return M.map(rejected, fn(x, i));
   };
 };
@@ -241,11 +251,11 @@ var casesOfCase = function casesOfCase(p, o$$1, r) {
 //
 
 var ruleBinOp = function ruleBinOp(op) {
-  return curryN(2, function (l) {
+  return curryN(2, copyName(function (l) {
     return l = toRule(l), function (r) {
       return r = toRule(r), op(l, r);
     };
-  });
+  }, op));
 };
 
 //
@@ -258,15 +268,16 @@ var upgradesCase = function upgradesCase(revalidate) {
 
 // General
 
-var run = /*#__PURE__*/curryN(3, function (c) {
+var run = /*#__PURE__*/curryN(3, function run(c) {
   var M = c.Monad || Identity;
   var onAccept = c.onAccept || id;
   var onReject = c.onReject || raise;
   var handler = function handler(r) {
     return isRejected(r) ? onReject(value(r)) : onAccept(r);
   };
-  return function (rule) {
-    return rule = toRule(rule), function (data) {
+  return function run(rule) {
+    rule = toRule(rule);
+    return function run(data) {
       return M.chain(handler, traverse(M, id, rule, data));
     };
   };
@@ -302,15 +313,16 @@ var where = function where(predicate) {
 
 // Elaboration
 
-var modifyError = /*#__PURE__*/curry(function (fn, rule) {
-  return rule = toRule(rule), function (x, i, M, xi2yM) {
+var modifyError = /*#__PURE__*/curry(function modifyError(fn, rule) {
+  rule = toRule(rule);
+  return function modifyError(x, i, M, xi2yM) {
     return M.chain(function (r) {
       return isRejected(r) ? M.map(rejected, fn(x, value(r), i)) : M.of(r);
     }, rule(x, i, M, xi2yM));
   };
 });
 
-var setError = /*#__PURE__*/curry(function (error, rule) {
+var setError = /*#__PURE__*/curry(function setError(error, rule) {
   return compose([rewrite(function (r) {
     return isRejected(r) ? rejected(error) : r;
   }), rule]);
@@ -318,10 +330,10 @@ var setError = /*#__PURE__*/curry(function (error, rule) {
 
 // Ad-hoc
 
-var modifyAfter = /*#__PURE__*/curryN(2, function (rule) {
+var modifyAfter = /*#__PURE__*/curryN(2, function modifyAfter(rule) {
   return o(both$1(rule), acceptWith);
 });
-var setAfter = /*#__PURE__*/curryN(2, function (rule) {
+var setAfter = /*#__PURE__*/curryN(2, function setAfter(rule) {
   return o(both$1(rule), acceptAs);
 });
 var removeAfter = function removeAfter(rule) {
@@ -330,8 +342,8 @@ var removeAfter = function removeAfter(rule) {
 
 // Logical
 
-var both$1 = /*#__PURE__*/ruleBinOp(function (rule, rest) {
-  return function (x, i, M, xi2yM) {
+var both$1 = /*#__PURE__*/ruleBinOp(function both$$1(rule, rest) {
+  return function both$$1(x, i, M, xi2yM) {
     return M.chain(function (r) {
       return isRejected(r) ? M.of(r) : rest(r, i, M, xi2yM);
     }, rule(x, i, M, xi2yM));
@@ -346,8 +358,8 @@ var not = function not(rule) {
   }), rule]);
 };
 
-var either = /*#__PURE__*/ruleBinOp(function (rule, rest) {
-  return function (x, i, M, xi2yM) {
+var either = /*#__PURE__*/ruleBinOp(function either(rule, rest) {
+  return function either(x, i, M, xi2yM) {
     return M.chain(function (r) {
       return isRejected(r) ? rest(x, i, M, xi2yM) : M.of(r);
     }, rule(x, i, M, xi2yM));
@@ -374,9 +386,10 @@ var tuple = /*#__PURE__*/tupleOr({ less: false, rest: reject });
 
 // Functions
 
-var dependentFn = /*#__PURE__*/curry(function (argsRule, toResRule) {
-  return argsRule = toRule(argsRule), function (fn, i, M, _xi2yM) {
-    return M.of(isFunction(fn) ? function () {
+var dependentFn = /*#__PURE__*/curry(function dependentFn(argsRule, toResRule) {
+  argsRule = toRule(argsRule);
+  return function (fn, i, M, _xi2yM) {
+    return M.of(isFunction(fn) ? copyName(function () {
       for (var _len = arguments.length, args = Array(_len), _key = 0; _key < _len; _key++) {
         args[_key] = arguments[_key];
       }
@@ -386,17 +399,17 @@ var dependentFn = /*#__PURE__*/curry(function (argsRule, toResRule) {
           return M.map(raiseRejected, traverse(M, id, toRule(toResRule.apply(null, args)), res));
         }, fn.apply(null, args));
       }, traverse(M, id, argsRule, args));
-    } : rejected(fn));
+    }, fn) : rejected(fn));
   };
 });
 
-var freeFn = /*#__PURE__*/curry(function (argsRule, resRule) {
+var freeFn = /*#__PURE__*/curry(function freeFn(argsRule, resRule) {
   return dependentFn(argsRule, always(resRule));
 });
 
 // Objects
 
-var keep = /*#__PURE__*/curry(function (key, rule) {
+var keep = /*#__PURE__*/curry(function keep(key, rule) {
   return andCompose(isInstanceOfObject, [setter(function (r, x) {
     return isRejected(r) ? rejected(set(key, getEither(key, value(r), x), value(r))) : r;
   }), rule]);
@@ -406,7 +419,7 @@ var optional$1 = function optional$$1(rule) {
   return compose([optional, rule]);
 };
 
-var propsOr = /*#__PURE__*/curry(function (onOthers, template) {
+var propsOr = /*#__PURE__*/curry(function propsOr(onOthers, template) {
   return andCompose(isInstanceOfObject, [propsTrickle, branchOr(toRule(onOthers), modify(values, toRule, template))]);
 });
 
@@ -415,23 +428,26 @@ var props = /*#__PURE__*/propsOr(reject);
 // Dependent
 
 var choose$1 = function choose$$1(xi2r) {
-  return xi2r = protect(xi2r), function (x, i, M, xi2yM) {
+  return xi2r = protect(xi2r), copyName(function (x, i, M, xi2yM) {
     return M.chain(function (r) {
       return r ? toRule(r)(x, i, M, xi2yM) : rejectRaisedOr(M, x);
     }, xi2r(x, i));
-  };
+  }, xi2r);
 };
 
 // Conditional
 
 var cases = /*#__PURE__*/sumRight(reject, function (alt, rest) {
   return length(alt) === 1 ? alt[0] : ifElse$1(alt[0], alt[1], rest);
-}, function (alt, rest) {
+}, function cases(alt, rest) {
   return ifElse$1(alt[0], alt[1], rest);
 });
 
-var ifElse$1 = /*#__PURE__*/curry(function (p, c, a) {
-  return p = protect(p), c = toRule(c), a = toRule(a), function (x, i, M, xi2yM) {
+var ifElse$1 = /*#__PURE__*/curry(function ifElse$$1(p, c, a) {
+  p = protect(p);
+  c = toRule(c);
+  a = toRule(a);
+  return function ifElse$$1(x, i, M, xi2yM) {
     return M.chain(function (b) {
       return b ? c(x, i, M, xi2yM) : undefined !== b || raised === unique ? a(x, i, M, xi2yM) : rejectRaisedOr(M, x);
     }, p(x, i));
@@ -446,7 +462,7 @@ function casesOf(lens) {
     var c = arguments[n];
     op = length(c) !== 1 ? casesOfCase(protect(c[0]), toRule(c[1]), op) : always(toRule(c[0]));
   }
-  return function (x, i, M, xi2yM) {
+  return function casesOf(x, i, M, xi2yM) {
     return lens(x, i, Constant, op)(x, i, M, xi2yM);
   };
 }
@@ -565,13 +581,13 @@ var fml = function fml(firsts, middle, lasts) {
 };
 
 var variadicFn1 = function variadicFn1(fn) {
-  return function (x) {
+  return copyName(function (x) {
     for (var _len = arguments.length, xs = Array(_len > 1 ? _len - 1 : 0), _key = 1; _key < _len; _key++) {
       xs[_key - 1] = arguments[_key];
     }
 
     return fn.apply(undefined, [x].concat(xs));
-  };
+  }, fn);
 };
 
 var caseR = /*#__PURE__*/tuple(rule);
