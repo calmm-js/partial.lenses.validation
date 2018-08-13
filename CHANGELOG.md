@@ -1,3 +1,16 @@
+## 2.0.0
+
+To reduce implementation complexity the following combinators no longer allow
+the predicates or functions passed to them to be asynchronous:
+
+* `V.ifElse`
+* `V.choose`
+* `V.cases`
+* `V.casesOf`
+
+The functions that are allowed to be asynchronous are now marked in the document
+with the `async` keyword.
+
 ## 0.3.8
 
 Fixed `V.run` contract.

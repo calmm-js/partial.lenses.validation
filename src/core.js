@@ -173,20 +173,6 @@ export const remove = acceptAs(undefined)
 
 //
 
-const casesOfDefault = I.always(reject)
-const casesOfCase = (p, o, r) => (y, j) => (x, i, M, xi2yM) =>
-  M.chain(
-    b =>
-      b
-        ? o(x, i, M, xi2yM)
-        : undefined !== b || raised === unique
-          ? r(y, j)(x, i, M, xi2yM)
-          : rejectRaisedOr(M, x),
-    p(y, j)
-  )
-
-//
-
 const ruleBinOp = op =>
   I.curryN(
     2,
@@ -389,14 +375,10 @@ export const props = propsOr(reject)
 
 export const choose = xi2r => (
   (xi2r = protect(xi2r)),
-  copyName(
-    (x, i, M, xi2yM) =>
-      M.chain(
-        r => (r ? toRule(r)(x, i, M, xi2yM) : rejectRaisedOr(M, x)),
-        xi2r(x, i)
-      ),
-    xi2r
-  )
+  copyName((x, i, M, xi2yM) => {
+    const r = xi2r(x, i)
+    return r ? toRule(r)(x, i, M, xi2yM) : rejectRaisedOr(M, x)
+  }, xi2r)
 )
 
 // Conditional
@@ -414,31 +396,55 @@ export const ifElse = I.curry(function ifElse(p, c, a) {
   c = toRule(c)
   a = toRule(a)
   return function ifElse(x, i, M, xi2yM) {
-    return M.chain(
-      b =>
-        b
-          ? c(x, i, M, xi2yM)
-          : undefined !== b || raised === unique
-            ? a(x, i, M, xi2yM)
-            : rejectRaisedOr(M, x),
-      p(x, i)
-    )
+    const b = p(x, i)
+    return b
+      ? c(x, i, M, xi2yM)
+      : undefined !== b || raised === unique
+        ? a(x, i, M, xi2yM)
+        : rejectRaisedOr(M, x)
   }
 })
 
-export function casesOf(lens) {
-  lens = L.toFunction(lens)
-  let n = arguments.length
-  let op = casesOfDefault
-  while (--n) {
-    const c = arguments[n]
-    op =
-      I.length(c) !== 1
-        ? casesOfCase(protect(c[0]), toRule(c[1]), op)
-        : I.always(toRule(c[0]))
+export function casesOf(of) {
+  of = L.toFunction(of)
+
+  let n = arguments.length - 1
+  if (!n) return reject
+
+  let def = arguments[n]
+  if (def.length === 1) {
+    --n
+    def = toRule(def[0])
+  } else {
+    def = reject
   }
+
+  const ps = Array(n)
+  const os = Array(n + 1)
+  for (let i = 0; i < n; ++i) {
+    const c = arguments[i + 1]
+    ps[i] = protect(c[0])
+    os[i] = toRule(c[1])
+  }
+  os[n] = def
+
   return function casesOf(x, i, M, xi2yM) {
-    return lens(x, i, L.Constant, op)(x, i, M, xi2yM)
+    let min = n
+    const r = of(x, i, L.Select, (y, j) => {
+      for (let i = 0; i < min; ++i) {
+        const b = ps[i](y, j)
+        if (b) {
+          min = i
+          if (i === 0) return 0
+          else break
+        } else if (undefined === b && raised !== unique) {
+          const r = raised
+          raised = unique
+          return M.of(rejected(r))
+        }
+      }
+    })
+    return r ? r : os[min](x, i, M, xi2yM)
   }
 }
 
@@ -461,5 +467,5 @@ export const promote = (...cs) =>
 export const upgrades = (...cs) =>
   lazy(rec => cases.apply(null, cs.map(upgradesCase(rec))))
 
-export const upgradesOf = (lens, ...cs) =>
-  lazy(rec => casesOf.apply(null, [lens].concat(cs.map(upgradesCase(rec)))))
+export const upgradesOf = (of, ...cs) =>
+  lazy(rec => casesOf.apply(null, [of].concat(cs.map(upgradesCase(rec)))))

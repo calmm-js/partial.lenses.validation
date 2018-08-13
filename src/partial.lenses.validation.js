@@ -36,8 +36,8 @@ const opticFn = fnN(4)
 
 const rule = V.lazy(rule => V.or(predicateFn, opticFn, V.tuple(rule, V.accept)))
 
-const lens = V.lazy(lens =>
-  V.or(I.isString, I.isNumber, transformFn, opticFn, V.arrayIx(lens))
+const traversal = V.lazy(traversal =>
+  V.or(I.isString, I.isNumber, transformFn, opticFn, V.arrayIx(traversal))
 )
 
 const tagError = (tag, rule) => V.modifyError((_, e) => [tag, e], rule)
@@ -255,7 +255,10 @@ export const ifElse = C(
 export const casesOf = C(
   V.casesOf,
   V.modifyAfter(
-    V.freeFn(tagArgs('casesOf', fml([lens], casePR, [caseR_casePR])), rule),
+    V.freeFn(
+      tagArgs('casesOf', fml([traversal], casePR, [caseR_casePR])),
+      rule
+    ),
     variadicFn1
   )
 )
@@ -283,7 +286,7 @@ export const upgradesOf = C(
   V.upgradesOf,
   V.modifyAfter(
     V.freeFn(
-      tagArgs('upgradesOf', fml([lens], casePR_casePRT, [caseR_casePR])),
+      tagArgs('upgradesOf', fml([traversal], casePR_casePRT, [caseR_casePR])),
       rule
     ),
     variadicFn1
