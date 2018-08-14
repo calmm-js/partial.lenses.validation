@@ -602,6 +602,14 @@ describe('V.casesOf', () => {
       )
     )
   )
+  testAcceptedAs([1, 2, 3], [1, -2, 3], () =>
+    V.casesOf(
+      L.elems,
+      [x => 3 < x, V.rejectAs('not me')],
+      [x => x < 0, V.arrayId(V.acceptWith(Math.abs))],
+      [R.equals(1), V.rejectAs('me neither')]
+    )
+  )
 })
 
 describe('V.promote', () => {
