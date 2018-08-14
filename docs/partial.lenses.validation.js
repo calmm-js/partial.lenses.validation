@@ -236,19 +236,6 @@
 
   //
 
-  var casesOfDefault = /*#__PURE__*/I.always(reject);
-  var casesOfCase = function casesOfCase(p, o$$1, r) {
-    return function (y, j) {
-      return function (x, i, M, xi2yM) {
-        return M.chain(function (b) {
-          return b ? o$$1(x, i, M, xi2yM) : undefined !== b || raised === unique ? r(y, j)(x, i, M, xi2yM) : rejectRaisedOr(M, x);
-        }, p(y, j));
-      };
-    };
-  };
-
-  //
-
   var ruleBinOp = function ruleBinOp(op) {
     return I.curryN(2, copyName(function (l) {
       return l = toRule(l), function (r) {
@@ -428,9 +415,8 @@
 
   var choose = function choose(xi2r) {
     return xi2r = protect(xi2r), copyName(function (x, i, M, xi2yM) {
-      return M.chain(function (r) {
-        return r ? toRule(r)(x, i, M, xi2yM) : rejectRaisedOr(M, x);
-      }, xi2r(x, i));
+      var r = xi2r(x, i);
+      return r ? toRule(r)(x, i, M, xi2yM) : rejectRaisedOr(M, x);
     }, xi2r);
   };
 
@@ -447,22 +433,50 @@
     c = toRule(c);
     a = toRule(a);
     return function ifElse(x, i, M, xi2yM) {
-      return M.chain(function (b) {
-        return b ? c(x, i, M, xi2yM) : undefined !== b || raised === unique ? a(x, i, M, xi2yM) : rejectRaisedOr(M, x);
-      }, p(x, i));
+      var b = p(x, i);
+      return b ? c(x, i, M, xi2yM) : undefined !== b || raised === unique ? a(x, i, M, xi2yM) : rejectRaisedOr(M, x);
     };
   });
 
-  function casesOf(lens) {
-    lens = L.toFunction(lens);
-    var n = arguments.length;
-    var op = casesOfDefault;
-    while (--n) {
-      var c = arguments[n];
-      op = length(c) !== 1 ? casesOfCase(protect(c[0]), toRule(c[1]), op) : I.always(toRule(c[0]));
+  function casesOf(of) {
+    of = L.toFunction(of);
+
+    var n = arguments.length - 1;
+    if (!n) return reject;
+
+    var def = arguments[n];
+    if (def.length === 1) {
+      --n;
+      def = toRule(def[0]);
+    } else {
+      def = reject;
     }
+
+    var ps = Array(n);
+    var os = Array(n + 1);
+    for (var i = 0; i < n; ++i) {
+      var c = arguments[i + 1];
+      ps[i] = protect(c[0]);
+      os[i] = toRule(c[1]);
+    }
+    os[n] = def;
+
     return function casesOf(x, i, M, xi2yM) {
-      return lens(x, i, L.Constant, op)(x, i, M, xi2yM);
+      var min = n;
+      var r = of(x, i, L.Select, function (y, j) {
+        for (var _i = 0; _i < min; ++_i) {
+          var b = ps[_i](y, j);
+          if (b) {
+            min = _i;
+            if (_i === 0) return 0;else break;
+          } else if (undefined === b && raised !== unique) {
+            var _r = raised;
+            raised = unique;
+            return M.of(rejected(_r));
+          }
+        }
+      });
+      return r ? r : os[min](x, i, M, xi2yM);
     };
   }
 
@@ -494,13 +508,13 @@
     });
   };
 
-  var upgradesOf = function upgradesOf(lens) {
+  var upgradesOf = function upgradesOf(of) {
     for (var _len4 = arguments.length, cs = Array(_len4 > 1 ? _len4 - 1 : 0), _key4 = 1; _key4 < _len4; _key4++) {
       cs[_key4 - 1] = arguments[_key4];
     }
 
     return lazy(function (rec) {
-      return casesOf.apply(null, [lens].concat(cs.map(upgradesCase(rec))));
+      return casesOf.apply(null, [of].concat(cs.map(upgradesCase(rec))));
     });
   };
 
@@ -547,8 +561,8 @@
     return or(predicateFn, opticFn, tuple(rule, accept));
   });
 
-  var lens = /*#__PURE__*/lazy(function (lens) {
-    return or(I.isString, I.isNumber, transformFn, opticFn, arrayIx(lens));
+  var traversal = /*#__PURE__*/lazy(function (traversal) {
+    return or(I.isString, I.isNumber, transformFn, opticFn, arrayIx(traversal));
   });
 
   var tagError = function tagError(tag, rule) {
@@ -712,7 +726,7 @@
 
   var ifElse$1 = /*#__PURE__*/C(ifElse, /*#__PURE__*/curriedFn('ifElse', [predicateFn, rule, rule], rule));
 
-  var casesOf$1 = /*#__PURE__*/C(casesOf, /*#__PURE__*/modifyAfter( /*#__PURE__*/freeFn( /*#__PURE__*/tagArgs('casesOf', /*#__PURE__*/fml([lens], casePR, [caseR_casePR])), rule), variadicFn1));
+  var casesOf$1 = /*#__PURE__*/C(casesOf, /*#__PURE__*/modifyAfter( /*#__PURE__*/freeFn( /*#__PURE__*/tagArgs('casesOf', /*#__PURE__*/fml([traversal], casePR, [caseR_casePR])), rule), variadicFn1));
 
   // Recursive
 
@@ -724,7 +738,7 @@
 
   var upgrades$1 = /*#__PURE__*/C(upgrades, /*#__PURE__*/freeFn( /*#__PURE__*/tagArgs('upgrades', /*#__PURE__*/fml([], casePR_casePRT, [caseR_casePR])), rule));
 
-  var upgradesOf$1 = /*#__PURE__*/C(upgradesOf, /*#__PURE__*/modifyAfter( /*#__PURE__*/freeFn( /*#__PURE__*/tagArgs('upgradesOf', /*#__PURE__*/fml([lens], casePR_casePRT, [caseR_casePR])), rule), variadicFn1));
+  var upgradesOf$1 = /*#__PURE__*/C(upgradesOf, /*#__PURE__*/modifyAfter( /*#__PURE__*/freeFn( /*#__PURE__*/tagArgs('upgradesOf', /*#__PURE__*/fml([traversal], casePR_casePRT, [caseR_casePR])), rule), variadicFn1));
 
   exports.accept = accept$1;
   exports.acceptAs = acceptAs$1;

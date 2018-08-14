@@ -1,5 +1,5 @@
-import { isFunction, isString, isNumber, arityN, sndU, defineNameU, id, freeze, isArray, always, curryN, curry, identicalU } from 'infestines';
-import { zero, any, modify, rewrite, elems, values, get, ifElse, toFunction, elemsTotal, choose, setOp, modifyOp, Identity, traverse, IdentityAsync, setter, set, optional, branchOr, Constant, lazy } from 'partial.lenses';
+import { isFunction, isString, isNumber, arityN, sndU, defineNameU, id, freeze, isArray, curryN, always, curry, identicalU } from 'infestines';
+import { zero, any, modify, rewrite, elems, values, get, ifElse, toFunction, elemsTotal, choose, setOp, modifyOp, Identity, traverse, IdentityAsync, setter, set, optional, branchOr, Select, lazy } from 'partial.lenses';
 
 var isThenable = function isThenable(x) {
   return null != x && isFunction(x.then);
@@ -235,19 +235,6 @@ var remove = /*#__PURE__*/acceptAs(undefined);
 
 //
 
-var casesOfDefault = /*#__PURE__*/always(reject);
-var casesOfCase = function casesOfCase(p, o$$1, r) {
-  return function (y, j) {
-    return function (x, i, M, xi2yM) {
-      return M.chain(function (b) {
-        return b ? o$$1(x, i, M, xi2yM) : undefined !== b || raised === unique ? r(y, j)(x, i, M, xi2yM) : rejectRaisedOr(M, x);
-      }, p(y, j));
-    };
-  };
-};
-
-//
-
 var ruleBinOp = function ruleBinOp(op) {
   return curryN(2, copyName(function (l) {
     return l = toRule(l), function (r) {
@@ -427,9 +414,8 @@ var props = /*#__PURE__*/propsOr(reject);
 
 var choose$1 = function choose$$1(xi2r) {
   return xi2r = protect(xi2r), copyName(function (x, i, M, xi2yM) {
-    return M.chain(function (r) {
-      return r ? toRule(r)(x, i, M, xi2yM) : rejectRaisedOr(M, x);
-    }, xi2r(x, i));
+    var r = xi2r(x, i);
+    return r ? toRule(r)(x, i, M, xi2yM) : rejectRaisedOr(M, x);
   }, xi2r);
 };
 
@@ -446,22 +432,50 @@ var ifElse$1 = /*#__PURE__*/curry(function ifElse$$1(p, c, a) {
   c = toRule(c);
   a = toRule(a);
   return function ifElse$$1(x, i, M, xi2yM) {
-    return M.chain(function (b) {
-      return b ? c(x, i, M, xi2yM) : undefined !== b || raised === unique ? a(x, i, M, xi2yM) : rejectRaisedOr(M, x);
-    }, p(x, i));
+    var b = p(x, i);
+    return b ? c(x, i, M, xi2yM) : undefined !== b || raised === unique ? a(x, i, M, xi2yM) : rejectRaisedOr(M, x);
   };
 });
 
-function casesOf(lens) {
-  lens = toFunction(lens);
-  var n = arguments.length;
-  var op = casesOfDefault;
-  while (--n) {
-    var c = arguments[n];
-    op = length(c) !== 1 ? casesOfCase(protect(c[0]), toRule(c[1]), op) : always(toRule(c[0]));
+function casesOf(of) {
+  of = toFunction(of);
+
+  var n = arguments.length - 1;
+  if (!n) return reject;
+
+  var def = arguments[n];
+  if (def.length === 1) {
+    --n;
+    def = toRule(def[0]);
+  } else {
+    def = reject;
   }
+
+  var ps = Array(n);
+  var os = Array(n + 1);
+  for (var i = 0; i < n; ++i) {
+    var c = arguments[i + 1];
+    ps[i] = protect(c[0]);
+    os[i] = toRule(c[1]);
+  }
+  os[n] = def;
+
   return function casesOf(x, i, M, xi2yM) {
-    return lens(x, i, Constant, op)(x, i, M, xi2yM);
+    var min = n;
+    var r = of(x, i, Select, function (y, j) {
+      for (var _i = 0; _i < min; ++_i) {
+        var b = ps[_i](y, j);
+        if (b) {
+          min = _i;
+          if (_i === 0) return 0;else break;
+        } else if (undefined === b && raised !== unique) {
+          var _r = raised;
+          raised = unique;
+          return M.of(rejected(_r));
+        }
+      }
+    });
+    return r ? r : os[min](x, i, M, xi2yM);
   };
 }
 
@@ -493,13 +507,13 @@ var upgrades = function upgrades() {
   });
 };
 
-var upgradesOf = function upgradesOf(lens) {
+var upgradesOf = function upgradesOf(of) {
   for (var _len4 = arguments.length, cs = Array(_len4 > 1 ? _len4 - 1 : 0), _key4 = 1; _key4 < _len4; _key4++) {
     cs[_key4 - 1] = arguments[_key4];
   }
 
   return lazy$1(function (rec) {
-    return casesOf.apply(null, [lens].concat(cs.map(upgradesCase(rec))));
+    return casesOf.apply(null, [of].concat(cs.map(upgradesCase(rec))));
   });
 };
 
@@ -546,8 +560,8 @@ var rule = /*#__PURE__*/lazy$1(function (rule) {
   return or(predicateFn, opticFn, tuple(rule, accept));
 });
 
-var lens = /*#__PURE__*/lazy$1(function (lens) {
-  return or(isString, isNumber, transformFn, opticFn, arrayIx(lens));
+var traversal = /*#__PURE__*/lazy$1(function (traversal) {
+  return or(isString, isNumber, transformFn, opticFn, arrayIx(traversal));
 });
 
 var tagError = function tagError(tag, rule) {
@@ -713,7 +727,7 @@ var cases$1 = /*#__PURE__*/C(cases, /*#__PURE__*/freeFn( /*#__PURE__*/tagArgs('c
 
 var ifElse$2 = /*#__PURE__*/C(ifElse$1, /*#__PURE__*/curriedFn('ifElse', [predicateFn, rule, rule], rule));
 
-var casesOf$1 = /*#__PURE__*/C(casesOf, /*#__PURE__*/modifyAfter( /*#__PURE__*/freeFn( /*#__PURE__*/tagArgs('casesOf', /*#__PURE__*/fml([lens], casePR, [caseR_casePR])), rule), variadicFn1));
+var casesOf$1 = /*#__PURE__*/C(casesOf, /*#__PURE__*/modifyAfter( /*#__PURE__*/freeFn( /*#__PURE__*/tagArgs('casesOf', /*#__PURE__*/fml([traversal], casePR, [caseR_casePR])), rule), variadicFn1));
 
 // Recursive
 
@@ -725,6 +739,6 @@ var promote$1 = /*#__PURE__*/C(promote, /*#__PURE__*/freeFn( /*#__PURE__*/tagArg
 
 var upgrades$1 = /*#__PURE__*/C(upgrades, /*#__PURE__*/freeFn( /*#__PURE__*/tagArgs('upgrades', /*#__PURE__*/fml([], casePR_casePRT, [caseR_casePR])), rule));
 
-var upgradesOf$1 = /*#__PURE__*/C(upgradesOf, /*#__PURE__*/modifyAfter( /*#__PURE__*/freeFn( /*#__PURE__*/tagArgs('upgradesOf', /*#__PURE__*/fml([lens], casePR_casePRT, [caseR_casePR])), rule), variadicFn1));
+var upgradesOf$1 = /*#__PURE__*/C(upgradesOf, /*#__PURE__*/modifyAfter( /*#__PURE__*/freeFn( /*#__PURE__*/tagArgs('upgradesOf', /*#__PURE__*/fml([traversal], casePR_casePRT, [caseR_casePR])), rule), variadicFn1));
 
 export { accept$1 as accept, acceptAs$1 as acceptAs, acceptWith$1 as acceptWith, rejectWith$1 as rejectWith, rejectAs$1 as rejectAs, reject$1 as reject, remove$1 as remove, run$1 as run, accepts$1 as accepts, errors$1 as errors, validate$1 as validate, acceptsAsync$1 as acceptsAsync, errorsAsync$1 as errorsAsync, tryValidateAsyncNow$1 as tryValidateAsyncNow, validateAsync$1 as validateAsync, where$1 as where, modifyError$1 as modifyError, setError$1 as setError, modifyAfter$1 as modifyAfter, setAfter$1 as setAfter, removeAfter$1 as removeAfter, both$2 as both, and$1 as and, not$1 as not, either$1 as either, or$1 as or, arrayId$1 as arrayId, arrayIx$1 as arrayIx, args$1 as args, tuple$1 as tuple, dependentFn$1 as dependentFn, freeFn$1 as freeFn, keep$1 as keep, optional$2 as optional, propsOr$1 as propsOr, props$1 as props, choose$2 as choose, cases$1 as cases, ifElse$2 as ifElse, casesOf$1 as casesOf, lazy$2 as lazy, promote$1 as promote, upgrades$1 as upgrades, upgradesOf$1 as upgradesOf };
